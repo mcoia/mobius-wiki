@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MOBIUS UI Kit - Component Library</title>
+    <link rel="stylesheet" href="mobius-ui.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .component-section {
+            margin-bottom: 64px;
+            padding-bottom: 32px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+        .component-example {
+            background: var(--bg-light);
+            padding: 24px;
+            border: 1px solid var(--gray-250);
+            border-radius: 4px;
+            margin: 16px 0;
+        }
+        .code-snippet {
+            position: relative;
+        }
+        .component-note {
+            font-size: 14px;
+            color: var(--gray-700);
+            font-style: italic;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+    <header class="top-header">
+        <div class="logo">MOBIUS<sup>®</sup> UI Kit</div>
+        <div class="top-nav">
+            <a href="#colors">Colors</a>
+            <a href="#layout">Layout</a>
+            <a href="#components">Components</a>
+            <a href="examples/home.html">Examples</a>
+        </div>
+    </header>
+
+    <div class="container">
+        <nav class="left-sidebar">
+            <div class="nav-section-title">Foundation</div>
+            <ul class="nav-menu">
+                <li><a href="#colors">Colors & Variables</a></li>
+                <li><a href="#typography">Typography</a></li>
+                <li><a href="#layout">Layout System</a></li>
+            </ul>
+
+            <div class="nav-section-title">Components</div>
+            <ul class="nav-menu">
+                <li><a href="#header">Header</a></li>
+                <li><a href="#navigation">Navigation</a></li>
+                <li><a href="#breadcrumb">Breadcrumb</a></li>
+                <li><a href="#callout">Callout Boxes</a></li>
+                <li><a href="#note-box">Note Boxes</a></li>
+                <li><a href="#stats">Stats Cards</a></li>
+                <li><a href="#tables">Tables</a></li>
+                <li><a href="#code">Code Blocks</a></li>
+                <li><a href="#flow-steps">Flow Steps</a></li>
+                <li><a href="#footer">Footer</a></li>
+            </ul>
+
+            <div class="nav-section-title">Utilities</div>
+            <ul class="nav-menu">
+                <li><a href="#responsive">Responsive Design</a></li>
+                <li><a href="#utilities">Utility Classes</a></li>
+            </ul>
+        </nav>
+
+        <main class="main-content">
+            <div class="breadcrumb">
+                <a href="#">Home</a> / Component Library
+            </div>
+
+            <h1>MOBIUS UI Kit - Component Library</h1>
+
+            <p class="lead">This is a comprehensive component library extracted from the MOBIUS documentation mockups. All components are built with vanilla HTML and CSS, using CSS custom properties for easy theming.</p>
+
+            <!-- ===== COLORS & VARIABLES ===== -->
+            <section id="colors" class="component-section">
+                <h2>Colors & Variables</h2>
+                <p>The MOBIUS UI Kit uses CSS custom properties for consistent theming across all components.</p>
+
+                <h3>Brand Colors</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div style="height: 60px; background: var(--mobius-navy); border-radius: 4px; margin-bottom: 12px;"></div>
+                        <h4>MOBIUS Navy</h4>
+                        <code>--mobius-navy</code><br>
+                        <code>#003057</code>
+                    </div>
+                    <div class="stat-card">
+                        <div style="height: 60px; background: var(--mobius-teal); border-radius: 4px; margin-bottom: 12px;"></div>
+                        <h4>MOBIUS Teal</h4>
+                        <code>--mobius-teal</code><br>
+                        <code>#0097A7</code>
+                    </div>
+                    <div class="stat-card">
+                        <div style="height: 60px; background: var(--mobius-dark-slate); border-radius: 4px; margin-bottom: 12px;"></div>
+                        <h4>Dark Slate</h4>
+                        <code>--mobius-dark-slate</code><br>
+                        <code>#2d3e50</code>
+                    </div>
+                </div>
+
+                <h3>Usage in CSS</h3>
+                <pre><code>.my-element {
+    color: var(--mobius-teal);
+    background: var(--mobius-navy);
+    border-color: var(--gray-250);
+}</code></pre>
+            </section>
+
+            <!-- ===== TYPOGRAPHY ===== -->
+            <section id="typography" class="component-section">
+                <h2>Typography</h2>
+                <p>Consistent heading sizes and typography system.</p>
+
+                <div class="component-example">
+                    <h1>Heading 1 - 36px / 400 weight</h1>
+                    <h2>Heading 2 - 28px / 400 weight (with border)</h2>
+                    <h3>Heading 3 - 20px / 600 weight</h3>
+                    <h4>Heading 4 - 16px / 600 weight</h4>
+                    <p>Paragraph text with 1.7 line height for optimal readability. Uses system font stack for fast loading and native look.</p>
+                </div>
+
+                <pre><code>&lt;h1&gt;Heading 1&lt;/h1&gt;
+&lt;h2&gt;Heading 2&lt;/h2&gt;
+&lt;h3&gt;Heading 3&lt;/h3&gt;
+&lt;h4&gt;Heading 4&lt;/h4&gt;
+&lt;p&gt;Paragraph text...&lt;/p&gt;</code></pre>
+            </section>
+
+            <!-- ===== LAYOUT ===== -->
+            <section id="layout" class="component-section">
+                <h2>Layout System</h2>
+                <p>Three-column responsive layout with fixed sidebars and flexible main content area.</p>
+
+                <h3>Structure</h3>
+                <pre><code>&lt;header class="top-header"&gt;...&lt;/header&gt;
+&lt;div class="container"&gt;
+    &lt;nav class="left-sidebar"&gt;...&lt;/nav&gt;
+    &lt;main class="main-content"&gt;...&lt;/main&gt;
+    &lt;aside class="right-sidebar"&gt;...&lt;/aside&gt;
+&lt;/div&gt;</code></pre>
+
+                <div class="note-box">
+                    <strong>Responsive Behavior</strong>
+                    <p>At 1200px: Right sidebar hides<br>
+                    At 768px: Columns stack vertically</p>
+                </div>
+            </section>
+
+            <!-- ===== HEADER ===== -->
+            <section id="header" class="component-section">
+                <h2>Header Component</h2>
+                <p>Top navigation bar with logo, links, and search box.</p>
+
+                <pre><code>&lt;header class="top-header"&gt;
+    &lt;div class="logo"&gt;MOBIUS&lt;sup&gt;®&lt;/sup&gt;&lt;/div&gt;
+    &lt;div class="top-nav"&gt;
+        &lt;a href="#"&gt;Developers&lt;/a&gt;
+        &lt;a href="#"&gt;Project Wiki&lt;/a&gt;
+        &lt;div class="search-box"&gt;
+            &lt;i class="fas fa-search"&gt;&lt;/i&gt;
+            &lt;input type="text" placeholder="Search this site..."&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+&lt;/header&gt;</code></pre>
+            </section>
+
+            <!-- ===== NAVIGATION ===== -->
+            <section id="navigation" class="component-section">
+                <h2>Navigation (Left Sidebar)</h2>
+                <p>Sectioned navigation menu with active state support.</p>
+
+                <pre><code>&lt;div class="nav-section-title"&gt;SECTION NAME&lt;/div&gt;
+&lt;ul class="nav-menu"&gt;
+    &lt;li&gt;&lt;a href="#"&gt;Menu Item&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href="#" class="active"&gt;Active Item&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;
+        &lt;a href="#"&gt;With Submenu&lt;/a&gt;
+        &lt;ul class="nav-submenu"&gt;
+            &lt;li&gt;&lt;a href="#"&gt;Submenu Item&lt;/a&gt;&lt;/li&gt;
+        &lt;/ul&gt;
+    &lt;/li&gt;
+&lt;/ul&gt;</code></pre>
+            </section>
+
+            <!-- ===== BREADCRUMB ===== -->
+            <section id="breadcrumb" class="component-section">
+                <h2>Breadcrumb</h2>
+                <p>Navigational breadcrumb trail.</p>
+
+                <div class="component-example">
+                    <div class="breadcrumb">
+                        <a href="#">Home</a> / <a href="#">Documentation</a> / Current Page
+                    </div>
+                </div>
+
+                <pre><code>&lt;div class="breadcrumb"&gt;
+    &lt;a href="#"&gt;Home&lt;/a&gt; / &lt;a href="#"&gt;Documentation&lt;/a&gt; / Current Page
+&lt;/div&gt;</code></pre>
+            </section>
+
+            <!-- ===== CALLOUT ===== -->
+            <section id="callout" class="component-section">
+                <h2>Callout Boxes</h2>
+                <p>Highlighted information boxes with left teal border.</p>
+
+                <div class="component-example">
+                    <div class="callout">
+                        <p><strong>Important:</strong> This is a callout box used for highlighting key information, warnings, or important notes to the reader.</p>
+                    </div>
+                </div>
+
+                <pre><code>&lt;div class="callout"&gt;
+    &lt;p&gt;&lt;strong&gt;Important:&lt;/strong&gt; This is a callout box...&lt;/p&gt;
+&lt;/div&gt;</code></pre>
+            </section>
+
+            <!-- ===== NOTE BOX ===== -->
+            <section id="note-box" class="component-section">
+                <h2>Note Boxes</h2>
+                <p>Styled note boxes with four variants for different message types.</p>
+
+                <div class="component-example">
+                    <div class="note-box">
+                        <strong>Default Note</strong>
+                        This is a standard note box for general information.
+                    </div>
+
+                    <div class="note-box warning">
+                        <strong>Warning</strong>
+                        This is a warning note box for cautionary information.
+                    </div>
+
+                    <div class="note-box success">
+                        <strong>Success</strong>
+                        This is a success note box for positive confirmations.
+                    </div>
+
+                    <div class="note-box danger">
+                        <strong>Danger</strong>
+                        This is a danger note box for critical warnings.
+                    </div>
+                </div>
+
+                <pre><code>&lt;div class="note-box"&gt;
+    &lt;strong&gt;Default Note&lt;/strong&gt;
+    Note content...
+&lt;/div&gt;
+
+&lt;div class="note-box warning"&gt;
+    &lt;strong&gt;Warning&lt;/strong&gt;
+    Warning content...
+&lt;/div&gt;
+
+&lt;div class="note-box success"&gt;
+    &lt;strong&gt;Success&lt;/strong&gt;
+    Success content...
+&lt;/div&gt;
+
+&lt;div class="note-box danger"&gt;
+    &lt;strong&gt;Danger&lt;/strong&gt;
+    Danger content...
+&lt;/div&gt;</code></pre>
+            </section>
+
+            <!-- ===== STATS CARDS ===== -->
+            <section id="stats" class="component-section">
+                <h2>Stats Cards</h2>
+                <p>Grid of statistics or feature cards with teal accent border.</p>
+
+                <div class="component-example">
+                    <div class="stats-grid">
+                        <div class="stat-card center">
+                            <div class="stat-number">72</div>
+                            <div class="stat-label">Member Libraries</div>
+                        </div>
+                        <div class="stat-card center">
+                            <div class="stat-number">30M+</div>
+                            <div class="stat-label">Items in Catalog</div>
+                        </div>
+                    </div>
+                </div>
+
+                <pre><code>&lt;div class="stats-grid"&gt;
+    &lt;div class="stat-card center"&gt;
+        &lt;div class="stat-number"&gt;72&lt;/div&gt;
+        &lt;div class="stat-label"&gt;Member Libraries&lt;/div&gt;
+    &lt;/div&gt;
+    &lt;div class="stat-card center"&gt;
+        &lt;div class="stat-number"&gt;30M+&lt;/div&gt;
+        &lt;div class="stat-label"&gt;Items in Catalog&lt;/div&gt;
+    &lt;/div&gt;
+&lt;/div&gt;</code></pre>
+
+                <p class="component-note">Tip: Use 3 columns by changing CSS: <code>grid-template-columns: repeat(3, 1fr)</code></p>
+            </section>
+
+            <!-- ===== TABLES ===== -->
+            <section id="tables" class="component-section">
+                <h2>Tables</h2>
+                <p>Styled tables with hover effects and consistent spacing.</p>
+
+                <div class="component-example">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Column 1</th>
+                                <th>Column 2</th>
+                                <th>Column 3</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Row 1, Cell 1</td>
+                                <td>Row 1, Cell 2</td>
+                                <td>Row 1, Cell 3</td>
+                            </tr>
+                            <tr>
+                                <td>Row 2, Cell 1</td>
+                                <td>Row 2, Cell 2</td>
+                                <td>Row 2, Cell 3</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <pre><code>&lt;table&gt;
+    &lt;thead&gt;
+        &lt;tr&gt;
+            &lt;th&gt;Column 1&lt;/th&gt;
+            &lt;th&gt;Column 2&lt;/th&gt;
+        &lt;/tr&gt;
+    &lt;/thead&gt;
+    &lt;tbody&gt;
+        &lt;tr&gt;
+            &lt;td&gt;Cell 1&lt;/td&gt;
+            &lt;td&gt;Cell 2&lt;/td&gt;
+        &lt;/tr&gt;
+    &lt;/tbody&gt;
+&lt;/table&gt;</code></pre>
+            </section>
+
+            <!-- ===== CODE BLOCKS ===== -->
+            <section id="code" class="component-section">
+                <h2>Code Blocks</h2>
+                <p>Inline and block code formatting with syntax highlighting.</p>
+
+                <h3>Inline Code</h3>
+                <div class="component-example">
+                    <p>Use the <code>var(--mobius-teal)</code> CSS variable for theming.</p>
+                </div>
+
+                <pre><code>&lt;p&gt;Use the &lt;code&gt;var(--mobius-teal)&lt;/code&gt; CSS variable for theming.&lt;/p&gt;</code></pre>
+
+                <h3>Code Blocks</h3>
+                <div class="component-example">
+                    <pre><code>function hello() {
+    console.log("Hello, MOBIUS!");
+    return true;
+}</code></pre>
+                </div>
+
+                <pre><code>&lt;pre&gt;&lt;code&gt;function hello() {
+    console.log("Hello, MOBIUS!");
+}&lt;/code&gt;&lt;/pre&gt;</code></pre>
+            </section>
+
+            <!-- ===== FLOW STEPS ===== -->
+            <section id="flow-steps" class="component-section">
+                <h2>Flow Steps</h2>
+                <p>Numbered step indicators for process documentation.</p>
+
+                <div class="component-example">
+                    <div class="flow-step">
+                        <span class="step-number">1</span>
+                        <strong>First Step</strong>
+                        <p>This is the first step in the process. It includes important details and instructions.</p>
+                    </div>
+
+                    <div class="flow-step">
+                        <span class="step-number">2</span>
+                        <strong>Second Step</strong>
+                        <p>This is the second step with additional information.</p>
+                    </div>
+                </div>
+
+                <pre><code>&lt;div class="flow-step"&gt;
+    &lt;span class="step-number"&gt;1&lt;/span&gt;
+    &lt;strong&gt;First Step&lt;/strong&gt;
+    &lt;p&gt;Step description...&lt;/p&gt;
+&lt;/div&gt;</code></pre>
+            </section>
+
+            <!-- ===== FOOTER ===== -->
+            <section id="footer" class="component-section">
+                <h2>Content Footer</h2>
+                <p>Footer for page metadata and timestamps.</p>
+
+                <div class="component-example">
+                    <div class="content-footer">
+                        Last modified December 15, 2025
+                    </div>
+                </div>
+
+                <pre><code>&lt;div class="content-footer"&gt;
+    Last modified December 15, 2025
+&lt;/div&gt;</code></pre>
+            </section>
+
+            <!-- ===== RESPONSIVE ===== -->
+            <section id="responsive" class="component-section">
+                <h2>Responsive Design</h2>
+                <p>The UI kit includes responsive breakpoints for optimal display on all devices.</p>
+
+                <h3>Breakpoints</h3>
+                <ul>
+                    <li><strong>1200px:</strong> Right sidebar hides</li>
+                    <li><strong>768px:</strong> Columns stack vertically, reduced padding</li>
+                    <li><strong>480px:</strong> Header stacks, full-width search</li>
+                </ul>
+            </section>
+
+            <!-- ===== UTILITIES ===== -->
+            <section id="utilities" class="component-section">
+                <h2>Utility Classes</h2>
+                <p>Helper classes for common spacing and alignment needs.</p>
+
+                <h3>Margin</h3>
+                <pre><code>.mt-sm, .mt-md, .mt-lg, .mt-xl, .mt-2xl
+.mb-sm, .mb-md, .mb-lg, .mb-xl, .mb-2xl</code></pre>
+
+                <h3>Padding</h3>
+                <pre><code>.p-sm, .p-md, .p-lg, .p-xl</code></pre>
+
+                <h3>Alignment</h3>
+                <pre><code>.text-center</code></pre>
+            </section>
+
+            <div class="content-footer">
+                MOBIUS UI Kit v1.0.0 | Generated 2025-12-15
+            </div>
+        </main>
+
+        <aside class="right-sidebar">
+            <div class="sidebar-title">On This Page</div>
+            <ul class="toc-list">
+                <li><a href="#colors">Colors & Variables</a></li>
+                <li><a href="#typography">Typography</a></li>
+                <li><a href="#layout">Layout System</a></li>
+                <li><a href="#header">Header</a></li>
+                <li><a href="#navigation">Navigation</a></li>
+                <li><a href="#breadcrumb">Breadcrumb</a></li>
+                <li><a href="#callout">Callout Boxes</a></li>
+                <li><a href="#note-box">Note Boxes</a></li>
+                <li><a href="#stats">Stats Cards</a></li>
+                <li><a href="#tables">Tables</a></li>
+                <li><a href="#code">Code Blocks</a></li>
+                <li><a href="#flow-steps">Flow Steps</a></li>
+                <li><a href="#footer">Footer</a></li>
+                <li><a href="#responsive">Responsive Design</a></li>
+                <li><a href="#utilities">Utility Classes</a></li>
+            </ul>
+        </aside>
+    </div>
+
+    <script src="mobius-ui.js"></script>
+</body>
+</html>

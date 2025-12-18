@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MOBIUS UI Kit - Component Snippets</title>
+    <link rel="stylesheet" href="../mobius-ui.css">
+</head>
+<body style="padding: 40px; max-width: 1200px; margin: 0 auto;">
+    <h1>MOBIUS UI Kit - Component Snippets</h1>
+    <p>Copy-paste ready HTML snippets for all components.</p>
+
+    <hr style="margin: 40px 0;">
+
+    <!-- CALLOUT BOX -->
+    <h2>Callout Box</h2>
+    <pre style="background: #f8f9fa; padding: 16px; border-radius: 4px; overflow-x: auto;"><code>&lt;div class="callout"&gt;
+    &lt;p&gt;&lt;strong&gt;Important:&lt;/strong&gt; Your message here.&lt;/p&gt;
+&lt;/div&gt;</code></pre>
+
+    <!-- NOTE BOXES -->
+    <h2>Note Boxes</h2>
+    <pre style="background: #f8f9fa; padding: 16px; border-radius: 4px; overflow-x: auto;"><code>&lt;!-- Default Note --&gt;
+&lt;div class="note-box"&gt;
+    &lt;strong&gt;Note&lt;/strong&gt;
+    Your note content here.
+&lt;/div&gt;
+
+&lt;!-- Warning Note --&gt;
+&lt;div class="note-box warning"&gt;
+    &lt;strong&gt;Warning&lt;/strong&gt;
+    Your warning message here.
+&lt;/div&gt;
+
+&lt;!-- Success Note --&gt;
+&lt;div class="note-box success"&gt;
+    &lt;strong&gt;Success&lt;/strong&gt;
+    Your success message here.
+&lt;/div&gt;
+
+&lt;!-- Danger Note --&gt;
+&lt;div class="note-box danger"&gt;
+    &lt;strong&gt;Danger&lt;/strong&gt;
+    Your danger message here.
+&lt;/div&gt;</code></pre>
+
+    <!-- STATS CARDS -->
+    <h2>Stats Cards (2-column grid)</h2>
+    <pre style="background: #f8f9fa; padding: 16px; border-radius: 4px; overflow-x: auto;"><code>&lt;div class="stats-grid"&gt;
+    &lt;div class="stat-card center"&gt;
+        &lt;div class="stat-number"&gt;72&lt;/div&gt;
+        &lt;div class="stat-label"&gt;Stat Label&lt;/div&gt;
+    &lt;/div&gt;
+    &lt;div class="stat-card center"&gt;
+        &lt;div class="stat-number"&gt;30M+&lt;/div&gt;
+        &lt;div class="stat-label"&gt;Another Stat&lt;/div&gt;
+    &lt;/div&gt;
+&lt;/div&gt;</code></pre>
+
+    <!-- STAT CARD WITH CONTENT -->
+    <h2>Stat Card with Content</h2>
+    <pre style="background: #f8f9fa; padding: 16px; border-radius: 4px; overflow-x: auto;"><code>&lt;div class="stats-grid"&gt;
+    &lt;div class="stat-card"&gt;
+        &lt;h4&gt;Card Title&lt;/h4&gt;
+        &lt;p&gt;Card description or content goes here.&lt;/p&gt;
+        &lt;ul&gt;
+            &lt;li&gt;List item 1&lt;/li&gt;
+            &lt;li&gt;List item 2&lt;/li&gt;
+        &lt;/ul&gt;
+    &lt;/div&gt;
+&lt;/div&gt;</code></pre>
+
+    <!-- TABLE -->
+    <h2>Table</h2>
+    <pre style="background: #f8f9fa; padding: 16px; border-radius: 4px; overflow-x: auto;"><code>&lt;table&gt;
+    &lt;thead&gt;
+        &lt;tr&gt;
+            &lt;th&gt;Column 1&lt;/th&gt;
+            &lt;th&gt;Column 2&lt;/th&gt;
+            &lt;th&gt;Column 3&lt;/th&gt;
+        &lt;/tr&gt;
+    &lt;/thead&gt;
+    &lt;tbody&gt;
+        &lt;tr&gt;
+            &lt;td&gt;Data 1&lt;/td&gt;
+            &lt;td&gt;Data 2&lt;/td&gt;
+            &lt;td&gt;Data 3&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;Data 4&lt;/td&gt;
+            &lt;td&gt;Data 5&lt;/td&gt;
+            &lt;td&gt;Data 6&lt;/td&gt;
+        &lt;/tr&gt;
+    &lt;/tbody&gt;
+&lt;/table&gt;</code></pre>
+
+    <!-- FLOW STEPS -->
+    <h2>Flow Steps</h2>
+    <pre style="background: #f8f9fa; padding: 16px; border-radius: 4px; overflow-x: auto;"><code>&lt;div class="flow-step"&gt;
+    &lt;span class="step-number"&gt;1&lt;/span&gt;
+    &lt;strong&gt;Step Title&lt;/strong&gt;
+    &lt;p&gt;Step description goes here.&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;div class="flow-step"&gt;
+    &lt;span class="step-number"&gt;2&lt;/span&gt;
+    &lt;strong&gt;Next Step Title&lt;/strong&gt;
+    &lt;p&gt;Next step description.&lt;/p&gt;
+&lt;/div&gt;</code></pre>
+
+    <!-- CODE BLOCKS -->
+    <h2>Code Blocks</h2>
+    <pre style="background: #f8f9fa; padding: 16px; border-radius: 4px; overflow-x: auto;"><code>&lt;!-- Inline Code --&gt;
+&lt;p&gt;Use the &lt;code&gt;var(--mobius-teal)&lt;/code&gt; variable.&lt;/p&gt;
+
+&lt;!-- Code Block --&gt;
+&lt;pre&gt;&lt;code&gt;function example() {
+    return "Hello, MOBIUS!";
+}&lt;/code&gt;&lt;/pre&gt;</code></pre>
+
+    <!-- BREADCRUMB -->
+    <h2>Breadcrumb</h2>
+    <pre style="background: #f8f9fa; padding: 16px; border-radius: 4px; overflow-x: auto;"><code>&lt;div class="breadcrumb"&gt;
+    &lt;a href="#"&gt;Home&lt;/a&gt; / &lt;a href="#"&gt;Section&lt;/a&gt; / Current Page
+&lt;/div&gt;</code></pre>
+
+    <!-- HIGHLIGHT -->
+    <h2>Highlight (Inline)</h2>
+    <pre style="background: #f8f9fa; padding: 16px; border-radius: 4px; overflow-x: auto;"><code>&lt;p&gt;This text has &lt;span class="highlight"&gt;highlighted content&lt;/span&gt; in it.&lt;/p&gt;</code></pre>
+
+    <!-- FOOTER -->
+    <h2>Content Footer</h2>
+    <pre style="background: #f8f9fa; padding: 16px; border-radius: 4px; overflow-x: auto;"><code>&lt;div class="content-footer"&gt;
+    Last modified December 15, 2025
+&lt;/div&gt;</code></pre>
+
+    <!-- TOC LIST -->
+    <h2>Table of Contents (Right Sidebar)</h2>
+    <pre style="background: #f8f9fa; padding: 16px; border-radius: 4px; overflow-x: auto;"><code>&lt;aside class="right-sidebar"&gt;
+    &lt;div class="sidebar-title"&gt;On This Page&lt;/div&gt;
+    &lt;ul class="toc-list"&gt;
+        &lt;li&gt;&lt;a href="#section1"&gt;Section 1&lt;/a&gt;&lt;/li&gt;
+        &lt;li&gt;&lt;a href="#section2"&gt;Section 2&lt;/a&gt;&lt;/li&gt;
+        &lt;li&gt;
+            &lt;a href="#section3"&gt;Section 3&lt;/a&gt;
+            &lt;ul&gt;
+                &lt;li&gt;&lt;a href="#subsection"&gt;Subsection&lt;/a&gt;&lt;/li&gt;
+            &lt;/ul&gt;
+        &lt;/li&gt;
+    &lt;/ul&gt;
+&lt;/aside&gt;</code></pre>
+
+    <!-- UTILITY CLASSES -->
+    <h2>Utility Classes</h2>
+    <pre style="background: #f8f9fa; padding: 16px; border-radius: 4px; overflow-x: auto;"><code>&lt;!-- Margins --&gt;
+&lt;div class="mt-xl"&gt;Top margin XL&lt;/div&gt;
+&lt;div class="mb-lg"&gt;Bottom margin LG&lt;/div&gt;
+
+&lt;!-- Padding --&gt;
+&lt;div class="p-md"&gt;Padding MD on all sides&lt;/div&gt;
+
+&lt;!-- Text Alignment --&gt;
+&lt;div class="text-center"&gt;Centered text&lt;/div&gt;</code></pre>
+
+</body>
+</html>

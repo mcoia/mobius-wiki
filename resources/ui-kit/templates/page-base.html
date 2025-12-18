@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><!-- PAGE TITLE HERE --></title>
+
+    <!-- MOBIUS UI Kit Styles -->
+    <link rel="stylesheet" href="../mobius-ui.css">
+
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Mermaid (for diagrams - optional, remove if not needed) -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <!-- ===== HEADER ===== -->
+    <!-- See templates/header.html for full header markup -->
+    <header class="top-header">
+        <div class="logo">MOBIUS<sup>®</sup></div>
+        <div class="top-nav">
+            <a href="#">Link 1</a>
+            <a href="#">Link 2</a>
+            <a href="#">Link 3</a>
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Search this site...">
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- ===== LEFT SIDEBAR NAVIGATION ===== -->
+        <!-- See templates/left-nav.html for full navigation markup -->
+        <nav class="left-sidebar">
+            <div class="nav-section-title">SECTION 1</div>
+            <ul class="nav-menu">
+                <li><a href="#">Menu Item 1</a></li>
+                <li><a href="#" class="active">Active Item</a></li>
+                <li><a href="#">Menu Item 3</a></li>
+            </ul>
+
+            <div class="nav-section-title">SECTION 2</div>
+            <ul class="nav-menu">
+                <li><a href="#">Menu Item 4</a></li>
+                <li><a href="#">Menu Item 5</a></li>
+            </ul>
+        </nav>
+
+        <!-- ===== MAIN CONTENT ===== -->
+        <main class="main-content">
+            <!-- Breadcrumb (optional) -->
+            <div class="breadcrumb">
+                <a href="#">Home</a> / Current Page
+            </div>
+
+            <!-- Page Title -->
+            <h1>Page Title</h1>
+
+            <!-- ========================================
+                 INSERT YOUR CONTENT HERE
+                 See ui-components.html for available components
+                 ======================================== -->
+
+            <p>Your page content goes here...</p>
+
+            <!-- Footer (optional) -->
+            <div class="content-footer">
+                Last modified: [DATE]
+            </div>
+        </main>
+
+        <!-- ===== RIGHT SIDEBAR (Table of Contents) ===== -->
+        <!-- See templates/right-toc.html for full TOC markup -->
+        <!-- Optional: Remove this aside if TOC is not needed -->
+        <aside class="right-sidebar">
+            <div class="sidebar-title">On This Page</div>
+            <ul class="toc-list">
+                <li><a href="#section1">Section 1</a></li>
+                <li><a href="#section2">Section 2</a></li>
+                <li><a href="#section3">Section 3</a></li>
+            </ul>
+        </aside>
+    </div>
+
+    <!-- MOBIUS UI Kit JavaScript -->
+    <script src="../mobius-ui.js"></script>
+</body>
+</html>
