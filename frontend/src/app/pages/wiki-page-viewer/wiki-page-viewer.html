@@ -1,0 +1,37 @@
+<div class="wiki-page">
+  @if (loading) {
+    <div class="loading">
+      <i class="fas fa-spinner fa-spin"></i> Loading page...
+    </div>
+  } @else if (error) {
+    <div class="note-box danger">
+      <strong>Error:</strong> {{ error }}
+    </div>
+  } @else if (page) {
+    <!-- Breadcrumb -->
+    <nav class="breadcrumb">
+      @if (page.wiki) {
+        <a [href]="'/wiki/' + page.wiki!.slug">{{ page.wiki!.title }}</a>
+        <span>›</span>
+      }
+      @if (page.section) {
+        <a [href]="'/wiki/' + page.wiki!.slug + '/' + page.section!.slug">{{ page.section!.title }}</a>
+        <span>›</span>
+      }
+      <span>{{ page.title }}</span>
+    </nav>
+
+    <!-- Page Content -->
+    <div class="page-content" [innerHTML]="sanitizeHtml(page.content)"></div>
+
+    <!-- Page Metadata -->
+    <div class="page-meta">
+      <small>
+        Last updated: {{ page.updated_at | date:'medium' }}
+        @if (page.author) {
+          by {{ page.author.name }}
+        }
+      </small>
+    </div>
+  }
+</div>

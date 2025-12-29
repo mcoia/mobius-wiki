@@ -1,0 +1,52 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "Complete PostgreSQL database schema for the MOBIUS Wiki platform with 14 tables and migration tracking. All tables are organized within the `wiki` schema for better namespace isolation.",
+  "main": "index.js",
+  "scripts": {
+    "build": "nest build",
+    "start": "nest start",
+    "start:dev": "nest start --watch",
+    "start:debug": "nest start --debug --watch",
+    "start:prod": "node dist/main",
+    "db:create": "bash scripts/create-db.sh",
+    "migrate": "bash scripts/run-migrations.sh",
+    "migrate:status": "bash scripts/migration-status.sh",
+    "migrate:rollback": "bash scripts/rollback-migration.sh",
+    "db:seed": "psql $DATABASE_URL -f seeds/001_initial_data.sql",
+    "db:setup": "npm run db:create && npm run migrate && npm run db:seed",
+    "test:connection": "node scripts/test-connection.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@nestjs/common": "^10.4.20",
+    "@nestjs/config": "^3.3.0",
+    "@nestjs/core": "^10.4.20",
+    "@nestjs/platform-express": "^10.4.20",
+    "bcrypt": "^6.0.0",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.3",
+    "connect-pg-simple": "^10.0.0",
+    "dotenv": "^17.2.3",
+    "express-session": "^1.18.2",
+    "multer": "^2.0.2",
+    "pg": "^8.16.3",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^10.4.9",
+    "@types/bcrypt": "^6.0.0",
+    "@types/express": "^5.0.6",
+    "@types/express-session": "^1.18.2",
+    "@types/multer": "^2.0.0",
+    "@types/node": "^25.0.3",
+    "@types/pg": "^8.16.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}

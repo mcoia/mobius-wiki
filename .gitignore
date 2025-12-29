@@ -1,2 +1,52 @@
+# IDE
 .idea
-CLAUDE.md
+.vscode
+*.swp
+*.swo
+*~
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Uploads (user content)
+backend/uploads/
+uploads/
+
+# Temporary files
+*.tmp
+*.temp
+backend/check-pages.js
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Cache
+.cache/
+.parcel-cache/
+.angular/
+
+# Local documentation (keep CLAUDE.md for repo context)
+# CLAUDE.md is intentionally tracked
