@@ -13,8 +13,11 @@
     "migrate": "bash scripts/run-migrations.sh",
     "migrate:status": "bash scripts/migration-status.sh",
     "migrate:rollback": "bash scripts/rollback-migration.sh",
-    "db:seed": "psql $DATABASE_URL -f seeds/001_initial_data.sql",
+    "db:seed": "node scripts/seed-setup.js",
+    "db:seed:test": "node scripts/seed-test.js",
+    "db:seed:all": "npm run db:seed && npm run db:seed:test",
     "db:setup": "npm run db:create && npm run migrate && npm run db:seed",
+    "db:setup:dev": "npm run db:create && npm run migrate && npm run db:seed:all",
     "test:connection": "node scripts/test-connection.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
