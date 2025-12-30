@@ -1,0 +1,67 @@
+.wiki-list-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.wiki-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.wiki-card {
+  background: #fff;
+  border: 1px solid #d0d0d0;
+  border-radius: 4px;
+  padding: 1.5rem;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.wiki-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-color: #00a0b0;
+}
+
+.wiki-card h3 {
+  margin: 0 0 0.75rem 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.wiki-card h3 a {
+  color: #003b5c;
+  text-decoration: none;
+}
+
+.wiki-card h3 a:hover {
+  color: #00a0b0;
+  text-decoration: underline;
+}
+
+.wiki-description {
+  color: #555;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin: 0 0 1rem 0;
+}
+
+.wiki-meta {
+  padding-top: 0.75rem;
+  border-top: 1px solid #e0e0e0;
+  color: #777;
+  font-size: 0.85rem;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .wiki-list-content {
+    padding: 1rem;
+  }
+
+  .wiki-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}

@@ -12,26 +12,35 @@
   </div>
 
   <h2>Platform Statistics</h2>
-  <div class="stats-grid">
-    <div class="stat-card">
-      <div class="stat-number">{{ wikis }}</div>
-      <div class="stat-label">Wikis</div>
+  @if (stats$ | async; as stats) {
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-number">{{ stats.wikis }}</div>
+        <div class="stat-label">Wikis</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">{{ stats.pages }}</div>
+        <div class="stat-label">Pages</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">{{ stats.views }}</div>
+        <div class="stat-label">Page Views</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">{{ stats.users }}</div>
+        <div class="stat-label">Users</div>
+      </div>
     </div>
-    <div class="stat-card">
-      <div class="stat-number">{{ pages }}</div>
-      <div class="stat-label">Pages</div>
+  } @else {
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-number">-</div>
+        <div class="stat-label">Loading...</div>
+      </div>
     </div>
-    <div class="stat-card">
-      <div class="stat-number">{{ views }}</div>
-      <div class="stat-label">Page Views</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-number">{{ users }}</div>
-      <div class="stat-label">Users</div>
-    </div>
-  </div>
+  }
 
-  @if (currentUser) {
+  @if (currentUser$ | async; as currentUser) {
     <div class="note-box success">
       <strong>Welcome back, {{ currentUser.name }}!</strong><br>
       <small>Role: {{ currentUser.role }}</small>
@@ -48,7 +57,7 @@
 
   <h2>Getting Started</h2>
   <ul>
-    <li><a href="/wiki">Browse Wikis</a></li>
+    <li><a href="/wikis">Browse Wikis</a></li>
     <li><a href="/search">Search Documentation</a></li>
     <li><a href="/help">Help & Support</a></li>
   </ul>

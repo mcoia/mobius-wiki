@@ -1,8 +1,17 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Observable, of } from 'rxjs';
+import { map, catchError, shareReplay } from 'rxjs/operators';
 import { AuthService } from '../../core/services/auth.service';
 import { ApiService } from '../../core/services/api.service';
 import { User } from '../../core/models/user.model';
+
+interface PlatformStats {
+  wikis: number;
+  pages: number;
+  views: number;
+  users: number;
+}
 
 @Component({
   selector: 'app-home',
@@ -11,11 +20,8 @@ import { User } from '../../core/models/user.model';
   styleUrl: './home.css'
 })
 export class HomeComponent implements OnInit {
-  currentUser: User | null = null;
-  wikis = 0;
-  pages = 0;
-  views = 0;
-  users = 0;
+  currentUser$!: Observable<User | null>;
+  stats$!: Observable<PlatformStats>;
 
   constructor(
     private authService: AuthService,
@@ -23,36 +29,22 @@ export class HomeComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    // Subscribe to current user
-    this.authService.currentUser$.subscribe(user => {
-      this.currentUser = user;
-    });
+    // Use the existing BehaviorSubject as an observable
+    this.currentUser$ = this.authService.currentUser$;
 
-    // Load platform statistics
-    this.loadStatistics();
-  }
-
-  loadStatistics(): void {
-    this.apiService.get<any>('/analytics/stats').subscribe({
-      next: (response) => {
-        // Extract stats from backend response
-        if (response.content) {
-          this.wikis = response.content.wikis || 0;
-          this.pages = response.content.pages || 0;
-        }
-        if (response.views) {
-          this.views = response.views.total || 0;
-          this.users = response.views.uniqueUsers || 0;
-        }
-      },
-      error: (error) => {
+    // Load platform statistics as observable
+    this.stats$ = this.apiService.get<any>('/analytics/stats').pipe(
+      map(response => ({
+        wikis: response.content?.wikis || 0,
+        pages: response.content?.pages || 0,
+        views: response.views?.total || 0,
+        users: response.views?.uniqueUsers || 0
+      })),
+      catchError(error => {
         console.error('Failed to load statistics:', error);
-        // Set default values on error
-        this.wikis = 0;
-        this.pages = 0;
-        this.views = 0;
-        this.users = 0;
-      }
-    });
+        return of({ wikis: 0, pages: 0, views: 0, users: 0 });
+      }),
+      shareReplay(1) // Cache the result
+    );
   }
 }

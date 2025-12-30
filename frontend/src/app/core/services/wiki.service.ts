@@ -20,4 +20,8 @@ export class WikiService {
   getPagesBySlugs(wikiSlug: string, sectionSlug: string, pageSlug: string): Observable<any> {
     return this.api.get(`/wikis/slug/${wikiSlug}/sections/slug/${sectionSlug}/pages/slug/${pageSlug}`);
   }
+
+  getWikis(): Observable<{ data: Wiki[]; meta: { total: number } }> {
+    return this.api.get('/wikis');
+  }
 }

@@ -3,10 +3,13 @@ export interface Wiki {
   title: string;
   slug: string;
   description: string | null;
-  createdAt: string;
-  updatedAt: string;
-  createdBy: number;
-  updatedBy: number;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+  created_by: number;
+  updated_by: number;
+  deleted_at: string | null;
+  deleted_by: number | null;
 }
 
 export interface Page {

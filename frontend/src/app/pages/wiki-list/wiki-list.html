@@ -1,0 +1,51 @@
+<div class="wiki-list-content">
+  <nav class="breadcrumb">
+    <a routerLink="/">Home</a>
+    <span class="breadcrumb-separator">›</span>
+    <span>Wikis</span>
+  </nav>
+
+  <h1>Browse Wikis</h1>
+
+  <div class="callout">
+    <p>
+      Explore documentation for MOBIUS library systems and services.
+      Select a wiki below to view its content.
+    </p>
+  </div>
+
+  @if (error) {
+    <div class="note-box error">
+      <strong>Error:</strong> {{ error }}
+    </div>
+  }
+
+  @if (wikis$ | async; as wikis) {
+    @if (wikis.length === 0) {
+      <div class="note-box warning">
+        <strong>No wikis found</strong><br>
+        <small>There are no wikis available at this time.</small>
+      </div>
+    } @else {
+      <div class="wiki-grid">
+        @for (wiki of wikis; track wiki.id) {
+          <div class="wiki-card">
+            <h3>
+              <a [routerLink]="['/wiki', wiki.slug]">{{ wiki.title }}</a>
+            </h3>
+            @if (wiki.description) {
+              <p class="wiki-description">{{ wiki.description }}</p>
+            }
+            <div class="wiki-meta">
+              <small>Updated {{ wiki.updated_at | date:'short' }}</small>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  } @else {
+    <div class="note-box info">
+      <strong>Loading wikis...</strong>
+    </div>
+  }
+</div>

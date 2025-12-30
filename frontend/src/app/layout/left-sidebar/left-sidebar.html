@@ -1,16 +1,38 @@
 <nav class="left-sidebar">
-  <!-- Navigation Section 1 -->
-  <div class="nav-section-title">SITE</div>
+  <!-- Browse All Wikis -->
+  <div class="nav-section-title">NAVIGATION</div>
   <ul class="nav-menu">
-    <li><a href="/wiki/site/main/home" [class.active]="isActive('/wiki/site/main/home')">Home</a></li>
-    <li><a href="/wiki/site/main/about" [class.active]="isActive('/wiki/site/main/about')">About</a></li>
-    <li><a href="/wiki/site/main/terms" [class.active]="isActive('/wiki/site/main/terms')">Terms</a></li>
-    <li><a href="/wiki/site/main/help" [class.active]="isActive('/wiki/site/main/help')">Help</a></li>
+    <li><a routerLink="/wikis" [class.active]="isActive('/wikis')">Browse All Wikis</a></li>
   </ul>
 
-  <!-- Navigation Section 2 -->
+  <!-- Dynamic Wiki List -->
+  @if (loading) {
+    <div class="nav-section-title">Loading...</div>
+  } @else if (wikis.length > 0) {
+    <div class="nav-section-title">WIKIS</div>
+    <ul class="nav-menu">
+      @for (wiki of wikis; track wiki.id) {
+        <li>
+          <a [routerLink]="['/wiki', wiki.slug]" [class.active]="isWikiActive(wiki.slug)">
+            {{ wiki.title }}
+          </a>
+        </li>
+      }
+    </ul>
+  }
+
+  <!-- Site Wiki (Expanded) - Keeping for backwards compatibility -->
+  <div class="nav-section-title">SITE PAGES</div>
+  <ul class="nav-menu">
+    <li><a routerLink="/wiki/site/main/home" [class.active]="isActive('/wiki/site/main/home')">Home</a></li>
+    <li><a routerLink="/wiki/site/main/about" [class.active]="isActive('/wiki/site/main/about')">About</a></li>
+    <li><a routerLink="/wiki/site/main/terms" [class.active]="isActive('/wiki/site/main/terms')">Terms</a></li>
+    <li><a routerLink="/wiki/site/main/help" [class.active]="isActive('/wiki/site/main/help')">Help</a></li>
+  </ul>
+
+  <!-- Resources -->
   <div class="nav-section-title">RESOURCES</div>
   <ul class="nav-menu">
-    <li><a href="/search">Search</a></li>
+    <li><a routerLink="/search">Search</a></li>
   </ul>
 </nav>

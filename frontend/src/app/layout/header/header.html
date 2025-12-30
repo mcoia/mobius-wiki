@@ -1,9 +1,11 @@
 <header class="top-header">
-  <div class="logo">MOBIUS<sup>®</sup></div>
+  <div class="logo">
+    <a routerLink="/">MOBIUS<sup>®</sup></a>
+  </div>
   <div class="top-nav">
     <!-- Navigation links -->
-    <a href="#">Wiki</a>
-    <a href="#">Documentation</a>
+    <a routerLink="/wikis">Browse Wikis</a>
+    <a routerLink="/wiki/site/main/home">Home</a>
 
     <!-- Search Box -->
     <div class="search-box">
@@ -12,7 +14,7 @@
     </div>
 
     <!-- User menu (will be implemented later) -->
-    <a href="/login" class="user-link">
+    <a routerLink="/login" class="user-link">
       <i class="fas fa-user"></i> Login
     </a>
   </div>

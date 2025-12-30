@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { LoginComponent } from './pages/login/login';
 import { WikiPageViewer } from './pages/wiki-page-viewer/wiki-page-viewer';
+import { WikiListComponent } from './pages/wiki-list/wiki-list';
 import { MainLayout } from './layout/main-layout/main-layout';
 import { authGuard } from './core/guards/auth.guard';
 
@@ -23,6 +24,11 @@ export const routes: Routes = [
     path: '',
     component: MainLayout,
     children: [
+      // Wiki list page
+      {
+        path: 'wikis',
+        component: WikiListComponent
+      },
       // Wiki pages (3-level: /wiki/:wikiSlug/:sectionSlug/:pageSlug) - MUST BE FIRST
       {
         path: 'wiki/:wikiSlug/:sectionSlug/:pageSlug',
