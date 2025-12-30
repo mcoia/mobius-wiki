@@ -6,19 +6,21 @@
   </ul>
 
   <!-- Dynamic Wiki List -->
-  @if (loading) {
+  @if (wikis$ | async; as wikis) {
+    @if (wikis.length > 0) {
+      <div class="nav-section-title">WIKIS</div>
+      <ul class="nav-menu">
+        @for (wiki of wikis; track wiki.id) {
+          <li>
+            <a [routerLink]="['/wiki', wiki.slug]" [class.active]="isWikiActive(wiki.slug)">
+              {{ wiki.title }}
+            </a>
+          </li>
+        }
+      </ul>
+    }
+  } @else {
     <div class="nav-section-title">Loading...</div>
-  } @else if (wikis.length > 0) {
-    <div class="nav-section-title">WIKIS</div>
-    <ul class="nav-menu">
-      @for (wiki of wikis; track wiki.id) {
-        <li>
-          <a [routerLink]="['/wiki', wiki.slug]" [class.active]="isWikiActive(wiki.slug)">
-            {{ wiki.title }}
-          </a>
-        </li>
-      }
-    </ul>
   }
 
   <!-- Site Wiki (Expanded) - Keeping for backwards compatibility -->

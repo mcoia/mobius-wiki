@@ -1,7 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router, NavigationEnd } from '@angular/router';
-import { filter } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
+import { filter, map, catchError, shareReplay } from 'rxjs/operators';
 import { WikiService } from '../../core/services/wiki.service';
 import { Wiki } from '../../core/models/wiki.model';
 
@@ -13,8 +14,7 @@ import { Wiki } from '../../core/models/wiki.model';
 })
 export class LeftSidebar implements OnInit {
   currentUrl = '';
-  wikis: Wiki[] = [];
-  loading = true;
+  wikis$!: Observable<Wiki[]>;
 
   constructor(
     private router: Router,
@@ -30,20 +30,14 @@ export class LeftSidebar implements OnInit {
   }
 
   ngOnInit(): void {
-    this.loadWikis();
-  }
-
-  loadWikis(): void {
-    this.wikiService.getWikis().subscribe({
-      next: (response) => {
-        this.wikis = response.data;
-        this.loading = false;
-      },
-      error: (error) => {
+    this.wikis$ = this.wikiService.getWikis().pipe(
+      map(response => response.data),
+      catchError(error => {
         console.error('Failed to load wikis for navigation:', error);
-        this.loading = false;
-      }
-    });
+        return of([]);
+      }),
+      shareReplay(1)
+    );
   }
 
   isActive(url: string): boolean {
