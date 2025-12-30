@@ -18,6 +18,8 @@ export interface Page {
   title: string;
   slug: string;
   content: string;
+  scripts: string | null;
+  allow_scripts: boolean;
   status: string;
   sort_order: number;
   published_at: string | null;

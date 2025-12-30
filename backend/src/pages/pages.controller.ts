@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, UseInterceptors, ParseIntPipe, SetMetadata } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, UseInterceptors, ParseIntPipe, SetMetadata, ForbiddenException } from '@nestjs/common';
 import { PagesService } from './pages.service';
 import { PageVersionsService } from './page-versions.service';
 import { CreatePageDto } from './dto/create-page.dto';
@@ -14,6 +14,16 @@ export class PagesController {
     private pagesService: PagesService,
     private pageVersionsService: PageVersionsService,
   ) {}
+
+  private getRoleLevel(role: string): number {
+    const levels = {
+      guest: 0,
+      library_staff: 1,
+      mobius_staff: 2,
+      site_admin: 3,
+    };
+    return levels[role] || 0;
+  }
 
   @Get('sections/:sectionId/pages')
   async findAllInSection(
@@ -59,6 +69,18 @@ export class PagesController {
     @Body() dto: CreatePageDto,
     @User() user: any,
   ) {
+    // Check permission if allowScripts is true
+    if (dto.allowScripts === true) {
+      const roleLevel = this.getRoleLevel(user.role);
+
+      if (roleLevel < 2) {
+        // mobius_staff is level 2, site_admin is level 3
+        throw new ForbiddenException(
+          'Only MOBIUS staff and site admins can enable scripts on pages',
+        );
+      }
+    }
+
     return this.pagesService.create(sectionId, dto, user.id);
   }
 
@@ -69,6 +91,17 @@ export class PagesController {
     @Body() dto: UpdatePageDto,
     @User() user: any,
   ) {
+    // Check permission if allowScripts is being enabled
+    if (dto.allowScripts === true) {
+      const roleLevel = this.getRoleLevel(user.role);
+
+      if (roleLevel < 2) {
+        throw new ForbiddenException(
+          'Only MOBIUS staff and site admins can enable scripts on pages',
+        );
+      }
+    }
+
     return this.pagesService.update(id, dto, user.id);
   }
 

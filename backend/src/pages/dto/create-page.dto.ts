@@ -1,4 +1,4 @@
-import { IsString, IsOptional, MinLength, MaxLength, IsInt, IsEnum } from 'class-validator';
+import { IsString, IsOptional, MinLength, MaxLength, IsInt, IsEnum, IsBoolean } from 'class-validator';
 
 export class CreatePageDto {
   @IsString()
@@ -13,6 +13,14 @@ export class CreatePageDto {
 
   @IsString()
   content: string;
+
+  @IsOptional()
+  @IsString()
+  scripts?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  allowScripts?: boolean;
 
   @IsOptional()
   @IsEnum(['draft', 'published'])

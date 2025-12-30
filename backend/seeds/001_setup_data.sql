@@ -74,7 +74,7 @@ SELECT setval('wiki.sections_id_seq', (SELECT MAX(id) FROM wiki.sections));
 -- 5. PAGES
 -- =============================================================================
 
-INSERT INTO wiki.pages (id, section_id, title, slug, content, status, sort_order, published_at, created_at, updated_at, created_by, updated_by) VALUES
+INSERT INTO wiki.pages (id, section_id, title, slug, content, scripts, allow_scripts, status, sort_order, published_at, created_at, updated_at, created_by, updated_by) VALUES
 (1, 1, 'Welcome to Folio', 'welcome',
 '<h1>Welcome to Folio</h1>
 <p>This is your comprehensive guide to the FOLIO library services platform.</p>
@@ -95,7 +95,7 @@ INSERT INTO wiki.pages (id, section_id, title, slug, content, status, sort_order
 <li>Import your catalog data</li>
 </ol>
 <p>For detailed instructions, explore the sections in this wiki.</p>',
-'published', 1, NOW(), NOW(), NOW(), 1, 1),
+NULL, false, 'published', 1, NOW(), NOW(), NOW(), 1, 1),
 
 (2, 1, 'System Requirements', 'system-requirements',
 '<h1>System Requirements</h1>
@@ -111,7 +111,7 @@ INSERT INTO wiki.pages (id, section_id, title, slug, content, status, sort_order
 <li>Java 11 or higher</li>
 <li>Modern web browser (Chrome, Firefox, Safari, Edge)</li>
 </ul>',
-'published', 2, NOW(), NOW(), NOW(), 1, 1);
+NULL, false, 'published', 2, NOW(), NOW(), NOW(), 1, 1);
 
 -- Reset sequence for pages
 SELECT setval('wiki.pages_id_seq', (SELECT MAX(id) FROM wiki.pages));
@@ -120,7 +120,7 @@ SELECT setval('wiki.pages_id_seq', (SELECT MAX(id) FROM wiki.pages));
 -- 6. PAGE VERSIONS
 -- =============================================================================
 
-INSERT INTO wiki.page_versions (page_id, content, title, version_number, created_at, created_by) VALUES
+INSERT INTO wiki.page_versions (page_id, content, scripts, title, version_number, created_at, created_by) VALUES
 (1, '<h1>Welcome to Folio</h1>
 <p>This is your comprehensive guide to the FOLIO library services platform.</p>
 <h2>What is FOLIO?</h2>
@@ -140,7 +140,7 @@ INSERT INTO wiki.page_versions (page_id, content, title, version_number, created
 <li>Import your catalog data</li>
 </ol>
 <p>For detailed instructions, explore the sections in this wiki.</p>',
-'Welcome to Folio', 1, NOW(), 1),
+NULL, 'Welcome to Folio', 1, NOW(), 1),
 
 (2, '<h1>System Requirements</h1>
 <h2>Hardware Requirements</h2>
@@ -155,7 +155,7 @@ INSERT INTO wiki.page_versions (page_id, content, title, version_number, created
 <li>Java 11 or higher</li>
 <li>Modern web browser (Chrome, Firefox, Safari, Edge)</li>
 </ul>',
-'System Requirements', 1, NOW(), 1);
+NULL, 'System Requirements', 1, NOW(), 1);
 
 -- =============================================================================
 -- 7. TAGS
@@ -300,7 +300,7 @@ VALUES (
 -- =============================================================================
 
 -- Home/Welcome Page
-INSERT INTO wiki.pages (section_id, title, slug, content, created_by, updated_by, created_at, updated_at)
+INSERT INTO wiki.pages (section_id, title, slug, content, scripts, allow_scripts, created_by, updated_by, created_at, updated_at)
 VALUES (
   (SELECT id FROM wiki.sections WHERE wiki_id = (SELECT id FROM wiki.wikis WHERE slug = 'site') AND slug = 'main'),
   'Welcome',
@@ -318,6 +318,8 @@ VALUES (
 </ul>
 <h2>Getting Started</h2>
 <p>Explore the navigation to learn more about MOBIUS, review our terms of service, or get help and support.</p>',
+  NULL,
+  false,
   1,
   1,
   NOW(),
@@ -325,7 +327,7 @@ VALUES (
 );
 
 -- About MOBIUS Page
-INSERT INTO wiki.pages (section_id, title, slug, content, created_by, updated_by, created_at, updated_at)
+INSERT INTO wiki.pages (section_id, title, slug, content, scripts, allow_scripts, created_by, updated_by, created_at, updated_at)
 VALUES (
   (SELECT id FROM wiki.sections WHERE wiki_id = (SELECT id FROM wiki.wikis WHERE slug = 'site') AND slug = 'main'),
   'About MOBIUS',
@@ -344,6 +346,8 @@ VALUES (
 <li>Technical assistance and support</li>
 <li>System management for member libraries</li>
 </ul>',
+  NULL,
+  false,
   1,
   1,
   NOW(),
@@ -351,7 +355,7 @@ VALUES (
 );
 
 -- Terms of Service Page
-INSERT INTO wiki.pages (section_id, title, slug, content, created_by, updated_by, created_at, updated_at)
+INSERT INTO wiki.pages (section_id, title, slug, content, scripts, allow_scripts, created_by, updated_by, created_at, updated_at)
 VALUES (
   (SELECT id FROM wiki.sections WHERE wiki_id = (SELECT id FROM wiki.wikis WHERE slug = 'site') AND slug = 'main'),
   'Terms of Service',
@@ -375,6 +379,8 @@ VALUES (
 <p>MOBIUS and its members shall not be liable for any damages arising from the use or inability to use this platform.</p>
 <h2>Contact</h2>
 <p>For questions about these terms, please contact MOBIUS support.</p>',
+  NULL,
+  false,
   1,
   1,
   NOW(),
@@ -382,7 +388,7 @@ VALUES (
 );
 
 -- Help & Support Page
-INSERT INTO wiki.pages (section_id, title, slug, content, created_by, updated_by, created_at, updated_at)
+INSERT INTO wiki.pages (section_id, title, slug, content, scripts, allow_scripts, created_by, updated_by, created_at, updated_at)
 VALUES (
   (SELECT id FROM wiki.sections WHERE wiki_id = (SELECT id FROM wiki.wikis WHERE slug = 'site') AND slug = 'main'),
   'Help & Support',
@@ -414,6 +420,8 @@ VALUES (
 <li>Search functionality</li>
 <li>Analytics and page views</li>
 </ul>',
+  NULL,
+  false,
   1,
   1,
   NOW(),
@@ -425,12 +433,13 @@ VALUES (
 -- =============================================================================
 
 -- Create initial page_versions entries for each page
-INSERT INTO wiki.page_versions (page_id, version_number, title, content, created_by, created_at)
+INSERT INTO wiki.page_versions (page_id, version_number, title, content, scripts, created_by, created_at)
 SELECT
   p.id,
   1 as version_number,
   p.title,
   p.content,
+  p.scripts,
   p.created_by,
   p.created_at
 FROM wiki.pages p

@@ -88,6 +88,8 @@ export class PagesService {
         p.title,
         p.slug,
         p.content,
+        p.scripts,
+        p.allow_scripts,
         p.status,
         p.sort_order,
         p.published_at,
@@ -158,16 +160,32 @@ export class PagesService {
     const publishedAt = status === 'published' ? 'NOW()' : 'NULL';
 
     const { rows } = await this.pool.query(
-      `INSERT INTO wiki.pages (section_id, title, slug, content, status, sort_order, published_at, created_by, updated_by)
-       VALUES ($1, $2, $3, $4, $5, $6, ${publishedAt}, $7, $7)
+      `INSERT INTO wiki.pages (section_id, title, slug, content, scripts, allow_scripts, status, sort_order, published_at, created_by, updated_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, ${publishedAt}, $9, $9)
        RETURNING *`,
-      [sectionId, dto.title, slug, dto.content, status, dto.sortOrder || 0, userId]
+      [
+        sectionId,
+        dto.title,
+        slug,
+        dto.content,
+        dto.scripts || null,
+        dto.allowScripts || false,
+        status,
+        dto.sortOrder || 0,
+        userId
+      ]
     );
 
     const page = rows[0];
 
     // Create initial version
-    await this.pageVersionsService.createVersion(page.id, page.title, page.content, userId);
+    await this.pageVersionsService.createVersion(
+      page.id,
+      page.title,
+      page.content,
+      page.scripts || null,
+      userId
+    );
 
     return page;
   }
@@ -182,6 +200,7 @@ export class PagesService {
 
     let newTitle = page.title;
     let newContent = page.content;
+    let newScripts = page.scripts || null;
 
     if (dto.title !== undefined) {
       updates.push(`title = $${paramCount}`);
@@ -194,6 +213,19 @@ export class PagesService {
       updates.push(`content = $${paramCount}`);
       values.push(dto.content);
       newContent = dto.content;
+      paramCount++;
+    }
+
+    if (dto.scripts !== undefined) {
+      updates.push(`scripts = $${paramCount}`);
+      values.push(dto.scripts);
+      newScripts = dto.scripts;
+      paramCount++;
+    }
+
+    if (dto.allowScripts !== undefined) {
+      updates.push(`allow_scripts = $${paramCount}`);
+      values.push(dto.allowScripts);
       paramCount++;
     }
 
@@ -228,13 +260,16 @@ export class PagesService {
 
     const updatedPage = rows[0];
 
-    // Create new version
-    await this.pageVersionsService.createVersion(
-      updatedPage.id,
-      newTitle,
-      newContent,
-      userId
-    );
+    // Create new version if content, title, or scripts changed
+    if (dto.content !== undefined || dto.title !== undefined || dto.scripts !== undefined) {
+      await this.pageVersionsService.createVersion(
+        updatedPage.id,
+        newTitle,
+        newContent,
+        newScripts,
+        userId
+      );
+    }
 
     return updatedPage;
   }

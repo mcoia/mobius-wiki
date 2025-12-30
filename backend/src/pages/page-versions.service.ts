@@ -5,7 +5,13 @@ import { Pool } from 'pg';
 export class PageVersionsService {
   constructor(@Inject('DATABASE_POOL') private pool: Pool) {}
 
-  async createVersion(pageId: number, title: string, content: string, userId: number) {
+  async createVersion(
+    pageId: number,
+    title: string,
+    content: string,
+    scripts: string | null,
+    userId: number
+  ) {
     // Get next version number
     const { rows: versionRows } = await this.pool.query(
       'SELECT COALESCE(MAX(version_number), 0) + 1 as next_version FROM wiki.page_versions WHERE page_id = $1',
@@ -16,10 +22,10 @@ export class PageVersionsService {
 
     // Create new version
     const { rows } = await this.pool.query(
-      `INSERT INTO wiki.page_versions (page_id, content, title, version_number, created_by)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO wiki.page_versions (page_id, content, scripts, title, version_number, created_by)
+       VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
-      [pageId, content, title, nextVersion, userId]
+      [pageId, content, scripts, title, nextVersion, userId]
     );
 
     return rows[0];
