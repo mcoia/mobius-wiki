@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MOBIUS - Documentation</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; line-height: 1.6; color: #333; background: #f5f5f5; }
+        .top-header { background: #003057; color: white; padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); position: relative; z-index: 200; }
+        .logo { font-size: 24px; font-weight: 300; letter-spacing: 1px; display: flex; align-items: center; gap: 12px; }
+        .logo sup { font-size: 14px; }
+        .top-nav { display: flex; gap: 32px; align-items: center; }
+        .top-nav a { color: white; text-decoration: none; font-size: 14px; cursor: pointer; }
+        .top-nav a:hover { text-decoration: underline; }
+        .search-box { position: relative; }
+        .search-box input { padding: 6px 12px 6px 30px; border: none; border-radius: 4px; font-size: 13px; width: 200px; }
+        .search-box svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #666; width: 14px; height: 14px; }
+        .container { display: flex; height: calc(100vh - 48px); }
+        .left-sidebar { width: 260px; background: #2d3e50; color: #ddd; overflow-y: auto; padding: 20px 0; flex-shrink: 0; }
+        .nav-section-title { color: white; font-size: 13px; font-weight: 600; text-transform: uppercase; padding: 12px 20px 8px 20px; letter-spacing: 0.5px; }
+        .nav-menu { list-style: none; margin-bottom: 20px; }
+        .nav-menu a { display: block; padding: 8px 20px; color: #ddd; text-decoration: none; font-size: 14px; transition: background 0.2s; }
+        .nav-menu a:hover { background: rgba(255,255,255,0.1); color: white; }
+        .nav-menu a.active { background: rgba(255,255,255,0.15); color: white; font-weight: 500; }
+        .main-content { flex: 1; background: white; overflow-y: auto; position: relative; display: flex; flex-direction: column; }
+        .content-inner { padding: 40px 60px; flex: 1; }
+        .breadcrumb { color: #0097A7; font-size: 13px; margin-bottom: 24px; }
+        .breadcrumb a { color: #0097A7; text-decoration: none; }
+        h1 { font-size: 36px; font-weight: 400; color: #2d3e50; margin-bottom: 32px; }
+        h2 { font-size: 28px; font-weight: 400; color: #2d3e50; margin-top: 48px; margin-bottom: 20px; }
+        h3 { font-size: 20px; font-weight: 600; color: #2d3e50; margin-top: 32px; margin-bottom: 16px; }
+        p { margin-bottom: 16px; line-height: 1.7; color: #555; }
+        .callout { border-left: 4px solid #0097A7; background: #E0F7FA; padding: 16px 20px; margin: 24px 0; font-size: 14px; line-height: 1.6; }
+        .callout p { margin: 0; }
+        .note-box { background: #f8f9fa; border: 1px solid #dee2e6; padding: 16px 20px; margin: 24px 0; font-size: 14px; line-height: 1.6; }
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin: 32px 0; }
+        .stat-card { background: #f8f9fa; border: 1px solid #dee2e6; border-top: 3px solid #0097A7; padding: 24px; text-align: center; }
+        .stat-number { font-size: 36px; font-weight: 300; color: #0097A7; margin-bottom: 8px; }
+        .stat-label { font-size: 13px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
+        .timeline-table { width: 100%; border-collapse: collapse; margin: 24px 0; }
+        .timeline-table th { background: #f8f9fa; padding: 12px; text-align: left; border: 1px solid #dee2e6; font-weight: 600; color: #2d3e50; }
+        .timeline-table td { padding: 12px; border: 1px solid #dee2e6; }
+        .timeline-table tr:hover { background: #f8f9fa; }
+        ul, ol { margin-left: 24px; margin-bottom: 20px; }
+        li { margin-bottom: 8px; line-height: 1.7; color: #555; }
+        .right-sidebar { width: 280px; background: #fafafa; padding: 40px 24px; border-left: 1px solid #e0e0e0; overflow-y: auto; flex-shrink: 0; }
+        .sidebar-title { font-size: 13px; font-weight: 600; color: #666; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .toc-list { list-style: none; margin: 0; }
+        .toc-list li { margin-bottom: 8px; }
+        .toc-list a { color: #666; text-decoration: none; font-size: 13px; line-height: 1.5; }
+        .toc-list a:hover { color: #0097A7; text-decoration: underline; }
+        .content-footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid #e0e0e0; font-size: 12px; color: #999; }
+        .edit-toggle { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.1); padding: 6px 14px; border-radius: 4px; cursor: pointer; transition: all 0.2s; border: none; color: white; font-size: 14px; }
+        .edit-toggle:hover { background: rgba(255,255,255,0.2); }
+        .edit-toggle.editing { background: #0097A7; }
+        .edit-toggle svg { width: 16px; height: 16px; }
+        .editing-badge { display: none; background: #0097A7; color: white; font-size: 11px; padding: 3px 10px; border-radius: 3px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        .editing-badge.visible { display: inline-block; }
+        .editor-toolbar { display: none; background: linear-gradient(180deg, #ffffff 0%, #f3f3f3 100%); border-bottom: 2px solid #ddd; padding: 8px 16px; position: sticky; top: 0; z-index: 100; flex-shrink: 0; box-shadow: 0 2px 4px rgba(0,0,0,0.08); }
+        .editor-toolbar.visible { display: flex !important; flex-wrap: wrap; gap: 4px; align-items: center; }
+        .toolbar-group { display: flex; align-items: center; gap: 2px; padding: 0 10px; border-right: 1px solid #ddd; }
+        .toolbar-group:last-child { border-right: none; }
+        .toolbar-btn { background: none; border: 1px solid transparent; border-radius: 4px; padding: 6px; cursor: pointer; color: #555; transition: all 0.15s; display: flex; align-items: center; justify-content: center; }
+        .toolbar-btn:hover { background: #e8e8e8; border-color: #ccc; color: #333; }
+        .toolbar-btn:active { background: #ddd; border-color: #bbb; }
+        .toolbar-btn svg { width: 18px; height: 18px; stroke: currentColor; stroke-width: 2; fill: none; }
+        .toolbar-select { padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; background: white; cursor: pointer; }
+        .toolbar-select:hover { border-color: #999; }
+        .toolbar-color { width: 28px; height: 28px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; padding: 2px; }
+        .toolbar-color:hover { border-color: #999; }
+        .content-inner.editing { outline: none; }
+        .content-inner.editing *:focus { outline: 2px solid #0097A7; outline-offset: 2px; border-radius: 2px; }
+        .content-inner.editing:focus { outline: none; }
+        /* Preserve pasted content styling */
+        .content-inner img { max-width: 100%; height: auto; }
+        .content-inner pre, .content-inner code { font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace; }
+        .content-inner pre { padding: 16px; border-radius: 8px; overflow-x: auto; margin: 16px 0; }
+        .content-inner code { padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+        .content-inner [style*="background"] { border-radius: 4px; }
+        .edit-hint { position: fixed; bottom: 24px; right: 24px; background: #2d3e50; color: white; padding: 12px 20px; border-radius: 8px; font-size: 13px; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 1000; }
+        .edit-hint.visible { display: flex; align-items: center; gap: 8px; animation: fadeIn 0.3s ease; }
+        .edit-hint svg { width: 16px; height: 16px; stroke: currentColor; stroke-width: 2; fill: none; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .source-editor { display: none; width: 100%; height: 100%; border: none; padding: 20px; font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace; font-size: 13px; line-height: 1.5; background: #1e1e1e; color: #d4d4d4; resize: none; }
+        .source-editor.visible { display: block; }
+        .content-inner.hidden { display: none; }
+        .toolbar-btn.active { background: #0097A7; border-color: #0097A7; color: white; }
+        .toolbar-btn.active:hover { background: #00838f; border-color: #00838f; }
+        .insert-dropdown { position: relative; }
+        .insert-btn { display: flex; align-items: center; gap: 4px; padding: 6px 10px !important; }
+        .insert-btn svg:last-child { width: 12px; height: 12px; }
+        .insert-menu { position: absolute; top: 100%; left: 0; background: white; border: 1px solid #ccc; border-radius: 6px; box-shadow: 0 4px 16px rgba(0,0,0,0.15); min-width: 220px; display: none; z-index: 1000; margin-top: 4px; overflow: hidden; }
+        .insert-menu.visible { display: block; }
+        .insert-menu-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; cursor: pointer; font-size: 13px; color: #333; border-bottom: 1px solid #eee; transition: background 0.15s; }
+        .insert-menu-item:last-child { border-bottom: none; }
+        .insert-menu-item:hover { background: #f0f9fa; }
+        .insert-menu-item svg { width: 18px; height: 18px; stroke: #0097A7; stroke-width: 2; fill: none; flex-shrink: 0; }
+        .insert-menu-item span { flex: 1; }
+        .insert-menu-item small { color: #999; font-size: 11px; }
+        .insert-menu-section { padding: 6px 14px; background: #f5f5f5; font-size: 11px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
+        .source-mode-banner { display: none; background: #1e1e1e; color: #d4d4d4; padding: 8px 16px; font-size: 12px; border-bottom: 1px solid #333; }
+        .source-mode-banner.visible { display: flex; align-items: center; justify-content: space-between; }
+        .source-mode-banner span { opacity: 0.7; }
+    </style>
+</head>
+<body>
+    <header class="top-header">
+        <div class="logo">
+            <span>MOBIUS<sup>®</sup></span>
+            <span class="editing-badge" id="editingBadge">EDITING</span>
+        </div>
+        <div class="top-nav">
+            <a>Developers</a>
+            <a>Project Wiki</a>
+            <a>Releases ▼</a>
+            <button class="edit-toggle" id="editToggle">
+                <svg viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+                <span id="editToggleText">Edit Page</span>
+            </button>
+            <div class="search-box">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                <input type="text" placeholder="Search this site...">
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <nav class="left-sidebar">
+            <div class="nav-section-title">HOME</div>
+            <ul class="nav-menu"><li><a class="active">HOME</a></li></ul>
+            <div class="nav-section-title">ABOUT MOBIUS</div>
+            <ul class="nav-menu"><li><a>Glossary</a></li><li><a>MOBIUS Terminology</a></li><li><a>Features</a></li><li><a>Benefits</a></li><li><a>License</a></li></ul>
+            <div class="nav-section-title">GETTING STARTED</div>
+            <ul class="nav-menu"><li><a>Install FOLIO</a></li></ul>
+            <div class="nav-section-title">PLATFORM ESSENTIALS</div>
+            <ul class="nav-menu"><li><a>Item status</a></li><li><a>Permissions</a></li><li><a>Locations</a></li><li><a>Keyboard shortcuts</a></li></ul>
+            <div class="nav-section-title">RESOURCE ACCESS</div>
+            <ul class="nav-menu"><li><a>Check in</a></li><li><a>Check out</a></li><li><a>Circulation log</a></li><li><a>Requests</a></li></ul>
+            <div class="nav-section-title">RESOURCE MANAGEMENT</div>
+            <ul class="nav-menu"><li><a>Finance</a></li><li><a>Invoices</a></li><li><a>Orders</a></li><li><a>Organizations</a></li></ul>
+        </nav>
+
+        <main class="main-content">
+            <div class="editor-toolbar" id="editorToolbar">
+                <div class="toolbar-group">
+                    <select class="toolbar-select" id="formatBlock">
+                        <option value="p">Normal</option>
+                        <option value="h1">Heading 1</option>
+                        <option value="h2">Heading 2</option>
+                        <option value="h3">Heading 3</option>
+                    </select>
+                </div>
+                <div class="toolbar-group">
+                    <button type="button" class="toolbar-btn" id="btnBold" title="Bold (Ctrl+B)"><svg viewBox="0 0 24 24"><path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/><path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/></svg></button>
+                    <button type="button" class="toolbar-btn" id="btnItalic" title="Italic (Ctrl+I)"><svg viewBox="0 0 24 24"><line x1="19" x2="10" y1="4" y2="4"/><line x1="14" x2="5" y1="20" y2="20"/><line x1="15" x2="9" y1="4" y2="20"/></svg></button>
+                    <button type="button" class="toolbar-btn" id="btnUnderline" title="Underline (Ctrl+U)"><svg viewBox="0 0 24 24"><path d="M6 4v6a6 6 0 0 0 12 0V4"/><line x1="4" x2="20" y1="20" y2="20"/></svg></button>
+                    <button type="button" class="toolbar-btn" id="btnStrike" title="Strikethrough"><svg viewBox="0 0 24 24"><path d="M16 4H9a3 3 0 0 0-2.83 4"/><path d="M14 12a4 4 0 0 1 0 8H6"/><line x1="4" x2="20" y1="12" y2="12"/></svg></button>
+                </div>
+                <div class="toolbar-group">
+                    <input type="color" class="toolbar-color" id="textColor" value="#333333" title="Text Color">
+                    <input type="color" class="toolbar-color" id="bgColor" value="#ffff00" title="Highlight Color">
+                </div>
+                <div class="toolbar-group">
+                    <button type="button" class="toolbar-btn" id="btnOL" title="Numbered List"><svg viewBox="0 0 24 24"><line x1="10" x2="21" y1="6" y2="6"/><line x1="10" x2="21" y1="12" y2="12"/><line x1="10" x2="21" y1="18" y2="18"/><path d="M4 6h1v4"/><path d="M4 10h2"/><path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"/></svg></button>
+                    <button type="button" class="toolbar-btn" id="btnUL" title="Bulleted List"><svg viewBox="0 0 24 24"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><circle cx="3" cy="6" r="1" fill="currentColor"/><circle cx="3" cy="12" r="1" fill="currentColor"/><circle cx="3" cy="18" r="1" fill="currentColor"/></svg></button>
+                    <button type="button" class="toolbar-btn" id="btnOutdent" title="Decrease Indent"><svg viewBox="0 0 24 24"><polyline points="7 8 3 12 7 16"/><line x1="21" x2="11" y1="12" y2="12"/><line x1="21" x2="11" y1="6" y2="6"/><line x1="21" x2="11" y1="18" y2="18"/></svg></button>
+                    <button type="button" class="toolbar-btn" id="btnIndent" title="Increase Indent"><svg viewBox="0 0 24 24"><polyline points="3 8 7 12 3 16"/><line x1="21" x2="11" y1="12" y2="12"/><line x1="21" x2="11" y1="6" y2="6"/><line x1="21" x2="11" y1="18" y2="18"/></svg></button>
+                </div>
+                <div class="toolbar-group">
+                    <button type="button" class="toolbar-btn" id="btnLeft" title="Align Left"><svg viewBox="0 0 24 24"><line x1="21" x2="3" y1="6" y2="6"/><line x1="15" x2="3" y1="12" y2="12"/><line x1="17" x2="3" y1="18" y2="18"/></svg></button>
+                    <button type="button" class="toolbar-btn" id="btnCenter" title="Align Center"><svg viewBox="0 0 24 24"><line x1="21" x2="3" y1="6" y2="6"/><line x1="17" x2="7" y1="12" y2="12"/><line x1="19" x2="5" y1="18" y2="18"/></svg></button>
+                    <button type="button" class="toolbar-btn" id="btnRight" title="Align Right"><svg viewBox="0 0 24 24"><line x1="21" x2="3" y1="6" y2="6"/><line x1="21" x2="9" y1="12" y2="12"/><line x1="21" x2="7" y1="18" y2="18"/></svg></button>
+                </div>
+                <div class="toolbar-group">
+                    <button type="button" class="toolbar-btn" id="btnLink" title="Insert Link"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button>
+                    <button type="button" class="toolbar-btn" id="btnClear" title="Clear Formatting"><svg viewBox="0 0 24 24"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/><path d="m17 3 4 4"/><path d="m3 21 18-18"/></svg></button>
+                </div>
+                <div class="toolbar-group">
+                    <button type="button" class="toolbar-btn" id="btnUndo" title="Undo (Ctrl+Z)"><svg viewBox="0 0 24 24"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg></button>
+                    <button type="button" class="toolbar-btn" id="btnRedo" title="Redo (Ctrl+Y)"><svg viewBox="0 0 24 24"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"/></svg></button>
+                </div>
+                <div class="toolbar-group">
+                    <div class="insert-dropdown" id="insertDropdown">
+                        <button type="button" class="toolbar-btn insert-btn" id="btnInsert" title="Insert Element">
+                            <svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                            <span>Insert</span>
+                            <svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+                        </button>
+                        <div class="insert-menu" id="insertMenu">
+                            <div class="insert-menu-section">Content Blocks</div>
+                            <div class="insert-menu-item" data-element="callout">
+                                <svg viewBox="0 0 24 24"><path d="M6 8h12"/><path d="M6 12h12"/><path d="M6 16h12"/><rect x="3" y="4" width="18" height="16" rx="2"/></svg>
+                                <span>Callout Box</span>
+                                <small>Teal accent</small>
+                            </div>
+                            <div class="insert-menu-item" data-element="note">
+                                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                                <span>Note Box</span>
+                                <small>Gray info</small>
+                            </div>
+                            <div class="insert-menu-item" data-element="stats">
+                                <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+                                <span>Stats Grid</span>
+                                <small>3 columns</small>
+                            </div>
+                            <div class="insert-menu-section">Typography</div>
+                            <div class="insert-menu-item" data-element="h1">
+                                <svg viewBox="0 0 24 24"><path d="M4 12h8"/><path d="M4 4v16"/><path d="M12 4v16"/><path d="M17 12v8"/><path d="M21 12v8"/><path d="M17 12h4"/></svg>
+                                <span>Heading 1</span>
+                                <small>Page title</small>
+                            </div>
+                            <div class="insert-menu-item" data-element="h2">
+                                <svg viewBox="0 0 24 24"><path d="M4 12h8"/><path d="M4 4v16"/><path d="M12 4v16"/><path d="M21 18h-4c0-4 4-3 4-6 0-1.5-2-2.5-4-1"/></svg>
+                                <span>Heading 2</span>
+                                <small>Section</small>
+                            </div>
+                            <div class="insert-menu-item" data-element="h3">
+                                <svg viewBox="0 0 24 24"><path d="M4 12h8"/><path d="M4 4v16"/><path d="M12 4v16"/><path d="M17.5 10.5c1.7-1 3.5 0 3.5 1.5a2 2 0 0 1-2 2"/><path d="M17 17.5c2 1.5 4 .3 4-1.5a2 2 0 0 0-2-2"/></svg>
+                                <span>Heading 3</span>
+                                <small>Subsection</small>
+                            </div>
+                            <div class="insert-menu-item" data-element="paragraph">
+                                <svg viewBox="0 0 24 24"><path d="M13 4v16"/><path d="M17 4v16"/><path d="M19 4H9.5a4.5 4.5 0 0 0 0 9H13"/></svg>
+                                <span>Paragraph</span>
+                                <small>Body text</small>
+                            </div>
+                            <div class="insert-menu-section">Lists & Tables</div>
+                            <div class="insert-menu-item" data-element="ul">
+                                <svg viewBox="0 0 24 24"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><circle cx="3" cy="6" r="1" fill="currentColor"/><circle cx="3" cy="12" r="1" fill="currentColor"/><circle cx="3" cy="18" r="1" fill="currentColor"/></svg>
+                                <span>Bullet List</span>
+                                <small>Unordered</small>
+                            </div>
+                            <div class="insert-menu-item" data-element="ol">
+                                <svg viewBox="0 0 24 24"><line x1="10" x2="21" y1="6" y2="6"/><line x1="10" x2="21" y1="12" y2="12"/><line x1="10" x2="21" y1="18" y2="18"/><path d="M4 6h1v4"/><path d="M4 10h2"/><path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"/></svg>
+                                <span>Numbered List</span>
+                                <small>Ordered</small>
+                            </div>
+                            <div class="insert-menu-item" data-element="table">
+                                <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/></svg>
+                                <span>Table</span>
+                                <small>2 columns</small>
+                            </div>
+                            <div class="insert-menu-section">Other</div>
+                            <div class="insert-menu-item" data-element="divider">
+                                <svg viewBox="0 0 24 24"><path d="M3 12h18"/></svg>
+                                <span>Divider</span>
+                                <small>Horizontal line</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="toolbar-group">
+                    <button type="button" class="toolbar-btn" id="btnSource" title="View/Edit HTML Source"><svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></button>
+                </div>
+            </div>
+            
+            <div class="source-mode-banner" id="sourceBanner">
+                <span>HTML Source Mode — Edit the raw HTML below</span>
+                <span>Press "Done Editing" or click the &lt;/&gt; button to return to visual mode</span>
+            </div>
+
+            <div class="content-inner" id="contentArea">
+                <div class="breadcrumb"><a>Home</a></div>
+                <h1>MOBIUS</h1>
+                <div class="callout"><p>This documentation supports Missouri's premier library consortium. MOBIUS provides shared resources and services to 72 member libraries across Missouri and neighboring states.</p></div>
+                <div class="note-box"><p><strong>This section of the documentation contains links to external sites.</strong> Please be advised that these external sites are not maintained by MOBIUS and may be aligned with different MOBIUS releases or services.</p></div>
+                <p>Welcome to MOBIUS documentation. MOBIUS is a collaborative library consortium that provides access to shared collections, innovative technologies, and professional expertise. This open platform moves the library industry beyond traditional library management systems, offering libraries more choices of features and services.</p>
+                <div class="stats-grid">
+                    <div class="stat-card"><div class="stat-number">72</div><div class="stat-label">Member Libraries</div></div>
+                    <div class="stat-card"><div class="stat-number">30M+</div><div class="stat-label">Items in Catalog</div></div>
+                    <div class="stat-card"><div class="stat-number">176+</div><div class="stat-label">Physical Branches</div></div>
+                </div>
+                <h2>A modern library ecosystem</h2>
+                <p>The MOBIUS consortium aims to facilitate a sustainable, community-driven collaboration around the creation of modern technology infrastructure that empowers libraries through shared applications to manage library resources and expand library value.</p>
+                <h2>Community collaboration</h2>
+                <p>Development of MOBIUS services is driven by the transparent collaboration of librarians, developers, and vendors. A governance structure provides oversight of consortium development, with representation from the many member institutions and organizations involved.</p>
+                <h2>History and Organization</h2>
+                <p>MOBIUS was established in July 1998 by 50 libraries representing Missouri colleges and universities, with the University of Missouri acting as the initial host institution.</p>
+                <table class="timeline-table">
+                    <thead><tr><th style="width:120px">Year</th><th>Event</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>1998</strong></td><td>MOBIUS founded by 50 Missouri libraries with University of Missouri as host</td></tr>
+                        <tr><td><strong>2010</strong></td><td>Became independent Missouri not-for-profit corporation with 501(c)(3) status</td></tr>
+                        <tr><td><strong>2022</strong></td><td>University of Missouri System completed migration to FOLIO</td></tr>
+                        <tr><td><strong>2024</strong></td><td>First consortium to implement OpenRS resource sharing platform</td></tr>
+                    </tbody>
+                </table>
+                <h2>Technology Infrastructure</h2>
+                <h3>FOLIO Library Services Platform</h3>
+                <p>MOBIUS has adopted the FOLIO Library Services Platform, hosted by EBSCO Information Services. FOLIO is an open-source, next-generation library management system that replaces traditional integrated library systems (ILS).</p>
+                <ul>
+                    <li><strong>Circulation management</strong> – Check-in/check-out, holds, and renewals</li>
+                    <li><strong>Cataloging and metadata</strong> – MARC records and bibliographic control</li>
+                    <li><strong>Acquisitions and invoicing</strong> – Purchase orders and budget management</li>
+                    <li><strong>Electronic resource management</strong> – Licenses and access control</li>
+                </ul>
+                <h2>Services and Benefits</h2>
+                <p>MOBIUS provides member libraries with comprehensive services designed to maximize resource access and operational efficiency:</p>
+                <ul>
+                    <li><strong>Resource sharing</strong> – Direct borrowing and lending among member libraries</li>
+                    <li><strong>Courier service</strong> – Cost-effective physical delivery of materials</li>
+                    <li><strong>Professional development</strong> – Training opportunities and conferences</li>
+                    <li><strong>Technical support</strong> – Help desk services and system maintenance</li>
+                </ul>
+                <div class="content-footer">Last modified October 7, 2025</div>
+            </div>
+            
+            <textarea class="source-editor" id="sourceEditor" spellcheck="false"></textarea>
+        </main>
+
+        <aside class="right-sidebar">
+            <div class="sidebar-title">In this Topic</div>
+            <ul class="toc-list">
+                <li><a>A modern library ecosystem</a></li>
+                <li><a>Community collaboration</a></li>
+                <li><a>History and Organization</a></li>
+                <li><a>Technology Infrastructure</a></li>
+                <li><a>Services and Benefits</a></li>
+            </ul>
+        </aside>
+    </div>
+
+    <div class="edit-hint" id="editHint">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+        <span>Click anywhere to edit. Use the toolbar to format text.</span>
+    </div>
+
+    <script>
+        let isEditing = false;
+        let isSourceMode = false;
+        const contentArea = document.getElementById('contentArea');
+        const sourceEditor = document.getElementById('sourceEditor');
+        const sourceBanner = document.getElementById('sourceBanner');
+        const toolbar = document.getElementById('editorToolbar');
+        const editToggle = document.getElementById('editToggle');
+        const editToggleText = document.getElementById('editToggleText');
+        const editingBadge = document.getElementById('editingBadge');
+        const editHint = document.getElementById('editHint');
+        const btnSource = document.getElementById('btnSource');
+        const insertDropdown = document.getElementById('insertDropdown');
+        const btnInsert = document.getElementById('btnInsert');
+        const insertMenu = document.getElementById('insertMenu');
+        
+        // Store selection when it changes
+        let savedSelection = null;
+        
+        function saveSelection() {
+            const sel = window.getSelection();
+            if (sel.rangeCount > 0) {
+                savedSelection = sel.getRangeAt(0).cloneRange();
+            }
+        }
+        
+        function restoreSelection() {
+            if (savedSelection) {
+                const sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(savedSelection);
+            }
+        }
+        
+        // Save selection whenever user is in content area
+        contentArea.addEventListener('mouseup', saveSelection);
+        contentArea.addEventListener('keyup', saveSelection);
+        contentArea.addEventListener('focus', saveSelection);
+        
+        // Handle paste to preserve formatting
+        contentArea.addEventListener('paste', (e) => {
+            e.preventDefault();
+            
+            const clipboardData = e.clipboardData || window.clipboardData;
+            const items = clipboardData.items;
+            let html = clipboardData.getData('text/html');
+            const text = clipboardData.getData('text/plain');
+            
+            // Check for image files in clipboard (e.g., screenshots, copied images)
+            let hasImageFile = false;
+            if (items) {
+                for (let i = 0; i < items.length; i++) {
+                    if (items[i].type.indexOf('image') !== -1) {
+                        hasImageFile = true;
+                        const file = items[i].getAsFile();
+                        if (file) {
+                            const reader = new FileReader();
+                            reader.onload = (event) => {
+                                const img = `<img src="${event.target.result}" style="max-width: 100%; height: auto; display: block; margin: 16px 0;">`;
+                                document.execCommand('insertHTML', false, img);
+                            };
+                            reader.readAsDataURL(file);
+                        }
+                        break;
+                    }
+                }
+            }
+            
+            // If no image file, process HTML or text
+            if (!hasImageFile) {
+                if (html) {
+                    // Extract just the body content if there's a full HTML document
+                    const bodyMatch = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+                    if (bodyMatch) {
+                        html = bodyMatch[1];
+                    }
+                    
+                    // Remove meta tags, scripts, and other non-content elements
+                    html = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+                    html = html.replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '');
+                    html = html.replace(/<meta[^>]*>/gi, '');
+                    html = html.replace(/<link[^>]*>/gi, '');
+                    html = html.replace(/<!--StartFragment-->/gi, '');
+                    html = html.replace(/<!--EndFragment-->/gi, '');
+                    
+                    // Fix images - ensure they have proper styling and handle relative URLs
+                    html = html.replace(/<img([^>]*)>/gi, (match, attrs) => {
+                        // Add max-width styling if not present
+                        if (!attrs.includes('style=')) {
+                            return `<img${attrs} style="max-width: 100%; height: auto;">`;
+                        } else {
+                            return match.replace(/style="([^"]*)"/, 'style="$1; max-width: 100%; height: auto;"');
+                        }
+                    });
+                    
+                    // Insert the HTML at cursor position
+                    document.execCommand('insertHTML', false, html);
+                } else if (text) {
+                    // Fallback to plain text
+                    document.execCommand('insertText', false, text);
+                }
+            }
+        });
+
+        // Element templates based on page styles
+        const elementTemplates = {
+            callout: `<div class="callout"><p>Enter your callout text here. This is used for important highlights.</p></div>`,
+            note: `<div class="note-box"><p><strong>Note:</strong> Enter your note text here. This is used for additional information.</p></div>`,
+            stats: `<div class="stats-grid">
+                <div class="stat-card"><div class="stat-number">00</div><div class="stat-label">Label One</div></div>
+                <div class="stat-card"><div class="stat-number">00</div><div class="stat-label">Label Two</div></div>
+                <div class="stat-card"><div class="stat-number">00</div><div class="stat-label">Label Three</div></div>
+            </div>`,
+            h1: `<h1>New Page Title</h1>`,
+            h2: `<h2>New Section Heading</h2>`,
+            h3: `<h3>New Subsection Heading</h3>`,
+            paragraph: `<p>Enter your paragraph text here. This is standard body text with comfortable line height and spacing.</p>`,
+            ul: `<ul>
+                <li><strong>Item one</strong> – Description of the first item</li>
+                <li><strong>Item two</strong> – Description of the second item</li>
+                <li><strong>Item three</strong> – Description of the third item</li>
+            </ul>`,
+            ol: `<ol>
+                <li><strong>First step</strong> – Description of step one</li>
+                <li><strong>Second step</strong> – Description of step two</li>
+                <li><strong>Third step</strong> – Description of step three</li>
+            </ol>`,
+            table: `<table class="timeline-table">
+                <thead><tr><th style="width:120px">Column 1</th><th>Column 2</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Row 1</strong></td><td>Description for row 1</td></tr>
+                    <tr><td><strong>Row 2</strong></td><td>Description for row 2</td></tr>
+                    <tr><td><strong>Row 3</strong></td><td>Description for row 3</td></tr>
+                </tbody>
+            </table>`,
+            divider: `<hr style="border: none; border-top: 1px solid #e0e0e0; margin: 32px 0;">`
+        };
+
+        function toggleEdit() {
+            isEditing = !isEditing;
+            if (isEditing) {
+                contentArea.setAttribute('contenteditable', 'true');
+                contentArea.classList.add('editing');
+                toolbar.classList.add('visible');
+                editToggle.classList.add('editing');
+                editToggleText.textContent = 'Done Editing';
+                editingBadge.classList.add('visible');
+                editHint.classList.add('visible');
+                setTimeout(() => editHint.classList.remove('visible'), 3000);
+                contentArea.focus();
+            } else {
+                // If in source mode, apply changes first
+                if (isSourceMode) {
+                    applySourceChanges();
+                    toggleSourceMode();
+                }
+                contentArea.setAttribute('contenteditable', 'false');
+                contentArea.classList.remove('editing');
+                toolbar.classList.remove('visible');
+                editToggle.classList.remove('editing');
+                editToggleText.textContent = 'Edit Page';
+                editingBadge.classList.remove('visible');
+                editHint.classList.remove('visible');
+            }
+        }
+
+        function toggleSourceMode() {
+            if (!isEditing) return;
+            
+            isSourceMode = !isSourceMode;
+            
+            if (isSourceMode) {
+                // Switch to source mode
+                sourceEditor.value = formatHTML(contentArea.innerHTML);
+                contentArea.classList.add('hidden');
+                sourceEditor.classList.add('visible');
+                sourceBanner.classList.add('visible');
+                btnSource.classList.add('active');
+            } else {
+                // Switch back to visual mode
+                applySourceChanges();
+                contentArea.classList.remove('hidden');
+                sourceEditor.classList.remove('visible');
+                sourceBanner.classList.remove('visible');
+                btnSource.classList.remove('active');
+            }
+        }
+
+        function applySourceChanges() {
+            contentArea.innerHTML = sourceEditor.value;
+        }
+
+        function formatHTML(html) {
+            // Basic HTML formatting for readability
+            let formatted = '';
+            let indent = 0;
+            const tab = '  ';
+            
+            // Split by tags
+            html = html.replace(/>\s*</g, '>\n<');
+            const lines = html.split('\n');
+            
+            lines.forEach(line => {
+                line = line.trim();
+                if (!line) return;
+                
+                // Decrease indent for closing tags
+                if (line.match(/^<\/\w/)) {
+                    indent = Math.max(0, indent - 1);
+                }
+                
+                formatted += tab.repeat(indent) + line + '\n';
+                
+                // Increase indent for opening tags (not self-closing)
+                if (line.match(/^<\w[^>]*[^\/]>.*$/)) {
+                    // Don't indent for inline elements or self-closing
+                    if (!line.match(/<(br|hr|img|input|meta|link|area|base|col|embed|param|source|track|wbr)[^>]*>/i) &&
+                        !line.match(/<\/\w+>$/)) {
+                        indent++;
+                    }
+                }
+                // Decrease after self-contained tags
+                if (line.match(/<\w[^>]*>.*<\/\w+>$/)) {
+                    // Tag opened and closed on same line, no indent change needed after
+                }
+            });
+            
+            return formatted.trim();
+        }
+
+        function execCmd(command, value = null) {
+            if (isSourceMode) return; // Disable in source mode
+            document.execCommand(command, false, value);
+            contentArea.focus();
+        }
+
+        // Event listeners
+        editToggle.addEventListener('click', toggleEdit);
+        btnSource.addEventListener('click', toggleSourceMode);
+        
+        // Insert dropdown - prevent default to keep focus
+        btnInsert.addEventListener('mousedown', (e) => {
+            e.preventDefault(); // Prevent focus loss
+        });
+        
+        btnInsert.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (isSourceMode) return;
+            insertMenu.classList.toggle('visible');
+        });
+        
+        // Insert menu items - prevent default to keep focus
+        document.querySelectorAll('.insert-menu-item').forEach(item => {
+            item.addEventListener('mousedown', (e) => {
+                e.preventDefault(); // Prevent focus loss
+            });
+            
+            item.addEventListener('click', () => {
+                const elementType = item.dataset.element;
+                if (elementTemplates[elementType]) {
+                    insertElement(elementTemplates[elementType]);
+                }
+                insertMenu.classList.remove('visible');
+            });
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!insertDropdown.contains(e.target)) {
+                insertMenu.classList.remove('visible');
+            }
+        });
+        
+        function insertElement(html) {
+            if (isSourceMode) return;
+            
+            // Restore the saved selection
+            restoreSelection();
+            
+            const selection = window.getSelection();
+            let inserted = false;
+            
+            // Check if we have a valid selection inside content area
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                if (contentArea.contains(range.commonAncestorContainer)) {
+                    // Find the nearest block-level parent to insert after
+                    let node = range.commonAncestorContainer;
+                    while (node && node !== contentArea && node.parentNode !== contentArea) {
+                        node = node.parentNode;
+                    }
+                    
+                    if (node && node !== contentArea) {
+                        // Insert after the current block element
+                        node.insertAdjacentHTML('afterend', html);
+                        inserted = true;
+                    }
+                }
+            }
+            
+            // Fallback: append before footer or at end
+            if (!inserted) {
+                const footer = contentArea.querySelector('.content-footer');
+                if (footer) {
+                    footer.insertAdjacentHTML('beforebegin', html);
+                } else {
+                    contentArea.insertAdjacentHTML('beforeend', html);
+                }
+            }
+            
+            contentArea.focus();
+        }
+
+        document.getElementById('formatBlock').addEventListener('change', function() { execCmd('formatBlock', this.value); });
+        document.getElementById('btnBold').addEventListener('click', () => execCmd('bold'));
+        document.getElementById('btnItalic').addEventListener('click', () => execCmd('italic'));
+        document.getElementById('btnUnderline').addEventListener('click', () => execCmd('underline'));
+        document.getElementById('btnStrike').addEventListener('click', () => execCmd('strikeThrough'));
+        document.getElementById('textColor').addEventListener('change', function() { execCmd('foreColor', this.value); });
+        document.getElementById('bgColor').addEventListener('change', function() { execCmd('backColor', this.value); });
+        document.getElementById('btnOL').addEventListener('click', () => execCmd('insertOrderedList'));
+        document.getElementById('btnUL').addEventListener('click', () => execCmd('insertUnorderedList'));
+        document.getElementById('btnOutdent').addEventListener('click', () => execCmd('outdent'));
+        document.getElementById('btnIndent').addEventListener('click', () => execCmd('indent'));
+        document.getElementById('btnLeft').addEventListener('click', () => execCmd('justifyLeft'));
+        document.getElementById('btnCenter').addEventListener('click', () => execCmd('justifyCenter'));
+        document.getElementById('btnRight').addEventListener('click', () => execCmd('justifyRight'));
+        document.getElementById('btnLink').addEventListener('click', function() {
+            if (isSourceMode) return;
+            const url = prompt('Enter URL:', 'https://');
+            if (url) execCmd('createLink', url);
+        });
+        document.getElementById('btnClear').addEventListener('click', () => execCmd('removeFormat'));
+        document.getElementById('btnUndo').addEventListener('click', () => execCmd('undo'));
+        document.getElementById('btnRedo').addEventListener('click', () => execCmd('redo'));
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (!isEditing) return;
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key.toLowerCase()) {
+                    case 'b': if (!isSourceMode) { e.preventDefault(); execCmd('bold'); } break;
+                    case 'i': if (!isSourceMode) { e.preventDefault(); execCmd('italic'); } break;
+                    case 'u': if (!isSourceMode) { e.preventDefault(); execCmd('underline'); } break;
+                }
+            }
+        });
+    </script>
+</body>
+</html>

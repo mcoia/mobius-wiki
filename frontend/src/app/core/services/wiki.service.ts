@@ -24,4 +24,8 @@ export class WikiService {
   getWikis(): Observable<{ data: Wiki[]; meta: { total: number } }> {
     return this.api.get('/wikis');
   }
+
+  updatePage(pageId: number, data: { content: string }): Observable<any> {
+    return this.api.patch(`/pages/${pageId}`, data);
+  }
 }

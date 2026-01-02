@@ -3,37 +3,310 @@
     <div class="note-box danger">
       <strong>Error:</strong> {{ error }}
     </div>
-  } @else {
-    @if (page$ | async; as page) {
-      <!-- Breadcrumb -->
-      <nav class="breadcrumb">
-        @if (page.wiki) {
-          <a [href]="'/wiki/' + page.wiki!.slug">{{ page.wiki!.title }}</a>
-          <span>›</span>
-        }
-        @if (page.section) {
-          <a [href]="'/wiki/' + page.wiki!.slug + '/' + page.section!.slug">{{ page.section!.title }}</a>
-          <span>›</span>
-        }
-        <span>{{ page.title }}</span>
-      </nav>
+  }
 
-      <!-- Page Content -->
-      <div class="page-content" [innerHTML]="sanitizeHtml(page.content)"></div>
+  @if (page$ | async; as page) {
+    <!-- Edit Controls Header (only for admins/MOBIUS staff) -->
+    @if (canEdit$ | async) {
+      <div class="page-header">
+        <button class="edit-toggle"
+                [class.editing]="isEditing"
+                (click)="toggleEdit()"
+                type="button">
+          <svg viewBox="0 0 24 24">
+            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+            <path d="m15 5 4 4"/>
+          </svg>
+          <span>{{ isEditing ? 'Cancel' : 'Edit Page' }}</span>
+        </button>
 
-      <!-- Page Metadata -->
-      <div class="page-meta">
-        <small>
-          Last updated: {{ page.updated_at | date:'medium' }}
-          @if (page.author) {
-            by {{ page.author.name }}
+        @if (isEditing) {
+          <span class="editing-badge">EDITING</span>
+
+          <button class="save-btn"
+                  (click)="saveContent()"
+                  [disabled]="isSaving || !isDirty()"
+                  type="button">
+            @if (isSaving) {
+              <span>Saving...</span>
+            } @else {
+              <span>Save Changes</span>
+            }
+          </button>
+
+          @if (saveError) {
+            <span class="save-error">{{ saveError }}</span>
           }
-        </small>
-      </div>
-    } @else {
-      <div class="loading">
-        <i class="fas fa-spinner fa-spin"></i> Loading page...
+        }
       </div>
     }
+
+    <!-- Editor Toolbar (only when editing) -->
+    @if (isEditing) {
+      <div class="editor-toolbar">
+        <!-- Format dropdown -->
+        <div class="toolbar-group">
+          <select class="toolbar-select" (change)="execCmd('formatBlock', $any($event.target).value)">
+            <option value="p">Normal</option>
+            <option value="h1">Heading 1</option>
+            <option value="h2">Heading 2</option>
+            <option value="h3">Heading 3</option>
+          </select>
+        </div>
+
+        <!-- Text formatting -->
+        <div class="toolbar-group">
+          <button type="button" class="toolbar-btn" (click)="execCmd('bold')" title="Bold (Ctrl+B)">
+            <svg viewBox="0 0 24 24"><path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/><path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/></svg>
+          </button>
+          <button type="button" class="toolbar-btn" (click)="execCmd('italic')" title="Italic (Ctrl+I)">
+            <svg viewBox="0 0 24 24"><line x1="19" x2="10" y1="4" y2="4"/><line x1="14" x2="5" y1="20" y2="20"/><line x1="15" x2="9" y1="4" y2="20"/></svg>
+          </button>
+          <button type="button" class="toolbar-btn" (click)="execCmd('underline')" title="Underline (Ctrl+U)">
+            <svg viewBox="0 0 24 24"><path d="M6 4v6a6 6 0 0 0 12 0V4"/><line x1="4" x2="20" y1="20" y2="20"/></svg>
+          </button>
+          <button type="button" class="toolbar-btn" (click)="execCmd('strikeThrough')" title="Strikethrough">
+            <svg viewBox="0 0 24 24"><path d="M16 4H9a3 3 0 0 0-2.83 4"/><path d="M14 12a4 4 0 0 1 0 8H6"/><line x1="4" x2="20" y1="12" y2="12"/></svg>
+          </button>
+        </div>
+
+        <!-- Colors -->
+        <div class="toolbar-group">
+          <input type="color" class="toolbar-color"
+                 value="#333333"
+                 (change)="execCmd('foreColor', $any($event.target).value)"
+                 title="Text Color">
+          <input type="color" class="toolbar-color"
+                 value="#ffff00"
+                 (change)="execCmd('backColor', $any($event.target).value)"
+                 title="Highlight Color">
+        </div>
+
+        <!-- Lists -->
+        <div class="toolbar-group">
+          <button type="button" class="toolbar-btn" (click)="execCmd('insertOrderedList')" title="Numbered List">
+            <svg viewBox="0 0 24 24"><line x1="10" x2="21" y1="6" y2="6"/><line x1="10" x2="21" y1="12" y2="12"/><line x1="10" x2="21" y1="18" y2="18"/><path d="M4 6h1v4"/><path d="M4 10h2"/><path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"/></svg>
+          </button>
+          <button type="button" class="toolbar-btn" (click)="execCmd('insertUnorderedList')" title="Bulleted List">
+            <svg viewBox="0 0 24 24"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><circle cx="3" cy="6" r="1" fill="currentColor"/><circle cx="3" cy="12" r="1" fill="currentColor"/><circle cx="3" cy="18" r="1" fill="currentColor"/></svg>
+          </button>
+          <button type="button" class="toolbar-btn" (click)="execCmd('outdent')" title="Decrease Indent">
+            <svg viewBox="0 0 24 24"><polyline points="7 8 3 12 7 16"/><line x1="21" x2="11" y1="12" y2="12"/><line x1="21" x2="11" y1="6" y2="6"/><line x1="21" x2="11" y1="18" y2="18"/></svg>
+          </button>
+          <button type="button" class="toolbar-btn" (click)="execCmd('indent')" title="Increase Indent">
+            <svg viewBox="0 0 24 24"><polyline points="3 8 7 12 3 16"/><line x1="21" x2="11" y1="12" y2="12"/><line x1="21" x2="11" y1="6" y2="6"/><line x1="21" x2="11" y1="18" y2="18"/></svg>
+          </button>
+        </div>
+
+        <!-- Alignment -->
+        <div class="toolbar-group">
+          <button type="button" class="toolbar-btn" (click)="execCmd('justifyLeft')" title="Align Left">
+            <svg viewBox="0 0 24 24"><line x1="21" x2="3" y1="6" y2="6"/><line x1="15" x2="3" y1="12" y2="12"/><line x1="17" x2="3" y1="18" y2="18"/></svg>
+          </button>
+          <button type="button" class="toolbar-btn" (click)="execCmd('justifyCenter')" title="Align Center">
+            <svg viewBox="0 0 24 24"><line x1="21" x2="3" y1="6" y2="6"/><line x1="17" x2="7" y1="12" y2="12"/><line x1="19" x2="5" y1="18" y2="18"/></svg>
+          </button>
+          <button type="button" class="toolbar-btn" (click)="execCmd('justifyRight')" title="Align Right">
+            <svg viewBox="0 0 24 24"><line x1="21" x2="3" y1="6" y2="6"/><line x1="21" x2="9" y1="12" y2="12"/><line x1="21" x2="7" y1="18" y2="18"/></svg>
+          </button>
+        </div>
+
+        <!-- Link & Clear -->
+        <div class="toolbar-group">
+          <button type="button" class="toolbar-btn" (click)="insertLink()" title="Insert Link">
+            <svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          </button>
+          <button type="button" class="toolbar-btn" (click)="execCmd('removeFormat')" title="Clear Formatting">
+            <svg viewBox="0 0 24 24"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/><path d="m17 3 4 4"/><path d="m3 21 18-18"/></svg>
+          </button>
+        </div>
+
+        <!-- Undo/Redo -->
+        <div class="toolbar-group">
+          <button type="button" class="toolbar-btn" (click)="execCmd('undo')" title="Undo (Ctrl+Z)">
+            <svg viewBox="0 0 24 24"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+          </button>
+          <button type="button" class="toolbar-btn" (click)="execCmd('redo')" title="Redo (Ctrl+Y)">
+            <svg viewBox="0 0 24 24"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"/></svg>
+          </button>
+        </div>
+
+        <!-- Insert Dropdown -->
+        <div class="toolbar-group">
+          <div class="insert-dropdown" #insertDropdown>
+            <button type="button"
+                    class="toolbar-btn insert-btn"
+                    (mousedown)="$event.preventDefault()"
+                    (click)="isInsertMenuOpen = !isInsertMenuOpen; $event.stopPropagation()"
+                    title="Insert Element">
+              <svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+              <span>Insert</span>
+              <svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+
+            @if (isInsertMenuOpen) {
+              <div class="insert-menu">
+                <div class="insert-menu-section">Content Blocks</div>
+                <div class="insert-menu-item"
+                     (mousedown)="$event.preventDefault()"
+                     (click)="insertElement(templates.callout); isInsertMenuOpen = false">
+                  <svg viewBox="0 0 24 24"><path d="M6 8h12"/><path d="M6 12h12"/><path d="M6 16h12"/><rect x="3" y="4" width="18" height="16" rx="2"/></svg>
+                  <span>Callout Box</span>
+                  <small>Teal accent</small>
+                </div>
+                <div class="insert-menu-item"
+                     (mousedown)="$event.preventDefault()"
+                     (click)="insertElement(templates.note); isInsertMenuOpen = false">
+                  <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                  <span>Note Box</span>
+                  <small>Gray info</small>
+                </div>
+                <div class="insert-menu-item"
+                     (mousedown)="$event.preventDefault()"
+                     (click)="insertElement(templates.stats); isInsertMenuOpen = false">
+                  <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+                  <span>Stats Grid</span>
+                  <small>3 columns</small>
+                </div>
+
+                <div class="insert-menu-section">Typography</div>
+                <div class="insert-menu-item"
+                     (mousedown)="$event.preventDefault()"
+                     (click)="insertElement(templates.h1); isInsertMenuOpen = false">
+                  <svg viewBox="0 0 24 24"><path d="M4 12h8"/><path d="M4 4v16"/><path d="M12 4v16"/><path d="M17 12v8"/><path d="M21 12v8"/><path d="M17 12h4"/></svg>
+                  <span>Heading 1</span>
+                  <small>Page title</small>
+                </div>
+                <div class="insert-menu-item"
+                     (mousedown)="$event.preventDefault()"
+                     (click)="insertElement(templates.h2); isInsertMenuOpen = false">
+                  <svg viewBox="0 0 24 24"><path d="M4 12h8"/><path d="M4 4v16"/><path d="M12 4v16"/><path d="M21 18h-4c0-4 4-3 4-6 0-1.5-2-2.5-4-1"/></svg>
+                  <span>Heading 2</span>
+                  <small>Section</small>
+                </div>
+                <div class="insert-menu-item"
+                     (mousedown)="$event.preventDefault()"
+                     (click)="insertElement(templates.h3); isInsertMenuOpen = false">
+                  <svg viewBox="0 0 24 24"><path d="M4 12h8"/><path d="M4 4v16"/><path d="M12 4v16"/><path d="M17.5 10.5c1.7-1 3.5 0 3.5 1.5a2 2 0 0 1-2 2"/><path d="M17 17.5c2 1.5 4 .3 4-1.5a2 2 0 0 0-2-2"/></svg>
+                  <span>Heading 3</span>
+                  <small>Subsection</small>
+                </div>
+                <div class="insert-menu-item"
+                     (mousedown)="$event.preventDefault()"
+                     (click)="insertElement(templates.paragraph); isInsertMenuOpen = false">
+                  <svg viewBox="0 0 24 24"><path d="M13 4v16"/><path d="M17 4v16"/><path d="M19 4H9.5a4.5 4.5 0 0 0 0 9H13"/></svg>
+                  <span>Paragraph</span>
+                  <small>Body text</small>
+                </div>
+
+                <div class="insert-menu-section">Lists & Tables</div>
+                <div class="insert-menu-item"
+                     (mousedown)="$event.preventDefault()"
+                     (click)="insertElement(templates.ul); isInsertMenuOpen = false">
+                  <svg viewBox="0 0 24 24"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><circle cx="3" cy="6" r="1" fill="currentColor"/><circle cx="3" cy="12" r="1" fill="currentColor"/><circle cx="3" cy="18" r="1" fill="currentColor"/></svg>
+                  <span>Bullet List</span>
+                  <small>Unordered</small>
+                </div>
+                <div class="insert-menu-item"
+                     (mousedown)="$event.preventDefault()"
+                     (click)="insertElement(templates.ol); isInsertMenuOpen = false">
+                  <svg viewBox="0 0 24 24"><line x1="10" x2="21" y1="6" y2="6"/><line x1="10" x2="21" y1="12" y2="12"/><line x1="10" x2="21" y1="18" y2="18"/><path d="M4 6h1v4"/><path d="M4 10h2"/><path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"/></svg>
+                  <span>Numbered List</span>
+                  <small>Ordered</small>
+                </div>
+                <div class="insert-menu-item"
+                     (mousedown)="$event.preventDefault()"
+                     (click)="insertElement(templates.table); isInsertMenuOpen = false">
+                  <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/></svg>
+                  <span>Table</span>
+                  <small>2 columns</small>
+                </div>
+
+                <div class="insert-menu-section">Other</div>
+                <div class="insert-menu-item"
+                     (mousedown)="$event.preventDefault()"
+                     (click)="insertElement(templates.divider); isInsertMenuOpen = false">
+                  <svg viewBox="0 0 24 24"><path d="M3 12h18"/></svg>
+                  <span>Divider</span>
+                  <small>Horizontal line</small>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Source Mode Toggle -->
+        <div class="toolbar-group">
+          <button type="button"
+                  class="toolbar-btn"
+                  [class.active]="isSourceMode"
+                  (click)="toggleSourceMode()"
+                  title="View/Edit HTML Source">
+            <svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- Source Mode Banner -->
+    @if (isSourceMode) {
+      <div class="source-mode-banner">
+        <span>HTML Source Mode — Edit the raw HTML below</span>
+        <span>Press "Save Changes" to apply, or toggle &lt;/&gt; to return to visual mode</span>
+      </div>
+    }
+
+    <!-- Breadcrumb -->
+    <nav class="breadcrumb">
+      @if (page.wiki) {
+        <a [routerLink]="['/wiki', page.wiki.slug]">{{ page.wiki.title }}</a>
+        <span> › </span>
+      }
+      @if (page.section) {
+        <span>{{ page.section.title }}</span>
+        <span> › </span>
+      }
+      <span>{{ page.title }}</span>
+    </nav>
+
+    <!-- Page Content (editable when isEditing) -->
+    <div #contentArea
+         class="page-content"
+         [class.editing]="isEditing"
+         [class.hidden]="isSourceMode"
+         [attr.contenteditable]="isEditing"
+         (mouseup)="isEditing && saveSelection()"
+         (keyup)="isEditing && saveSelection()"
+         (focus)="isEditing && saveSelection()"
+         (paste)="isEditing && handlePaste($event)">
+      <!-- Only render content via Angular when NOT editing -->
+      @if (!isEditing) {
+        <div [innerHTML]="sanitizeHtml(page.content)"></div>
+      }
+    </div>
+
+    <!-- Source Editor (only when isSourceMode) -->
+    @if (isSourceMode) {
+      <textarea #sourceEditor
+                class="source-editor"
+                [(ngModel)]="sourceContent"
+                spellcheck="false">
+      </textarea>
+    }
+
+    <!-- Page Metadata -->
+    @if (!isEditing) {
+      <div class="page-meta">
+        Last updated: {{ page.updated_at | date:'medium' }}
+        @if (page.author) {
+          by {{ page.author.name }}
+        }
+      </div>
+    }
+
+  } @else {
+    <div class="loading">
+      <p>Loading page...</p>
+    </div>
   }
 </div>

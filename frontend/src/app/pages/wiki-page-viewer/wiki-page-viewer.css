@@ -1,0 +1,339 @@
+/* Page Header with Edit Controls */
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  background: #003057;
+  color: white;
+  border-radius: 4px;
+}
+
+/* Edit Toggle Button */
+.edit-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 6px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  color: white;
+  font-size: 14px;
+}
+
+.edit-toggle:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.edit-toggle.editing {
+  background: #0097A7;
+}
+
+.edit-toggle svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
+}
+
+/* Editing Badge */
+.editing-badge {
+  background: #0097A7;
+  color: white;
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 3px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Save Button */
+.save-btn {
+  background: #0097A7;
+  color: white;
+  padding: 6px 16px;
+  border-radius: 4px;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.save-btn:hover:not(:disabled) {
+  background: #00838f;
+}
+
+.save-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Save Error */
+.save-error {
+  color: #ff6b6b;
+  font-size: 13px;
+  margin-left: auto;
+}
+
+/* Editor Toolbar */
+.editor-toolbar {
+  background: linear-gradient(180deg, #ffffff 0%, #f3f3f3 100%);
+  border-bottom: 2px solid #ddd;
+  padding: 8px 16px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 10px;
+  border-right: 1px solid #ddd;
+}
+
+.toolbar-group:last-child {
+  border-right: none;
+}
+
+/* Toolbar Buttons */
+.toolbar-btn {
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 6px;
+  cursor: pointer;
+  color: #555;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toolbar-btn:hover {
+  background: #e8e8e8;
+  border-color: #ccc;
+  color: #333;
+}
+
+.toolbar-btn:active {
+  background: #ddd;
+  border-color: #bbb;
+}
+
+.toolbar-btn.active {
+  background: #0097A7;
+  border-color: #0097A7;
+  color: white;
+}
+
+.toolbar-btn.active:hover {
+  background: #00838f;
+  border-color: #00838f;
+}
+
+.toolbar-btn svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
+}
+
+/* Toolbar Select */
+.toolbar-select {
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 13px;
+  background: white;
+  cursor: pointer;
+}
+
+.toolbar-select:hover {
+  border-color: #999;
+}
+
+/* Toolbar Color Picker */
+.toolbar-color {
+  width: 28px;
+  height: 28px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 2px;
+}
+
+.toolbar-color:hover {
+  border-color: #999;
+}
+
+/* Insert Dropdown */
+.insert-dropdown {
+  position: relative;
+}
+
+.insert-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px !important;
+}
+
+.insert-btn svg:last-child {
+  width: 12px;
+  height: 12px;
+}
+
+.insert-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  min-width: 220px;
+  z-index: 1000;
+  margin-top: 4px;
+  overflow: hidden;
+}
+
+.insert-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #333;
+  border-bottom: 1px solid #eee;
+  transition: background 0.15s;
+}
+
+.insert-menu-item:last-child {
+  border-bottom: none;
+}
+
+.insert-menu-item:hover {
+  background: #f0f9fa;
+}
+
+.insert-menu-item svg {
+  width: 18px;
+  height: 18px;
+  stroke: #0097A7;
+  stroke-width: 2;
+  fill: none;
+  flex-shrink: 0;
+}
+
+.insert-menu-item span {
+  flex: 1;
+}
+
+.insert-menu-item small {
+  color: #999;
+  font-size: 11px;
+}
+
+.insert-menu-section {
+  padding: 6px 14px;
+  background: #f5f5f5;
+  font-size: 11px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Content Editing States */
+.page-content.editing {
+  outline: none;
+  border: 2px dashed #ccc;
+  padding: 20px;
+  border-radius: 4px;
+  min-height: 400px;
+}
+
+.page-content.editing *:focus {
+  outline: 2px solid #0097A7;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.page-content.hidden {
+  display: none;
+}
+
+/* Preserve pasted content styling */
+.page-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+.page-content pre,
+.page-content code {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
+}
+
+.page-content pre {
+  padding: 16px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 16px 0;
+}
+
+.page-content code {
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+.page-content [style*="background"] {
+  border-radius: 4px;
+}
+
+/* Source Editor */
+.source-editor {
+  width: 100%;
+  height: 600px;
+  border: none;
+  padding: 20px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  background: #1e1e1e;
+  color: #d4d4d4;
+  resize: vertical;
+}
+
+/* Source Mode Banner */
+.source-mode-banner {
+  background: #1e1e1e;
+  color: #d4d4d4;
+  padding: 8px 16px;
+  font-size: 12px;
+  border-bottom: 1px solid #333;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.source-mode-banner span {
+  opacity: 0.7;
+}
