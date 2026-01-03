@@ -1,19 +1,57 @@
 <header class="top-header">
   <div class="logo">
     <a routerLink="/">MOBIUS<sup>®</sup></a>
+
+    <!-- Editing badge (only when editing) -->
+    @if ((editState$ | async)?.isEditing) {
+      <span class="editing-badge">EDITING</span>
+    }
   </div>
+
   <div class="top-nav">
-    <!-- Navigation links -->
     <a routerLink="/wikis">Browse Wikis</a>
     <a routerLink="/wiki/site/main/home">Home</a>
 
-    <!-- Search Box -->
+    <!-- Edit controls (only when canEdit is true) -->
+    @if ((editState$ | async)?.canEdit) {
+      @if ((editState$ | async)?.isEditing) {
+        <!-- Cancel button -->
+        <button class="header-btn" (click)="toggleEdit()" type="button">
+          <svg viewBox="0 0 24 24">
+            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+            <path d="m15 5 4 4"/>
+          </svg>
+          <span>Cancel</span>
+        </button>
+
+        <!-- Save button -->
+        <button class="header-btn save-btn"
+                (click)="saveContent()"
+                [disabled]="(editState$ | async)?.isSaving"
+                type="button">
+          @if ((editState$ | async)?.isSaving) {
+            <span>Saving...</span>
+          } @else {
+            <span>Save Changes</span>
+          }
+        </button>
+      } @else {
+        <!-- Edit button -->
+        <button class="header-btn" (click)="toggleEdit()" type="button">
+          <svg viewBox="0 0 24 24">
+            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+            <path d="m15 5 4 4"/>
+          </svg>
+          <span>Edit Page</span>
+        </button>
+      }
+    }
+
     <div class="search-box">
       <i class="fas fa-search"></i>
       <input type="text" placeholder="Search...">
     </div>
 
-    <!-- User menu (will be implemented later) -->
     <a routerLink="/login" class="user-link">
       <i class="fas fa-user"></i> Login
     </a>

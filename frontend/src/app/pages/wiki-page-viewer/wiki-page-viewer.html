@@ -6,41 +6,6 @@
   }
 
   @if (page$ | async; as page) {
-    <!-- Edit Controls Header (only for admins/MOBIUS staff) -->
-    @if (canEdit$ | async) {
-      <div class="page-header">
-        <button class="edit-toggle"
-                [class.editing]="isEditing"
-                (click)="toggleEdit()"
-                type="button">
-          <svg viewBox="0 0 24 24">
-            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
-            <path d="m15 5 4 4"/>
-          </svg>
-          <span>{{ isEditing ? 'Cancel' : 'Edit Page' }}</span>
-        </button>
-
-        @if (isEditing) {
-          <span class="editing-badge">EDITING</span>
-
-          <button class="save-btn"
-                  (click)="saveContent()"
-                  [disabled]="isSaving || !isDirty()"
-                  type="button">
-            @if (isSaving) {
-              <span>Saving...</span>
-            } @else {
-              <span>Save Changes</span>
-            }
-          </button>
-
-          @if (saveError) {
-            <span class="save-error">{{ saveError }}</span>
-          }
-        }
-      </div>
-    }
-
     <!-- Editor Toolbar (only when editing) -->
     @if (isEditing) {
       <div class="editor-toolbar">
@@ -248,14 +213,6 @@
       </div>
     }
 
-    <!-- Source Mode Banner -->
-    @if (isSourceMode) {
-      <div class="source-mode-banner">
-        <span>HTML Source Mode — Edit the raw HTML below</span>
-        <span>Press "Save Changes" to apply, or toggle &lt;/&gt; to return to visual mode</span>
-      </div>
-    }
-
     <!-- Breadcrumb -->
     <nav class="breadcrumb">
       @if (page.wiki) {
@@ -268,6 +225,14 @@
       }
       <span>{{ page.title }}</span>
     </nav>
+
+    <!-- Source Mode Banner -->
+    @if (isSourceMode) {
+      <div class="source-mode-banner">
+        <span>HTML Source Mode — Edit the raw HTML below</span>
+        <span>Press "Save Changes" to apply, or toggle &lt;/&gt; to return to visual mode</span>
+      </div>
+    }
 
     <!-- Page Content (editable when isEditing) -->
     <div #contentArea

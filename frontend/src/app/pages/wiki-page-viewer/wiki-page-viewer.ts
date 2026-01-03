@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { WikiService } from '../../core/services/wiki.service';
 import { AuthService } from '../../core/services/auth.service';
+import { PageContextService } from '../../core/services/page-context.service';
 import { Page } from '../../core/models/wiki.model';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Observable, throwError, EMPTY } from 'rxjs';
@@ -88,7 +89,8 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
     private route: ActivatedRoute,
     private wikiService: WikiService,
     private sanitizer: DomSanitizer,
-    private authService: AuthService
+    private authService: AuthService,
+    private pageContext: PageContextService
   ) {}
 
   ngOnInit(): void {
@@ -115,11 +117,20 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
           tap(page => {
             console.log('Page response:', page);
             this.currentPage = page; // Store for AfterViewChecked
+
+            // Update page context with current page ID
+            this.pageContext.updateEditState({
+              currentPageId: page.id
+            });
           }),
           catchError(err => {
             console.error('Page load error:', err);
             this.error = err.error?.message || 'Failed to load page';
             this.currentPage = null;
+            this.pageContext.updateEditState({
+              currentPageId: null,
+              canEdit: false
+            });
             return EMPTY;
           })
         );
@@ -127,14 +138,41 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
       shareReplay(1)
     );
 
-    // Permission check for edit button visibility
+    // Permission check for edit button visibility - MUST subscribe to trigger tap()
     this.canEdit$ = this.authService.currentUser$.pipe(
       map(user => {
         if (!user) return false;
         return user.role === 'site_admin' || user.role === 'mobius_staff';
       }),
+      tap(canEdit => {
+        // Broadcast to PageContextService for header
+        this.pageContext.updateEditState({ canEdit });
+      }),
       shareReplay(1)
     );
+
+    // Subscribe to canEdit$ to ensure tap executes
+    this.canEdit$.subscribe();
+
+    // Subscribe to edit state changes from header
+    this.pageContext.editState$.subscribe(state => {
+      if (state.isEditing !== this.isEditing) {
+        // Header triggered toggle
+        this.isEditing = state.isEditing;
+        this.saveError = null;
+
+        if (this.isEditing) {
+          this.enterEditMode();
+        } else {
+          this.exitEditMode();
+        }
+      }
+
+      if (state.isSaving && !this.isSaving && this.isEditing) {
+        // Header triggered save
+        this.performSave();
+      }
+    });
   }
 
   ngAfterViewChecked(): void {
@@ -153,6 +191,7 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
 
   ngOnDestroy(): void {
     this.cleanupScripts();
+    this.pageContext.resetEditState();
   }
 
   /**
@@ -192,54 +231,54 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   /**
-   * Toggle editing mode
+   * Enter editing mode
    */
-  toggleEdit(): void {
-    this.isEditing = !this.isEditing;
-    this.saveError = null;
+  private enterEditMode(): void {
+    this.cleanupScripts();
+    this.lastExecutedPageId = null;
 
-    if (this.isEditing) {
-      // Entering edit mode
-      this.cleanupScripts();
-      this.lastExecutedPageId = null;
-
-      // IMPORTANT: Use setTimeout to ensure Angular has removed the @if block
-      // before we manually set innerHTML
-      setTimeout(() => {
-        if (this.contentArea) {
-          // Manually set innerHTML from the current page data
-          // This happens ONCE, then the DOM stays static during editing
-          this.contentArea.nativeElement.innerHTML = this.currentPage?.content || '';
-
-          // Store original content for dirty checking
-          this.editableContent = this.contentArea.nativeElement.innerHTML;
-        }
-      }, 0);
-    } else {
-      // Exiting edit mode - ask for confirmation if dirty
-      if (this.isDirty()) {
-        if (!confirm('You have unsaved changes. Are you sure you want to exit without saving?')) {
-          this.isEditing = true;
-          return;
-        }
-      }
-
-      // Exit source mode if active
-      if (this.isSourceMode) {
-        this.toggleSourceMode();
-      }
-
-      // Clear the manually-set content so Angular can take over again
+    // IMPORTANT: Use setTimeout to ensure Angular has removed the @if block
+    // before we manually set innerHTML
+    setTimeout(() => {
       if (this.contentArea) {
-        this.contentArea.nativeElement.innerHTML = '';
+        // Manually set innerHTML from the current page data
+        // This happens ONCE, then the DOM stays static during editing
+        this.contentArea.nativeElement.innerHTML = this.currentPage?.content || '';
+
+        // Store original content for dirty checking
+        this.editableContent = this.contentArea.nativeElement.innerHTML;
       }
+    }, 0);
+  }
+
+  /**
+   * Exit editing mode
+   */
+  private exitEditMode(): void {
+    // Ask for confirmation if dirty
+    if (this.isDirty()) {
+      if (!confirm('You have unsaved changes. Are you sure you want to exit without saving?')) {
+        // Cancel exit - set editing back to true
+        this.pageContext.updateEditState({ isEditing: true });
+        return;
+      }
+    }
+
+    // Exit source mode if active
+    if (this.isSourceMode) {
+      this.isSourceMode = false;
+    }
+
+    // Clear the manually-set content so Angular can take over again
+    if (this.contentArea) {
+      this.contentArea.nativeElement.innerHTML = '';
     }
   }
 
   /**
-   * Save edited content to backend
+   * Perform save operation (triggered by header save button)
    */
-  saveContent(): void {
+  private performSave(): void {
     if (this.isSaving) return;
 
     this.isSaving = true;
@@ -263,12 +302,25 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
         this.isSaving = false;
         this.isEditing = false;
 
+        // Update service state
+        this.pageContext.updateEditState({
+          isEditing: false,
+          isSaving: false,
+          saveError: null
+        });
+
         // Reload page to show saved content
         window.location.reload();
       },
       error: (err) => {
         this.isSaving = false;
         this.saveError = err.error?.message || 'Failed to save page. Please try again.';
+
+        // Update service state with error
+        this.pageContext.updateEditState({
+          isSaving: false,
+          saveError: this.saveError
+        });
       }
     });
   }

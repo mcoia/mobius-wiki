@@ -6,3 +6,57 @@
 .logo a:hover {
   opacity: 0.9;
 }
+
+/* Header buttons (edit/save/cancel) */
+.header-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 6px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  color: white;
+  font-size: 14px;
+}
+
+.header-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.header-btn svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
+}
+
+.header-btn.save-btn {
+  background: #0097A7;
+}
+
+.header-btn.save-btn:hover:not(:disabled) {
+  background: #00838f;
+}
+
+.header-btn.save-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Editing badge in header */
+.editing-badge {
+  background: #0097A7;
+  color: white;
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 3px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-left: 12px;
+}

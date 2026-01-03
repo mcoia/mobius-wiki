@@ -423,7 +423,7 @@ pre code {
     flex: 1;
     background: var(--bg-white);
     overflow-y: auto;
-    padding: var(--space-3xl) var(--space-5xl);
+    padding: 0 var(--space-5xl);
 }
 
 /* ===== CONTENT COMPONENTS ===== */
