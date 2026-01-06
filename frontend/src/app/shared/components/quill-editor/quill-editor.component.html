@@ -1,0 +1,8 @@
+<quill-editor
+  [modules]="quillConfig"
+  [placeholder]="placeholder"
+  [(ngModel)]="value"
+  (onContentChanged)="onContentChanged($event)"
+  [disabled]="disabled"
+  class="quill-editor-container">
+</quill-editor>

@@ -3,203 +3,54 @@
   margin-top: 40px;
 }
 
-.editor-toolbar + .breadcrumb {
-  margin-top: 0;
+/* Quill Editor Wrapper */
+.page-editor {
+  margin: 24px 0;
 }
 
-/* Editor Toolbar */
-.editor-toolbar {
+/* Customize Quill toolbar to match MOBIUS theme */
+:host ::ng-deep .page-editor .ql-toolbar {
   background: linear-gradient(180deg, #ffffff 0%, #f3f3f3 100%);
+  border: 1px solid #ddd;
   border-bottom: 2px solid #ddd;
-  padding: 8px;
-  margin: -48px -60px 16px -60px;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  align-items: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  border-radius: 4px 4px 0 0;
 }
 
-.toolbar-group {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  padding: 0 10px;
-  border-right: 1px solid #ddd;
+:host ::ng-deep .page-editor .ql-container {
+  border: 1px solid #ddd;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  font-family: inherit;
+  font-size: 16px;
 }
 
-.toolbar-group:last-child {
-  border-right: none;
-}
-
-/* Toolbar Buttons */
-.toolbar-btn {
-  background: none;
-  border: 1px solid transparent;
-  border-radius: 4px;
-  padding: 6px;
-  cursor: pointer;
-  color: #555;
-  transition: all 0.15s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.toolbar-btn:hover {
-  background: #e8e8e8;
-  border-color: #ccc;
-  color: #333;
-}
-
-.toolbar-btn:active {
-  background: #ddd;
-  border-color: #bbb;
-}
-
-.toolbar-btn.active {
-  background: #0097A7;
-  border-color: #0097A7;
-  color: white;
-}
-
-.toolbar-btn.active:hover {
-  background: #00838f;
-  border-color: #00838f;
-}
-
-.toolbar-btn svg {
-  width: 18px;
-  height: 18px;
-  stroke: currentColor;
-  stroke-width: 2;
-  fill: none;
-}
-
-/* Toolbar Select */
-.toolbar-select {
-  padding: 6px 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 13px;
-  background: white;
-  cursor: pointer;
-}
-
-.toolbar-select:hover {
-  border-color: #999;
-}
-
-/* Toolbar Color Picker */
-.toolbar-color {
-  width: 28px;
-  height: 28px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  cursor: pointer;
-  padding: 2px;
-}
-
-.toolbar-color:hover {
-  border-color: #999;
-}
-
-/* Insert Dropdown */
-.insert-dropdown {
-  position: relative;
-}
-
-.insert-btn {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 10px !important;
-}
-
-.insert-btn svg:last-child {
-  width: 12px;
-  height: 12px;
-}
-
-.insert-menu {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  background: white;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-  min-width: 220px;
-  z-index: 1000;
-  margin-top: 4px;
-  overflow: hidden;
-}
-
-.insert-menu-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
-  cursor: pointer;
-  font-size: 13px;
-  color: #333;
-  border-bottom: 1px solid #eee;
-  transition: background 0.15s;
-}
-
-.insert-menu-item:last-child {
-  border-bottom: none;
-}
-
-.insert-menu-item:hover {
-  background: #f0f9fa;
-}
-
-.insert-menu-item svg {
-  width: 18px;
-  height: 18px;
-  stroke: #0097A7;
-  stroke-width: 2;
-  fill: none;
-  flex-shrink: 0;
-}
-
-.insert-menu-item span {
-  flex: 1;
-}
-
-.insert-menu-item small {
-  color: #999;
-  font-size: 11px;
-}
-
-.insert-menu-section {
-  padding: 6px 14px;
-  background: #f5f5f5;
-  font-size: 11px;
-  font-weight: 600;
-  color: #666;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-/* Content Editing States */
-.page-content.editing {
-  outline: none;
+:host ::ng-deep .page-editor .ql-editor {
   min-height: 400px;
+  max-height: 600px;
 }
 
-.page-content.editing *:focus {
-  outline: 2px solid #0097A7;
-  outline-offset: 2px;
-  border-radius: 2px;
+/* Quill toolbar button active state (MOBIUS teal accent) */
+:host ::ng-deep .page-editor .ql-toolbar button:hover,
+:host ::ng-deep .page-editor .ql-toolbar button.ql-active {
+  color: #0097A7;
 }
 
-.page-content.hidden {
-  display: none;
+:host ::ng-deep .page-editor .ql-toolbar .ql-stroke {
+  stroke: #555;
+}
+
+:host ::ng-deep .page-editor .ql-toolbar button:hover .ql-stroke,
+:host ::ng-deep .page-editor .ql-toolbar button.ql-active .ql-stroke {
+  stroke: #0097A7;
+}
+
+:host ::ng-deep .page-editor .ql-toolbar .ql-fill {
+  fill: #555;
+}
+
+:host ::ng-deep .page-editor .ql-toolbar button:hover .ql-fill,
+:host ::ng-deep .page-editor .ql-toolbar button.ql-active .ql-fill {
+  fill: #0097A7;
 }
 
 /* Preserve pasted content styling */
@@ -228,34 +79,4 @@
 
 .page-content [style*="background"] {
   border-radius: 4px;
-}
-
-/* Source Editor */
-.source-editor {
-  width: 100%;
-  height: 600px;
-  border: none;
-  padding: 20px;
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-  font-size: 13px;
-  line-height: 1.5;
-  background: #1e1e1e;
-  color: #d4d4d4;
-  resize: vertical;
-}
-
-/* Source Mode Banner */
-.source-mode-banner {
-  background: #1e1e1e;
-  color: #d4d4d4;
-  padding: 8px 16px;
-  font-size: 12px;
-  border-bottom: 1px solid #333;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.source-mode-banner span {
-  opacity: 0.7;
 }

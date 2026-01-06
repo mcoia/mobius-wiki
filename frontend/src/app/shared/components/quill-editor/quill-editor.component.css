@@ -1,0 +1,30 @@
+.quill-editor-container {
+  display: block;
+  width: 100%;
+}
+
+:host ::ng-deep .ql-toolbar {
+  border: 1px solid #ccc;
+  border-radius: 4px 4px 0 0;
+  background-color: #f9f9f9;
+}
+
+:host ::ng-deep .ql-container {
+  border: 1px solid #ccc;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  min-height: 300px;
+  font-family: inherit;
+  font-size: 16px;
+}
+
+:host ::ng-deep .ql-editor {
+  min-height: 300px;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+:host ::ng-deep .ql-editor.ql-blank::before {
+  color: #999;
+  font-style: italic;
+}

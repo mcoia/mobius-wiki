@@ -25,6 +25,7 @@
               }
             ],
             "styles": [
+              "node_modules/quill/dist/quill.snow.css",
               "src/styles/mobius-ui.css",
               "src/styles.css"
             ]
