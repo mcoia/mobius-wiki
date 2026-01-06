@@ -29,17 +29,12 @@ export class QuillEditorComponent implements ControlValueAccessor {
   value: string = '';
   disabled: boolean = false;
 
-  // Quill configuration
+  // Reference to Quill instance
+  private quillEditor: any;
+
+  // Quill configuration - use custom toolbar element
   quillConfig = {
-    toolbar: [
-      [{ header: [1, 2, 3, false] }],
-      ['bold', 'italic', 'underline', 'strike'],
-      [{ list: 'ordered' }, { list: 'bullet' }],
-      [{ indent: '-1' }, { indent: '+1' }],
-      ['link', 'code-block'],
-      [{ align: [] }],
-      ['clean']
-    ]
+    toolbar: '#quill-toolbar'
   };
 
   // ControlValueAccessor implementation
@@ -68,5 +63,36 @@ export class QuillEditorComponent implements ControlValueAccessor {
     this.onChange(html);
     this.onTouched();
     this.contentChange.emit(html);
+  }
+
+  onEditorCreated(quill: any): void {
+    this.quillEditor = quill;
+  }
+
+  undo(): void {
+    if (this.quillEditor) {
+      this.quillEditor.history.undo();
+    }
+  }
+
+  redo(): void {
+    if (this.quillEditor) {
+      this.quillEditor.history.redo();
+    }
+  }
+
+  applyColor(type: 'color' | 'background', event: any): void {
+    if (this.quillEditor) {
+      const color = event.target.value;
+      this.quillEditor.format(type, color);
+    }
+  }
+
+  toggleInsertMenu(): void {
+    // Placeholder for insert menu - implement in parent component
+  }
+
+  toggleSourceMode(): void {
+    // Placeholder for source mode - implement in parent component
   }
 }

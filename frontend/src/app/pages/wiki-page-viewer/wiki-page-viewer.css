@@ -3,57 +3,12 @@
   margin-top: 40px;
 }
 
-/* Quill Editor Wrapper */
+/* Quill Editor Container */
 .page-editor {
   margin: 24px 0;
 }
 
-/* Customize Quill toolbar to match MOBIUS theme */
-:host ::ng-deep .page-editor .ql-toolbar {
-  background: linear-gradient(180deg, #ffffff 0%, #f3f3f3 100%);
-  border: 1px solid #ddd;
-  border-bottom: 2px solid #ddd;
-  border-radius: 4px 4px 0 0;
-}
-
-:host ::ng-deep .page-editor .ql-container {
-  border: 1px solid #ddd;
-  border-top: none;
-  border-radius: 0 0 4px 4px;
-  font-family: inherit;
-  font-size: 16px;
-}
-
-:host ::ng-deep .page-editor .ql-editor {
-  min-height: 400px;
-  max-height: 600px;
-}
-
-/* Quill toolbar button active state (MOBIUS teal accent) */
-:host ::ng-deep .page-editor .ql-toolbar button:hover,
-:host ::ng-deep .page-editor .ql-toolbar button.ql-active {
-  color: #0097A7;
-}
-
-:host ::ng-deep .page-editor .ql-toolbar .ql-stroke {
-  stroke: #555;
-}
-
-:host ::ng-deep .page-editor .ql-toolbar button:hover .ql-stroke,
-:host ::ng-deep .page-editor .ql-toolbar button.ql-active .ql-stroke {
-  stroke: #0097A7;
-}
-
-:host ::ng-deep .page-editor .ql-toolbar .ql-fill {
-  fill: #555;
-}
-
-:host ::ng-deep .page-editor .ql-toolbar button:hover .ql-fill,
-:host ::ng-deep .page-editor .ql-toolbar button.ql-active .ql-fill {
-  fill: #0097A7;
-}
-
-/* Preserve pasted content styling */
+/* Preserve content styling */
 .page-content img {
   max-width: 100%;
   height: auto;
