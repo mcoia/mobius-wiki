@@ -52,3 +52,22 @@
 :host ::ng-deep .page-content .ql-align-justify {
   text-align: justify;
 }
+
+/* Image alignment in view mode */
+:host ::ng-deep .page-content img.ql-align-left {
+  display: block;
+  margin-left: 0;
+  margin-right: auto;
+}
+
+:host ::ng-deep .page-content img.ql-align-center {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+:host ::ng-deep .page-content img.ql-align-right {
+  display: block;
+  margin-left: auto;
+  margin-right: 0;
+}
