@@ -3,6 +3,81 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { QuillModule } from 'ngx-quill';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import Quill from 'quill';
+
+// Extend Quill's Image format to preserve 'class' attribute for alignment
+const Image: any = Quill.import('formats/image');
+const ATTRIBUTES = ['alt', 'height', 'width', 'class'];
+
+class ImageBlot extends Image {
+  static create(value: any) {
+    // Quill expects value to be the src string for the image
+    const src = typeof value === 'string' ? value : value.src;
+    const node = super.create(src);
+    
+    // Apply alignment class if present in the value object
+    if (typeof value === 'object' && value.align) {
+      node.setAttribute('class', `ql-align-${value.align}`);
+    }
+    
+    // Also restore other attributes if they exist in the value object
+    if (typeof value === 'object') {
+      if (value.alt) node.setAttribute('alt', value.alt);
+      if (value.width) node.setAttribute('width', value.width);
+      if (value.height) node.setAttribute('height', value.height);
+    }
+    
+    return node;
+  }
+
+  static formats(node: HTMLImageElement) {
+    // We need to return an object that contains the src,
+    // so that when this Delta is rendered back, create(value) gets the src.
+    // However, Quill's default Image.formats(node) might just return attributes or be null.
+    // We should check what super.formats returns. 
+    // Actually, Image blot value() usually returns the src string.
+    // We are overriding value() to return formats().
+    
+    const formats: any = {
+      src: node.getAttribute('src')
+    };
+
+    if (node.hasAttribute('alt')) formats.alt = node.getAttribute('alt');
+    if (node.hasAttribute('width')) formats.width = node.getAttribute('width');
+    if (node.hasAttribute('height')) formats.height = node.getAttribute('height');
+
+    if (node.classList.contains('ql-align-left')) {
+      formats.align = 'left';
+    } else if (node.classList.contains('ql-align-center')) {
+      formats.align = 'center';
+    } else if (node.classList.contains('ql-align-right')) {
+      formats.align = 'right';
+    }
+    
+    return formats;
+  }
+
+
+  static value(node: HTMLImageElement) {
+    return this['formats'](node);
+  }
+
+  format(name: string, value: any) {
+    if (name === 'align') {
+      if (value) {
+        this['domNode'].classList.remove('ql-align-left', 'ql-align-center', 'ql-align-right');
+        this['domNode'].classList.add(`ql-align-${value}`);
+      } else {
+        this['domNode'].classList.remove('ql-align-left', 'ql-align-center', 'ql-align-right');
+      }
+    } else {
+      super.format(name, value);
+    }
+  }
+}
+
+// Register custom Image blot with Quill
+Quill.register('formats/image', ImageBlot, true);
 
 @Component({
   selector: 'app-quill-editor',
@@ -96,11 +171,78 @@ export class QuillEditorComponent implements ControlValueAccessor {
         this.deselectImage();
       }
     });
+
+    // Update overlay on content changes (e.g. alignment via toolbar)
+    this.quillEditor.on('text-change', () => {
+      if (this.selectedImage) {
+        this.positionOverlay(this.selectedImage);
+      }
+    });
+
+    // Update overlay on selection change (handles keyboard navigation)
+    this.quillEditor.on('selection-change', (range: any) => {
+      if (!range && this.selectedImage) {
+        // Blur occurred, but we might want to keep selection if clicking overlay
+        return;
+      }
+      
+      // If selection moved away from the image, deselect it
+      if (this.selectedImage && range) {
+        const blot = Quill.find(this.selectedImage);
+        if (blot) {
+          const index = this.quillEditor.getIndex(blot);
+          if (range.index !== index || range.length !== 1) {
+            this.deselectImage();
+          }
+        }
+      }
+    });
+
+    // Handle window resize
+    window.addEventListener('resize', () => {
+      if (this.selectedImage) {
+        this.positionOverlay(this.selectedImage);
+      }
+    });
+
+    // Handle scroll in the editor container
+    this.quillEditor.root.addEventListener('scroll', () => {
+      if (this.selectedImage) {
+        this.positionOverlay(this.selectedImage);
+      }
+    }, true);
+
+    // Intercept main toolbar alignment clicks when an image is selected
+    const toolbar = document.querySelector('#quill-toolbar');
+    if (toolbar) {
+      toolbar.querySelectorAll('.ql-align').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          if (this.selectedImage) {
+            // Prevent default Quill behavior which might try to wrap the image
+            // We want to apply our custom class logic instead
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const value = (btn as any).value;
+            // Map value: "" -> "left", "center" -> "center", "right" -> "right"
+            const align = value === '' ? 'left' : value;
+            this.alignImage(align);
+          }
+        }, true); // Use capture phase to intercept before Quill
+      });
+    }
   }
 
   private selectImage(img: HTMLImageElement): void {
     this.selectedImage = img;
     this.showImageControls(img);
+
+    // Set Quill selection to the image so toolbar buttons work
+    const blot = Quill.find(img);
+    if (blot && this.quillEditor) {
+      const index = this.quillEditor.getIndex(blot);
+      this.quillEditor.setSelection(index, 1, 'user');
+    }
   }
 
   private deselectImage(): void {
@@ -192,18 +334,18 @@ export class QuillEditorComponent implements ControlValueAccessor {
   }
 
   private alignImage(alignment: string): void {
-    if (!this.selectedImage) return;
+    if (!this.selectedImage || !this.quillEditor) return;
 
-    // Remove existing alignment classes
-    this.selectedImage.classList.remove('ql-align-left', 'ql-align-center', 'ql-align-right');
-
-    // Add new alignment class
-    if (alignment) {
-      this.selectedImage.classList.add(`ql-align-${alignment}`);
+    // Find the blot for the selected image
+    const blot: any = Quill.find(this.selectedImage);
+    if (blot) {
+      // Call the blot's format method directly.
+      // This bypasses Quill's global 'align' whitelist check which filters out 'left'.
+      blot.format('align', alignment);
+      
+      // Update overlay position immediately
+      this.positionOverlay(this.selectedImage);
     }
-
-    // Trigger content change
-    this.onContentChanged({ html: this.quillEditor.root.innerHTML });
   }
 
   private setupResizeHandles(overlay: HTMLDivElement): void {
