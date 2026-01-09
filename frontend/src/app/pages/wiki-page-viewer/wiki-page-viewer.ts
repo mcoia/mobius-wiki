@@ -9,11 +9,11 @@ import { Page } from '../../core/models/wiki.model';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Observable, throwError, EMPTY, Subject } from 'rxjs';
 import { switchMap, catchError, shareReplay, tap, map, take, takeUntil } from 'rxjs/operators';
-import { QuillEditorComponent } from '../../shared/components/quill-editor/quill-editor.component';
+import { TinymceEditorComponent } from '../../shared/components/tinymce-editor/tinymce-editor.component';
 
 @Component({
   selector: 'app-wiki-page-viewer',
-  imports: [CommonModule, FormsModule, RouterLink, QuillEditorComponent],
+  imports: [CommonModule, FormsModule, RouterLink, TinymceEditorComponent],
   templateUrl: './wiki-page-viewer.html',
   styleUrl: './wiki-page-viewer.css'
 })
@@ -45,7 +45,7 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
   private destroy$ = new Subject<void>();
 
   // ViewChild references
-  @ViewChild('quillEditor', { static: false }) quillEditor?: QuillEditorComponent;
+  @ViewChild('quillEditor', { static: false }) quillEditor?: TinymceEditorComponent;
 
   constructor(
     private route: ActivatedRoute,

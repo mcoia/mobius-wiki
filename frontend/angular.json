@@ -22,10 +22,14 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "**/*",
+                "input": "node_modules/tinymce",
+                "output": "/tinymce/"
               }
             ],
             "styles": [
-              "node_modules/quill/dist/quill.snow.css",
               "src/styles/mobius-ui.css",
               "src/styles.css"
             ]

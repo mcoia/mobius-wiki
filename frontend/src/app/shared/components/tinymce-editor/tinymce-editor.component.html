@@ -1,0 +1,31 @@
+<div class="editor-container">
+  <!-- Toggle Button (always visible) -->
+  <div class="source-toggle-container">
+    <button
+      type="button"
+      class="source-toggle-btn"
+      (click)="toggleSourceMode()"
+      [title]="isSourceMode ? 'Switch to Visual Editor' : 'View HTML Source'">
+      {{ isSourceMode ? '← Visual Editor' : 'HTML Source →' }}
+    </button>
+  </div>
+
+  <!-- TinyMCE Editor (hidden when in source mode) -->
+  <div [hidden]="isSourceMode" class="visual-editor">
+    <editor
+      #editor
+      [init]="tinymceConfig"
+      (onInit)="onEditorInit($event)"
+      [initialValue]="content">
+    </editor>
+  </div>
+
+  <!-- Source Mode Textarea (hidden when in visual mode) -->
+  <textarea
+    [hidden]="!isSourceMode"
+    [(ngModel)]="sourceContent"
+    (input)="onSourceChange()"
+    class="source-editor"
+    [placeholder]="placeholder">
+  </textarea>
+</div>
