@@ -143,6 +143,16 @@ export class QuillEditorComponent implements OnDestroy {
   private selectedImage: HTMLImageElement | null = null;
   private resizeOverlay: HTMLDivElement | null = null;
 
+  // Event listener references for cleanup
+  private editorClickListener: ((e: Event) => void) | null = null;
+  private editorScrollListener: (() => void) | null = null;
+  private quillTextChangeHandler: (() => void) | null = null;
+  private quillSelectionChangeHandler: ((range: any) => void) | null = null;
+  private toolbarAlignmentListeners: Array<{
+    element: Element;
+    listener: (e: Event) => void;
+  }> = [];
+
   // Quill configuration - use custom toolbar element
   quillConfig = {
     toolbar: '#quill-toolbar'
@@ -201,18 +211,90 @@ export class QuillEditorComponent implements OnDestroy {
   constructor(private ngZone: NgZone) {}
 
   ngOnDestroy(): void {
-    // Clean up global event listeners
-    document.removeEventListener('click', this.onInsertMenuOutsideClick);
-    document.removeEventListener('click', this.onDocumentClick);
-    window.removeEventListener('resize', this.onWindowResize);
+    // PHASE 1: Remove all event listeners first (prevents handlers firing during teardown)
 
-    // Clean up any active resize listeners
+    // Remove global document/window listeners
+    if (this.onInsertMenuOutsideClick) {
+      document.removeEventListener('click', this.onInsertMenuOutsideClick);
+      this.onInsertMenuOutsideClick = () => {}; // Clear reference
+    }
+
+    if (this.onDocumentClick) {
+      document.removeEventListener('click', this.onDocumentClick);
+      this.onDocumentClick = () => {}; // Clear reference
+    }
+
+    if (this.onWindowResize) {
+      window.removeEventListener('resize', this.onWindowResize);
+      this.onWindowResize = () => {}; // Clear reference
+    }
+
+    // Remove active resize listeners
     if (this.onResizeMouseMove) {
       document.removeEventListener('mousemove', this.onResizeMouseMove);
+      this.onResizeMouseMove = null;
     }
+
     if (this.onResizeMouseUp) {
       document.removeEventListener('mouseup', this.onResizeMouseUp);
+      this.onResizeMouseUp = null;
     }
+
+    // PHASE 2: Clean up Quill-specific listeners (if quillEditor exists)
+    if (this.quillEditor) {
+      // Remove editor click listener
+      if (this.editorClickListener && this.quillEditor.root) {
+        this.quillEditor.root.removeEventListener('click', this.editorClickListener);
+        this.editorClickListener = null;
+      }
+
+      // Remove editor scroll listener
+      if (this.editorScrollListener && this.quillEditor.root) {
+        this.quillEditor.root.removeEventListener('scroll', this.editorScrollListener, true);
+        this.editorScrollListener = null;
+      }
+
+      // Remove Quill event handlers (using .off() method)
+      if (this.quillTextChangeHandler) {
+        this.quillEditor.off('text-change', this.quillTextChangeHandler);
+        this.quillTextChangeHandler = null;
+      }
+
+      if (this.quillSelectionChangeHandler) {
+        this.quillEditor.off('selection-change', this.quillSelectionChangeHandler);
+        this.quillSelectionChangeHandler = null;
+      }
+    }
+
+    // PHASE 3: Remove toolbar alignment button listeners
+    this.toolbarAlignmentListeners.forEach(({ element, listener }) => {
+      element.removeEventListener('click', listener, true);
+    });
+    this.toolbarAlignmentListeners = []; // Clear array
+
+    // PHASE 4: Remove DOM elements and clear references
+
+    // Remove overlay from DOM if it exists
+    if (this.resizeOverlay) {
+      // Remove overlay event listeners (alignment buttons inside overlay)
+      const overlayButtons = this.resizeOverlay.querySelectorAll('.img-align-btn');
+      overlayButtons.forEach(btn => {
+        // Clone and replace to remove all event listeners
+        const clone = btn.cloneNode(true);
+        btn.parentNode?.replaceChild(clone, btn);
+      });
+
+      // Remove from DOM
+      if (this.resizeOverlay.parentNode) {
+        this.resizeOverlay.parentNode.removeChild(this.resizeOverlay);
+      }
+
+      this.resizeOverlay = null;
+    }
+
+    // Null out all object references for garbage collection
+    this.selectedImage = null;
+    this.quillEditor = null;
   }
 
   onContentChanged(event: any): void {
@@ -243,8 +325,8 @@ export class QuillEditorComponent implements OnDestroy {
 
     const editor = this.quillEditor.root;
 
-    // Listen for clicks on images
-    editor.addEventListener('click', (e: Event) => {
+    // Listen for clicks on images - STORE reference for cleanup
+    this.editorClickListener = (e: Event) => {
       const target = e.target as HTMLElement;
       if (target.tagName === 'IMG') {
         e.preventDefault();
@@ -252,7 +334,8 @@ export class QuillEditorComponent implements OnDestroy {
       } else {
         this.deselectImage();
       }
-    });
+    };
+    editor.addEventListener('click', this.editorClickListener);
 
     // Listen for clicks outside editor to deselect
     this.onDocumentClick = (e: Event) => {
@@ -262,15 +345,16 @@ export class QuillEditorComponent implements OnDestroy {
     };
     document.addEventListener('click', this.onDocumentClick);
 
-    // Update overlay on content changes (e.g. alignment via toolbar)
-    this.quillEditor.on('text-change', () => {
+    // Update overlay on content changes - STORE handler reference
+    this.quillTextChangeHandler = () => {
       if (this.selectedImage) {
         this.positionOverlay(this.selectedImage);
       }
-    });
+    };
+    this.quillEditor.on('text-change', this.quillTextChangeHandler);
 
-    // Update overlay on selection change (handles keyboard navigation)
-    this.quillEditor.on('selection-change', (range: any) => {
+    // Update overlay on selection change - STORE handler reference
+    this.quillSelectionChangeHandler = (range: any) => {
       if (!range && this.selectedImage) {
         // Blur occurred, but we might want to keep selection if clicking overlay
         return;
@@ -286,7 +370,8 @@ export class QuillEditorComponent implements OnDestroy {
           }
         }
       }
-    });
+    };
+    this.quillEditor.on('selection-change', this.quillSelectionChangeHandler);
 
     // Handle window resize
     this.onWindowResize = () => {
@@ -296,21 +381,21 @@ export class QuillEditorComponent implements OnDestroy {
     };
     window.addEventListener('resize', this.onWindowResize);
 
-    // Handle scroll in the editor container
-    this.quillEditor.root.addEventListener('scroll', () => {
+    // Handle scroll in the editor container - STORE reference for cleanup
+    this.editorScrollListener = () => {
       if (this.selectedImage) {
         this.positionOverlay(this.selectedImage);
       }
-    }, true);
+    };
+    this.quillEditor.root.addEventListener('scroll', this.editorScrollListener, true);
 
-    // Intercept main toolbar alignment clicks when an image is selected
+    // Intercept main toolbar alignment clicks - STORE all listeners for cleanup
     const toolbar = document.querySelector('#quill-toolbar');
     if (toolbar) {
       toolbar.querySelectorAll('.ql-align').forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        const listener = (e: Event) => {
           if (this.selectedImage) {
-            // Prevent default Quill behavior which might try to wrap the image
-            // We want to apply our custom class logic instead
+            // Prevent default Quill behavior
             e.preventDefault();
             e.stopPropagation();
 
@@ -319,7 +404,15 @@ export class QuillEditorComponent implements OnDestroy {
             const align = value === '' ? 'left' : value;
             this.alignImage(align);
           }
-        }, true); // Use capture phase to intercept before Quill
+        };
+
+        btn.addEventListener('click', listener, true); // Use capture phase
+
+        // Store both element and listener for cleanup
+        this.toolbarAlignmentListeners.push({
+          element: btn,
+          listener: listener
+        });
       });
     }
   }

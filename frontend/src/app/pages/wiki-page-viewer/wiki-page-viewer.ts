@@ -7,8 +7,8 @@ import { AuthService } from '../../core/services/auth.service';
 import { PageContextService } from '../../core/services/page-context.service';
 import { Page } from '../../core/models/wiki.model';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { Observable, throwError, EMPTY } from 'rxjs';
-import { switchMap, catchError, shareReplay, tap, map, take } from 'rxjs/operators';
+import { Observable, throwError, EMPTY, Subject } from 'rxjs';
+import { switchMap, catchError, shareReplay, tap, map, take, takeUntil } from 'rxjs/operators';
 import { QuillEditorComponent } from '../../shared/components/quill-editor/quill-editor.component';
 
 @Component({
@@ -40,6 +40,9 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
 
   // UI state
   saveError: string | null = null;
+
+  // Destroy subject for automatic unsubscribe
+  private destroy$ = new Subject<void>();
 
   // ViewChild references
   @ViewChild('quillEditor', { static: false }) quillEditor?: QuillEditorComponent;
@@ -110,11 +113,15 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
       shareReplay(1)
     );
 
-    // Subscribe to canEdit$ to ensure tap executes
-    this.canEdit$.subscribe();
+    // Subscribe to canEdit$ to ensure tap executes - USE takeUntil for cleanup
+    this.canEdit$.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe();
 
-    // Subscribe to edit state changes from header
-    this.pageContext.editState$.subscribe(state => {
+    // Subscribe to edit state changes from header - USE takeUntil for cleanup
+    this.pageContext.editState$.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(state => {
       if (state.isEditing !== this.isEditing) {
         // Header triggered toggle
         this.isEditing = state.isEditing;
@@ -149,7 +156,14 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   ngOnDestroy(): void {
+    // Signal all subscriptions to unsubscribe
+    this.destroy$.next();
+    this.destroy$.complete();
+
+    // Clean up scripts
     this.cleanupScripts();
+
+    // Reset page context
     this.pageContext.resetEditState();
   }
 
