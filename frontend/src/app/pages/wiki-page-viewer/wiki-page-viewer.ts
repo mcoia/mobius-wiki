@@ -162,7 +162,18 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
 
       const scriptEl = document.createElement('script');
       scriptEl.type = 'text/javascript';
-      scriptEl.textContent = scripts;
+      
+      // Wrap scripts in an IIFE to prevent global scope pollution and re-declaration errors
+      // (e.g. "Identifier 'x' has already been declared")
+      scriptEl.textContent = `
+        (function() {
+          try {
+            ${scripts}
+          } catch (e) {
+            console.error('Error in page script:', e);
+          }
+        })();
+      `;
 
       // Append to body to execute
       document.body.appendChild(scriptEl);
@@ -226,7 +237,7 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
     this.saveError = null;
 
     // Get HTML from Quill editor
-    const html = this.quillEditor.value;
+    const html = this.quillEditor.getValue();
 
     this.page$.pipe(
       take(1),
@@ -266,7 +277,7 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
    */
   isDirty(): boolean {
     if (!this.quillEditor) return false;
-    return this.quillEditor.value !== this.editableContent;
+    return this.quillEditor.getValue() !== this.editableContent;
   }
 
 

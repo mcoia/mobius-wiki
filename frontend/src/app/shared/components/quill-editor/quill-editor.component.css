@@ -3,6 +3,10 @@
   width: 100%;
 }
 
+.quill-editor-container[hidden] {
+  display: none;
+}
+
 /* Custom Toolbar */
 .custom-toolbar {
   background: #f5f5f5;
@@ -114,6 +118,11 @@
   border-color: #999;
 }
 
+/* Insert Dropdown Wrapper */
+.insert-dropdown-wrapper {
+  position: relative;
+}
+
 /* Insert Button with text */
 .insert-dropdown-btn {
   display: inline-flex !important;
@@ -132,6 +141,69 @@
   height: 12px !important;
 }
 
+/* Insert Menu */
+.insert-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  min-width: 220px;
+  z-index: 1000;
+  margin-top: 4px;
+  overflow: hidden;
+}
+
+.insert-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #333;
+  border-bottom: 1px solid #eee;
+  transition: background 0.15s;
+}
+
+.insert-menu-item:last-child {
+  border-bottom: none;
+}
+
+.insert-menu-item:hover {
+  background: #f0f9fa;
+}
+
+.insert-menu-item svg {
+  width: 18px;
+  height: 18px;
+  stroke: #0097A7;
+  stroke-width: 2;
+  fill: none;
+  flex-shrink: 0;
+}
+
+.insert-menu-item span {
+  flex: 1;
+}
+
+.insert-menu-item small {
+  color: #999;
+  font-size: 11px;
+}
+
+.insert-menu-section {
+  padding: 6px 14px;
+  background: #f5f5f5;
+  font-size: 11px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 /* Editor container - clean, no borders */
 :host ::ng-deep .ql-container {
   border: none;
@@ -148,6 +220,62 @@
   color: #999;
   font-style: italic;
   left: 0;
+}
+
+/* Typography Sync with View Mode */
+:host ::ng-deep .ql-editor h1 {
+  font-size: 36px;
+  font-weight: 400;
+  color: var(--mobius-dark-slate, #2d3e50);
+  margin-bottom: var(--space-2xl, 32px);
+  line-height: 1.2;
+}
+
+:host ::ng-deep .ql-editor h2 {
+  font-size: 28px;
+  font-weight: 400;
+  color: var(--mobius-dark-slate, #2d3e50);
+  margin-top: var(--space-4xl, 48px);
+  margin-bottom: var(--space-lg, 20px);
+  padding-bottom: var(--space-xs, 8px);
+  border-bottom: 2px solid var(--mobius-teal, #0097A7);
+  line-height: 1.3;
+}
+
+:host ::ng-deep .ql-editor h3 {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--mobius-dark-slate, #2d3e50);
+  margin-top: var(--space-2xl, 32px);
+  margin-bottom: var(--space-md, 16px);
+  line-height: 1.4;
+}
+
+:host ::ng-deep .ql-editor h4 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--mobius-dark-slate, #2d3e50);
+  margin-top: var(--space-xl, 24px);
+  margin-bottom: var(--space-sm, 12px);
+  line-height: 1.5;
+}
+
+:host ::ng-deep .ql-editor p {
+  margin-bottom: var(--space-md, 16px);
+  line-height: 1.7;
+  color: var(--gray-700, #555);
+}
+
+:host ::ng-deep .ql-editor ul,
+:host ::ng-deep .ql-editor ol {
+  margin-bottom: var(--space-lg, 20px);
+  padding-left: 1.5em; /* Quill default is usually okay, but let's ensure spacing */
+}
+
+:host ::ng-deep .ql-editor li {
+  margin-bottom: var(--space-xs, 8px);
+  line-height: 1.7;
+  color: var(--gray-700, #555);
 }
 
 /* Image selection and hover */
@@ -273,4 +401,120 @@
   display: block;
   margin-left: auto;
   margin-right: 0;
+}
+
+/* Source Mode Styling */
+.source-editor {
+  width: 100%;
+  min-height: 400px;
+  padding: 12px 15px;
+  font-family: monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #333;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  resize: vertical;
+  background-color: #f9f9f9;
+  box-sizing: border-box;
+}
+
+.source-editor:focus {
+  outline: none;
+  border-color: #0097A7;
+  box-shadow: 0 0 0 2px rgba(0, 151, 167, 0.2);
+}
+
+/* Disable toolbar items in source mode */
+.custom-toolbar.source-mode-active .ql-formats:not(:last-child) {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.custom-toolbar.source-mode-active .source-mode-btn {
+  background: #d0d0d0;
+  color: #000;
+}
+
+/* Custom Elements Styling for Editor */
+/* Relaxed selectors to match elements at any depth within Quill */
+:host ::ng-deep .callout {
+  border-left: 4px solid #0097A7;
+  background: #E0F7FA;
+  padding: 16px 20px;
+  margin: 24px 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+:host ::ng-deep .callout p {
+  margin: 0;
+}
+
+:host ::ng-deep .note-box {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  padding: 16px 20px;
+  margin: 24px 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+:host ::ng-deep .stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin: 32px 0;
+}
+
+:host ::ng-deep .stat-card {
+  display: block;
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-top: 3px solid #0097A7;
+  padding: 24px;
+  text-align: center;
+  height: 100%; /* Ensure uniform height in grid */
+  box-sizing: border-box;
+}
+
+:host ::ng-deep .stat-number {
+  display: block;
+  font-size: 36px;
+  font-weight: 300;
+  color: #0097A7;
+  margin-bottom: 8px;
+  line-height: 1;
+}
+
+:host ::ng-deep .stat-label {
+  display: block;
+  font-size: 13px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+:host ::ng-deep .timeline-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 24px 0;
+}
+
+:host ::ng-deep .timeline-table th {
+  background: #f8f9fa;
+  padding: 12px;
+  text-align: left;
+  border: 1px solid #dee2e6;
+  font-weight: 600;
+  color: #2d3e50;
+}
+
+:host ::ng-deep .timeline-table td {
+  padding: 12px;
+  border: 1px solid #dee2e6;
+}
+
+:host ::ng-deep .timeline-table tr:hover {
+  background: #f8f9fa;
 }
