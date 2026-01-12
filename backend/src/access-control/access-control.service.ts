@@ -64,6 +64,96 @@ export class AccessControlService {
   }
 
   /**
+   * Check if user can EDIT content (modify/publish/delete)
+   * Edit permission requires:
+   * 1. User is authenticated
+   * 2. User has staff-level role (library_staff or higher)
+   * 3. User has READ access to the content (via canAccess)
+   * 4. If library_staff, content must be in their library
+   */
+  async canEdit(
+    user: User | null,
+    contentType: string,
+    contentId: number,
+  ): Promise<boolean> {
+    // Must be authenticated
+    if (!user || !user.id) {
+      return false;
+    }
+
+    const ROLE_LEVELS = { guest: 0, library_staff: 1, mobius_staff: 2, site_admin: 3 };
+
+    // Must have staff-level role
+    const roleLevel = ROLE_LEVELS[user.role] || 0;
+    if (roleLevel < ROLE_LEVELS.library_staff) {
+      return false;
+    }
+
+    // Must have read access (handles ACL rules)
+    const hasReadAccess = await this.canAccess(user, contentType, contentId);
+    if (!hasReadAccess) {
+      return false;
+    }
+
+    // mobius_staff or site_admin can edit anything they can read
+    if (roleLevel >= ROLE_LEVELS.mobius_staff) {
+      return true;
+    }
+
+    // For library_staff, check library boundary
+    const wiki = await this.getWikiForContent(contentType, contentId);
+
+    if (!wiki) {
+      return false;
+    }
+
+    // library_staff can only edit content in their library's wiki
+    return user.libraryId !== null && user.libraryId === wiki.library_id;
+  }
+
+  /**
+   * Helper: Get the wiki for any content type
+   * Used to check library boundaries for edit permissions
+   */
+  private async getWikiForContent(
+    contentType: string,
+    contentId: number
+  ): Promise<{ id: number; library_id: number | null } | null> {
+    if (contentType === 'wiki') {
+      const { rows } = await this.pool.query(
+        'SELECT id, library_id FROM wiki.wikis WHERE id = $1',
+        [contentId]
+      );
+      return rows[0] || null;
+    }
+
+    if (contentType === 'section') {
+      const { rows } = await this.pool.query(
+        `SELECT w.id, w.library_id
+         FROM wiki.wikis w
+         JOIN wiki.sections s ON s.wiki_id = w.id
+         WHERE s.id = $1`,
+        [contentId]
+      );
+      return rows[0] || null;
+    }
+
+    if (contentType === 'page') {
+      const { rows } = await this.pool.query(
+        `SELECT w.id, w.library_id
+         FROM wiki.wikis w
+         JOIN wiki.sections s ON s.wiki_id = w.id
+         JOIN wiki.pages p ON p.section_id = s.id
+         WHERE p.id = $1`,
+        [contentId]
+      );
+      return rows[0] || null;
+    }
+
+    return null;
+  }
+
+  /**
    * File access control: most restrictive wins
    * User must have access to BOTH file AND at least one linked content
    */

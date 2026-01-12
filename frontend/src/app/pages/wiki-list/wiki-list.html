@@ -5,7 +5,12 @@
     <span>Wikis</span>
   </nav>
 
-  <h1>Browse Wikis</h1>
+  <div class="page-header">
+    <h1>Browse Wikis</h1>
+    @if (canCreate$ | async) {
+      <a routerLink="/wiki/new" class="btn-primary">+ New Wiki</a>
+    }
+  </div>
 
   <div class="callout">
     <p>

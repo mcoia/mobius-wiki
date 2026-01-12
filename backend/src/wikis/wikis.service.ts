@@ -4,6 +4,7 @@ import { CreateWikiDto } from './dto/create-wiki.dto';
 import { UpdateWikiDto } from './dto/update-wiki.dto';
 import { generateSlug } from '../common/utils/slug.util';
 import { AccessControlService } from '../access-control/access-control.service';
+import { wrapData } from '../common/utils/response.util';
 
 interface User {
   id: number;
@@ -53,7 +54,7 @@ export class WikisService {
       throw new NotFoundException(`Wiki with ID ${id} not found`);
     }
 
-    return rows[0];
+    return wrapData(rows[0]);
   }
 
   async findBySlug(slug: string, includeDeleted = false) {
@@ -70,7 +71,7 @@ export class WikisService {
       throw new NotFoundException(`Wiki with slug '${slug}' not found`);
     }
 
-    return rows[0];
+    return wrapData(rows[0]);
   }
 
   async create(dto: CreateWikiDto, userId: number) {
@@ -93,7 +94,7 @@ export class WikisService {
       [dto.title, slug, dto.description || null, dto.sortOrder || 0, userId]
     );
 
-    return rows[0];
+    return wrapData(rows[0]);
   }
 
   async update(id: number, dto: UpdateWikiDto, userId: number) {
@@ -160,7 +161,7 @@ export class WikisService {
       throw new NotFoundException(`Wiki with ID ${id} not found`);
     }
 
-    return rows[0];
+    return wrapData(rows[0]);
   }
 
   async remove(id: number, userId: number) {
@@ -178,6 +179,6 @@ export class WikisService {
       throw new NotFoundException(`Wiki with ID ${id} not found`);
     }
 
-    return rows[0];
+    return wrapData(rows[0]);
   }
 }

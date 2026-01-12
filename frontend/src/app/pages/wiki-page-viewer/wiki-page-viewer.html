@@ -6,18 +6,38 @@
   }
 
   @if (page$ | async; as page) {
-    <!-- Breadcrumb -->
-    <nav class="breadcrumb">
-      @if (page.wiki) {
-        <a [routerLink]="['/wiki', page.wiki.slug]">{{ page.wiki.title }}</a>
-        <span> › </span>
+    <!-- Breadcrumb and action buttons -->
+    <div class="page-header">
+      <nav class="breadcrumb">
+        @if (page.wiki) {
+          <a [routerLink]="['/wiki', page.wiki.slug]">{{ page.wiki.title }}</a>
+          <span> › </span>
+        }
+        @if (page.section) {
+          <span>{{ page.section.title }}</span>
+          <span> › </span>
+        }
+        <span>{{ page.title }}</span>
+      </nav>
+
+      @if ((canEdit$ | async) && !isEditing) {
+        <div class="page-actions">
+          @if (page.status === 'draft') {
+            <button (click)="publishPage()" class="btn-publish" title="Publish this page">
+              Publish Page
+            </button>
+          }
+          <button (click)="showCreateSectionModal = true" class="btn-secondary" title="Create a new section in this wiki">
+            + New Section
+          </button>
+          @if (page.section_id) {
+            <button (click)="showCreatePageModal = true" class="btn-secondary" title="Create a new page in this section">
+              + New Page
+            </button>
+          }
+        </div>
       }
-      @if (page.section) {
-        <span>{{ page.section.title }}</span>
-        <span> › </span>
-      }
-      <span>{{ page.title }}</span>
-    </nav>
+    </div>
 
     <!-- Page Content -->
     @if (isEditing) {
@@ -43,6 +63,29 @@
           by {{ page.author.name }}
         }
       </div>
+    }
+
+    <!-- Modals -->
+    @if (showCreateSectionModal) {
+      <app-create-modal
+        #createSectionModal
+        modalTitle="Create New Section"
+        [showSlug]="true"
+        [showDescription]="true"
+        (create)="onCreateSection($event)"
+        (cancel)="showCreateSectionModal = false"
+      />
+    }
+
+    @if (showCreatePageModal && page.section) {
+      <app-create-modal
+        #createPageModal
+        [modalTitle]="'Create New Page in ' + page.section.title"
+        [showSlug]="true"
+        [showDescription]="false"
+        (create)="onCreatePage($event)"
+        (cancel)="showCreatePageModal = false"
+      />
     }
 
   } @else {

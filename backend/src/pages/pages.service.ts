@@ -5,6 +5,7 @@ import { UpdatePageDto } from './dto/update-page.dto';
 import { PageVersionsService } from './page-versions.service';
 import { generateSlug } from '../common/utils/slug.util';
 import { AccessControlService } from '../access-control/access-control.service';
+import { wrapData } from '../common/utils/response.util';
 
 interface User {
   id: number;
@@ -19,6 +20,33 @@ export class PagesService {
     private pageVersionsService: PageVersionsService,
     private aclService: AccessControlService,
   ) {}
+
+  /**
+   * Check if user can view a page based on its status
+   * - Published pages: anyone with ACL access can view
+   * - Draft pages: only users with EDIT permission can view
+   *
+   * @throws NotFoundException if user cannot view (returns 404, not 403)
+   */
+  private async checkPageVisibility(
+    page: any,
+    user: User | null
+  ): Promise<void> {
+    // Published pages are visible to anyone with ACL access
+    if (page.status === 'published') {
+      return;
+    }
+
+    // Draft pages require edit permission
+    if (page.status === 'draft') {
+      const canEdit = await this.aclService.canEdit(user, 'page', page.id);
+
+      if (!canEdit) {
+        // Return 404 (not 403) to avoid leaking page existence
+        throw new NotFoundException(`Page with ID ${page.id} not found`);
+      }
+    }
+  }
 
   async findAllInSection(sectionId: number, user: User | null = null, includeDeleted = false) {
     // Verify section exists
@@ -40,12 +68,24 @@ export class PagesService {
       [sectionId]
     );
 
-    // Filter by ACL
+    // Filter by ACL and status
     const accessible = [];
     for (const page of rows) {
-      if (await this.aclService.canAccess(user, 'page', page.id)) {
-        accessible.push(page);
+      // Check ACL access
+      const hasReadAccess = await this.aclService.canAccess(user, 'page', page.id);
+      if (!hasReadAccess) {
+        continue;  // User can't read this page at all
       }
+
+      // Check status visibility
+      if (page.status === 'draft') {
+        const canEdit = await this.aclService.canEdit(user, 'page', page.id);
+        if (!canEdit) {
+          continue;  // User can't see this draft - skip it
+        }
+      }
+
+      accessible.push(page);
     }
 
     return {
@@ -54,7 +94,7 @@ export class PagesService {
     };
   }
 
-  async findOne(id: number, includeDeleted = false) {
+  async findOne(id: number, user: User | null = null, includeDeleted = false) {
     const whereClause = includeDeleted
       ? 'WHERE id = $1'
       : 'WHERE id = $1 AND deleted_at IS NULL';
@@ -68,7 +108,10 @@ export class PagesService {
       throw new NotFoundException(`Page with ID ${id} not found`);
     }
 
-    return rows[0];
+    // Check page visibility based on status
+    await this.checkPageVisibility(rows[0], user);
+
+    return wrapData(rows[0]);
   }
 
   async findBySlug(
@@ -129,7 +172,10 @@ export class PagesService {
       throw new ForbiddenException('Access denied');
     }
 
-    return page;
+    // Check page visibility based on status
+    await this.checkPageVisibility(page, user);
+
+    return wrapData(page);
   }
 
   async create(sectionId: number, dto: CreatePageDto, userId: number) {
@@ -187,12 +233,12 @@ export class PagesService {
       userId
     );
 
-    return page;
+    return wrapData(page);
   }
 
-  async update(id: number, dto: UpdatePageDto, userId: number) {
+  async update(id: number, dto: UpdatePageDto, userId: number, user: User | null = null) {
     // Get current page
-    const page = await this.findOne(id);
+    const { data: page } = await this.findOne(id, user);
 
     const updates: string[] = [];
     const values: any[] = [id];
@@ -243,7 +289,7 @@ export class PagesService {
 
     if (updates.length === 2) {
       // Only updated_by and updated_at, nothing actually changed
-      return page;
+      return wrapData(page);
     }
 
     const { rows } = await this.pool.query(
@@ -271,7 +317,7 @@ export class PagesService {
       );
     }
 
-    return updatedPage;
+    return wrapData(updatedPage);
   }
 
   async publish(id: number, userId: number) {
@@ -290,7 +336,7 @@ export class PagesService {
       throw new NotFoundException(`Page with ID ${id} not found`);
     }
 
-    return rows[0];
+    return wrapData(rows[0]);
   }
 
   async remove(id: number, userId: number) {
@@ -308,6 +354,6 @@ export class PagesService {
       throw new NotFoundException(`Page with ID ${id} not found`);
     }
 
-    return rows[0];
+    return wrapData(rows[0]);
   }
 }

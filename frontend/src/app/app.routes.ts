@@ -2,6 +2,8 @@ import { Routes } from '@angular/router';
 import { LoginComponent } from './pages/login/login';
 import { WikiPageViewer } from './pages/wiki-page-viewer/wiki-page-viewer';
 import { WikiListComponent } from './pages/wiki-list/wiki-list';
+import { WikiCreateComponent } from './pages/wiki-create/wiki-create.component';
+import { WikiDetailComponent } from './pages/wiki-detail/wiki-detail.component';
 import { MainLayout } from './layout/main-layout/main-layout';
 import { authGuard } from './core/guards/auth.guard';
 
@@ -24,20 +26,29 @@ export const routes: Routes = [
     path: '',
     component: MainLayout,
     children: [
-      // Wiki list page
+      // Wiki routes - ORDER MATTERS!
+      // Literal paths must come before dynamic paths
       {
-        path: 'wikis',
-        component: WikiListComponent
+        path: 'wiki',
+        component: WikiListComponent  // Browse all wikis
       },
-      // Wiki pages (3-level: /wiki/:wikiSlug/:sectionSlug/:pageSlug) - MUST BE FIRST
+      {
+        path: 'wiki/new',
+        component: WikiCreateComponent  // Create new wiki
+      },
+      // Dynamic paths - most specific first
       {
         path: 'wiki/:wikiSlug/:sectionSlug/:pageSlug',
-        component: WikiPageViewer
+        component: WikiPageViewer  // View specific page (3-level)
       },
-      // Wiki pages (2-level: /wiki/:wikiSlug/:pageSlug) - MUST BE SECOND
       {
-        path: 'wiki/:wikiSlug/:pageSlug',
-        component: WikiPageViewer
+        path: 'wiki/site',
+        pathMatch: 'full',
+        redirectTo: '/wiki/site/main/home'
+      },
+      {
+        path: 'wiki/:wikiSlug',
+        component: WikiDetailComponent  // Wiki overview
       }
     ]
   }

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiService } from './api.service';
-import { Wiki, Page } from '../models/wiki.model';
+import { Wiki, Section, Page } from '../models/wiki.model';
 
 @Injectable({
   providedIn: 'root'
@@ -9,15 +9,15 @@ import { Wiki, Page } from '../models/wiki.model';
 export class WikiService {
   constructor(private api: ApiService) {}
 
-  getWikiBySlug(slug: string): Observable<any> {
+  getWikiBySlug(slug: string): Observable<{ data: Wiki }> {
     return this.api.get(`/wikis/slug/${slug}`);
   }
 
-  getPageBySlug(wikiSlug: string, pageSlug: string): Observable<any> {
+  getPageBySlug(wikiSlug: string, pageSlug: string): Observable<{ data: Page }> {
     return this.api.get(`/wikis/slug/${wikiSlug}/pages/slug/${pageSlug}`);
   }
 
-  getPagesBySlugs(wikiSlug: string, sectionSlug: string, pageSlug: string): Observable<any> {
+  getPagesBySlugs(wikiSlug: string, sectionSlug: string, pageSlug: string): Observable<{ data: Page }> {
     return this.api.get(`/wikis/slug/${wikiSlug}/sections/slug/${sectionSlug}/pages/slug/${pageSlug}`);
   }
 
@@ -25,7 +25,47 @@ export class WikiService {
     return this.api.get('/wikis');
   }
 
-  updatePage(pageId: number, data: { content: string }): Observable<any> {
+  updatePage(pageId: number, data: { content: string }): Observable<{ data: Page }> {
     return this.api.patch(`/pages/${pageId}`, data);
+  }
+
+  // Wiki CRUD operations
+  createWiki(data: { title: string; slug?: string; description?: string }): Observable<{ data: Wiki }> {
+    return this.api.post('/wikis', data);
+  }
+
+  updateWiki(id: number, data: Partial<Wiki>): Observable<{ data: Wiki }> {
+    return this.api.patch(`/wikis/${id}`, data);
+  }
+
+  deleteWiki(id: number): Observable<{ data: null }> {
+    return this.api.delete(`/wikis/${id}`);
+  }
+
+  // Section CRUD operations
+  createSection(wikiId: number, data: { title: string; slug?: string; description?: string }): Observable<{ data: Section }> {
+    return this.api.post(`/wikis/${wikiId}/sections`, data);
+  }
+
+  updateSection(id: number, data: Partial<Section>): Observable<{ data: Section }> {
+    return this.api.patch(`/sections/${id}`, data);
+  }
+
+  deleteSection(id: number): Observable<{ data: null }> {
+    return this.api.delete(`/sections/${id}`);
+  }
+
+  // Page CRUD operations
+  createPage(sectionId: number, data: { title: string; slug?: string; content?: string }): Observable<{ data: Page }> {
+    return this.api.post(`/sections/${sectionId}/pages`, data);
+  }
+
+  deletePage(id: number): Observable<{ data: null }> {
+    return this.api.delete(`/pages/${id}`);
+  }
+
+  // Publish page
+  publishPage(id: number): Observable<{ data: Page }> {
+    return this.api.post(`/pages/${id}/publish`, {});
   }
 }

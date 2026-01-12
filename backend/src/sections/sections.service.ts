@@ -4,6 +4,7 @@ import { CreateSectionDto } from './dto/create-section.dto';
 import { UpdateSectionDto } from './dto/update-section.dto';
 import { generateSlug } from '../common/utils/slug.util';
 import { AccessControlService } from '../access-control/access-control.service';
+import { wrapData } from '../common/utils/response.util';
 
 interface User {
   id: number;
@@ -66,7 +67,7 @@ export class SectionsService {
       throw new NotFoundException(`Section with ID ${id} not found`);
     }
 
-    return rows[0];
+    return wrapData(rows[0]);
   }
 
   async create(wikiId: number, dto: CreateSectionDto, userId: number) {
@@ -99,7 +100,7 @@ export class SectionsService {
       [wikiId, dto.title, slug, dto.description || null, dto.sortOrder || 0, userId]
     );
 
-    return rows[0];
+    return wrapData(rows[0]);
   }
 
   async update(id: number, dto: UpdateSectionDto, userId: number) {
@@ -176,7 +177,7 @@ export class SectionsService {
       throw new NotFoundException(`Section with ID ${id} not found`);
     }
 
-    return rows[0];
+    return wrapData(rows[0]);
   }
 
   async remove(id: number, userId: number) {
@@ -194,6 +195,6 @@ export class SectionsService {
       throw new NotFoundException(`Section with ID ${id} not found`);
     }
 
-    return rows[0];
+    return wrapData(rows[0]);
   }
 }

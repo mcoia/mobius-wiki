@@ -12,6 +12,21 @@ export interface Wiki {
   deleted_by: number | null;
 }
 
+export interface Section {
+  id: number;
+  wiki_id: number;
+  title: string;
+  slug: string;
+  description: string | null;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+  created_by: number;
+  updated_by: number;
+  deleted_at: string | null;
+  deleted_by: number | null;
+}
+
 export interface Page {
   id: number;
   section_id: number | null;

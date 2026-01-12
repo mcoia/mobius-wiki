@@ -357,3 +357,60 @@
   line-height: 1.7;
   color: #555;
 }
+
+/* ===== Image Alignment Overlay ===== */
+
+.tinymce-image-overlay {
+  position: absolute;
+  pointer-events: none;  /* Overlay doesn't block clicks */
+  border: 2px solid #0097A7;
+  box-sizing: border-box;
+  z-index: 1000;
+}
+
+.image-toolbar {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  display: flex;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.8);
+  border-radius: 4px;
+  padding: 4px;
+  pointer-events: auto;  /* Buttons ARE clickable */
+}
+
+.img-align-btn {
+  width: 32px;
+  height: 32px;
+  padding: 6px;
+  background: transparent;
+  border: none;
+  color: white;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.img-align-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.img-align-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.image-size {
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  color: white;
+  font-size: 12px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  white-space: nowrap;
+  pointer-events: none;
+}

@@ -60,6 +60,7 @@ export class TinymceEditorComponent implements AfterViewInit, OnDestroy {
   private editorInstance: any = null;
   private imageOverlay: HTMLDivElement | null = null;
   private selectedImage: HTMLImageElement | null = null;
+  private resizeHandler?: () => void;
 
   @ViewChild('editor', { static: false }) editor?: EditorComponent;
 
@@ -77,7 +78,8 @@ export class TinymceEditorComponent implements AfterViewInit, OnDestroy {
     }, 100);
 
     // Update on window resize
-    window.addEventListener('resize', () => this.updateEditorHeight());
+    this.resizeHandler = () => this.updateEditorHeight();
+    window.addEventListener('resize', this.resizeHandler);
   }
 
   private updateEditorHeight(): void {
@@ -104,7 +106,10 @@ export class TinymceEditorComponent implements AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     // Remove resize listener
-    window.removeEventListener('resize', () => this.updateEditorHeight());
+    if (this.resizeHandler) {
+      window.removeEventListener('resize', this.resizeHandler);
+      this.resizeHandler = undefined;
+    }
 
     // Remove image overlay
     this.hideImageOverlay();
@@ -171,6 +176,14 @@ export class TinymceEditorComponent implements AfterViewInit, OnDestroy {
         this.selectedImage = e.element;
         this.showImageOverlay(this.editorInstance, this.selectedImage as HTMLImageElement);
       } else {
+        this.hideImageOverlay();
+        this.selectedImage = null;
+      }
+    });
+
+    // Hide overlay when clicking elsewhere in editor
+    this.editorInstance.on('click', (e: any) => {
+      if (e.target.nodeName !== 'IMG' && this.imageOverlay) {
         this.hideImageOverlay();
         this.selectedImage = null;
       }
@@ -352,33 +365,41 @@ export class TinymceEditorComponent implements AfterViewInit, OnDestroy {
     // Create new overlay
     const overlay = document.createElement('div');
     overlay.className = 'tinymce-image-overlay';
+
+    // CRITICAL: Apply inline styles for pointer-events (component CSS doesn't reach here!)
+    overlay.style.position = 'absolute';
+    overlay.style.pointerEvents = 'none';  // Overlay doesn't block clicks
+    overlay.style.border = '2px solid #0097A7';
+    overlay.style.boxSizing = 'border-box';
+    overlay.style.zIndex = '1000';
+
     overlay.innerHTML = `
-      <div class="image-toolbar">
-        <button class="img-align-btn" data-align="left" title="Align Left">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <div class="image-toolbar" style="position: absolute; top: -40px; left: 0; display: flex; gap: 4px; background: rgba(0, 0, 0, 0.8); border-radius: 4px; padding: 4px; pointer-events: auto;">
+        <button class="img-align-btn" data-align="left" title="Align Left" style="width: 32px; height: 32px; padding: 6px; background: transparent; border: none; color: white; cursor: pointer; border-radius: 3px; display: flex; align-items: center; justify-content: center;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px;">
             <line x1="17" y1="10" x2="3" y2="10"></line>
             <line x1="21" y1="6" x2="3" y2="6"></line>
             <line x1="21" y1="14" x2="3" y2="14"></line>
             <line x1="17" y1="18" x2="3" y2="18"></line>
           </svg>
         </button>
-        <button class="img-align-btn" data-align="center" title="Align Center">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <button class="img-align-btn" data-align="center" title="Align Center" style="width: 32px; height: 32px; padding: 6px; background: transparent; border: none; color: white; cursor: pointer; border-radius: 3px; display: flex; align-items: center; justify-content: center;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px;">
             <line x1="18" y1="10" x2="6" y2="10"></line>
             <line x1="21" y1="6" x2="3" y2="6"></line>
             <line x1="21" y1="14" x2="3" y2="14"></line>
             <line x1="18" y1="18" x2="6" y2="18"></line>
           </svg>
         </button>
-        <button class="img-align-btn" data-align="right" title="Align Right">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <button class="img-align-btn" data-align="right" title="Align Right" style="width: 32px; height: 32px; padding: 6px; background: transparent; border: none; color: white; cursor: pointer; border-radius: 3px; display: flex; align-items: center; justify-content: center;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px;">
             <line x1="21" y1="10" x2="7" y2="10"></line>
             <line x1="21" y1="6" x2="3" y2="6"></line>
             <line x1="21" y1="14" x2="3" y2="14"></line>
             <line x1="21" y1="18" x2="7" y2="18"></line>
           </svg>
         </button>
-        <span class="image-size">${img.width} × ${img.height}</span>
+        <span class="image-size" style="display: flex; align-items: center; padding: 0 8px; color: white; font-size: 12px; white-space: nowrap; pointer-events: none;">${img.width} × ${img.height}</span>
       </div>
     `;
 
@@ -441,11 +462,8 @@ export class TinymceEditorComponent implements AfterViewInit, OnDestroy {
     // Trigger change event
     editor.fire('change');
 
-    // Update overlay position (image might move)
-    requestAnimationFrame(() => {
-      if (this.imageOverlay && this.selectedImage) {
-        this.positionImageOverlay(editor, this.selectedImage);
-      }
-    });
+    // Hide overlay after alignment to prevent lockup
+    this.hideImageOverlay();
+    this.selectedImage = null;
   }
 }

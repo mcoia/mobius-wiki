@@ -40,15 +40,19 @@ export class PagesController {
   @SetMetadata('aclCheck', { type: 'page', idParam: 'id' })
   async findOne(
     @Param('id', ParseIntPipe) id: number,
+    @User() user: any,
     @Query('includeDeleted') includeDeleted?: string,
   ) {
-    return this.pagesService.findOne(id, includeDeleted === 'true');
+    return this.pagesService.findOne(id, user, includeDeleted === 'true');
   }
 
   @Get('pages/:id/versions')
-  async getVersions(@Param('id', ParseIntPipe) id: number) {
-    // Verify page exists
-    await this.pagesService.findOne(id);
+  async getVersions(
+    @Param('id', ParseIntPipe) id: number,
+    @User() user: any,
+  ) {
+    // Verify page exists and user can view it (now includes status check)
+    await this.pagesService.findOne(id, user);
     return this.pageVersionsService.findAllForPage(id);
   }
 
@@ -56,9 +60,10 @@ export class PagesController {
   async getVersion(
     @Param('id', ParseIntPipe) id: number,
     @Param('versionNumber', ParseIntPipe) versionNumber: number,
+    @User() user: any,
   ) {
-    // Verify page exists
-    await this.pagesService.findOne(id);
+    // Verify page exists and user can view it (now includes status check)
+    await this.pagesService.findOne(id, user);
     return this.pageVersionsService.findOne(id, versionNumber);
   }
 
@@ -102,7 +107,7 @@ export class PagesController {
       }
     }
 
-    return this.pagesService.update(id, dto, user.id);
+    return this.pagesService.update(id, dto, user.id, user);
   }
 
   @Post('pages/:id/publish')

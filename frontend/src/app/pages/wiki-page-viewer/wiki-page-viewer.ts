@@ -1,19 +1,20 @@
 import { Component, OnInit, OnDestroy, AfterViewChecked, ViewChild, ElementRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { WikiService } from '../../core/services/wiki.service';
 import { AuthService } from '../../core/services/auth.service';
 import { PageContextService } from '../../core/services/page-context.service';
-import { Page } from '../../core/models/wiki.model';
+import { Page, Section } from '../../core/models/wiki.model';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Observable, throwError, EMPTY, Subject } from 'rxjs';
 import { switchMap, catchError, shareReplay, tap, map, take, takeUntil } from 'rxjs/operators';
 import { TinymceEditorComponent } from '../../shared/components/tinymce-editor/tinymce-editor.component';
+import { CreateModalComponent } from '../../shared/components/create-modal/create-modal.component';
 
 @Component({
   selector: 'app-wiki-page-viewer',
-  imports: [CommonModule, FormsModule, RouterLink, TinymceEditorComponent],
+  imports: [CommonModule, FormsModule, RouterLink, TinymceEditorComponent, CreateModalComponent],
   templateUrl: './wiki-page-viewer.html',
   styleUrl: './wiki-page-viewer.css'
 })
@@ -47,8 +48,15 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
   // ViewChild references
   @ViewChild('quillEditor', { static: false }) quillEditor?: TinymceEditorComponent;
 
+  // Modal state
+  showCreateSectionModal = false;
+  showCreatePageModal = false;
+  @ViewChild('createSectionModal') createSectionModal?: CreateModalComponent;
+  @ViewChild('createPageModal') createPageModal?: CreateModalComponent;
+
   constructor(
     private route: ActivatedRoute,
+    private router: Router,
     private wikiService: WikiService,
     private sanitizer: DomSanitizer,
     private authService: AuthService,
@@ -76,6 +84,7 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
           : this.wikiService.getPageBySlug(wikiSlug, pageSlug);
 
         return request.pipe(
+          map(response => response.data), // Unwrap response
           tap(page => {
             console.log('Page response:', page);
             this.currentPage = page; // Store for AfterViewChecked
@@ -87,7 +96,12 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
           }),
           catchError(err => {
             console.error('Page load error:', err);
-            this.error = err.error?.message || 'Failed to load page';
+            // For 404 errors, show generic message to avoid leaking page IDs
+            if (err.status === 404) {
+              this.error = 'Page not found';
+            } else {
+              this.error = err.error?.message || 'Failed to load page';
+            }
             this.currentPage = null;
             this.pageContext.updateEditState({
               currentPageId: null,
@@ -275,7 +289,12 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
       },
       error: (err) => {
         this.isSaving = false;
-        this.saveError = err.error?.message || 'Failed to save page. Please try again.';
+        // For 404 errors, show generic message to avoid leaking page IDs
+        if (err.status === 404) {
+          this.saveError = 'Page not found. It may have been deleted.';
+        } else {
+          this.saveError = err.error?.message || 'Failed to save page. Please try again.';
+        }
 
         // Update service state with error
         this.pageContext.updateEditState({
@@ -303,6 +322,144 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
     if (this.isEditing && this.isDirty()) {
       event.preventDefault();
       event.returnValue = '';
+    }
+  }
+
+  /**
+   * Handle section creation from modal
+   */
+  onCreateSection(data: { title: string; slug: string; description: string }): void {
+    if (!this.currentPage?.wiki) return;
+
+    if (this.createSectionModal) {
+      this.createSectionModal.setLoading(true);
+      this.createSectionModal.setError('');
+    }
+
+    // Get wiki ID from current page
+    this.page$.pipe(
+      take(1),
+      switchMap((page: Page) => {
+        // Need to get full wiki data to get wiki ID
+        if (!page.wiki) {
+          throw new Error('Cannot create section: wiki information not available');
+        }
+        return this.wikiService.getWikiBySlug(page.wiki.slug).pipe(
+          map(response => response.data), // Unwrap wiki response
+          switchMap((wiki) => {
+            return this.wikiService.createSection(wiki.id, {
+              title: data.title,
+              slug: data.slug,
+              description: data.description
+            }).pipe(
+              map(response => response.data) // Unwrap section response
+            );
+          })
+        );
+      })
+    ).subscribe({
+      next: () => {
+        // Close modal immediately
+        this.showCreateSectionModal = false;
+
+        // Reset modal loading state
+        if (this.createSectionModal) {
+          this.createSectionModal.setLoading(false);
+        }
+
+        // Show success message after change detection runs
+        setTimeout(() => {
+          alert('Section created successfully! You can now create pages in this section.');
+        }, 100);
+      },
+      error: (error: any) => {
+        if (this.createSectionModal) {
+          this.createSectionModal.setError(error.error?.message || 'Failed to create section');
+          this.createSectionModal.setLoading(false);
+        }
+      }
+    });
+  }
+
+  /**
+   * Handle page creation
+   */
+  onCreatePage(data: { title: string; slug: string }): void {
+    if (!this.currentPage || !this.currentPage.section_id) {
+      alert('Cannot create page: no section context');
+      return;
+    }
+
+    if (this.createPageModal) {
+      this.createPageModal.setLoading(true);
+      this.createPageModal.setError('');
+    }
+
+    this.wikiService.createPage(this.currentPage.section_id, {
+      title: data.title,
+      slug: data.slug,
+      content: ''
+    }).subscribe({
+      next: (response) => {
+        // Close modal immediately
+        this.showCreatePageModal = false;
+
+        // Reset modal loading state
+        if (this.createPageModal) {
+          this.createPageModal.setLoading(false);
+        }
+
+        // Navigate after change detection runs
+        setTimeout(() => {
+          const wikiSlug = this.currentPage?.wiki?.slug;
+          const sectionSlug = this.currentPage?.section?.slug;
+
+          if (wikiSlug && sectionSlug) {
+            this.router.navigate(
+              ['/wiki', wikiSlug, sectionSlug, response.data.slug]
+            );
+          }
+        }, 100);
+      },
+      error: (error) => {
+        if (this.createPageModal) {
+          this.createPageModal.setLoading(false);
+          this.createPageModal.setError(error.error?.message || 'Failed to create page');
+        }
+      }
+    });
+  }
+
+  /**
+   * Publish the current draft page
+   */
+  publishPage(): void {
+    if (!this.currentPage) {
+      alert('No page loaded');
+      return;
+    }
+
+    if (this.currentPage.status !== 'draft') {
+      alert('This page is already published');
+      return;
+    }
+
+    if (confirm('Publish this page? It will become visible to authorized users based on access rules.')) {
+      this.wikiService.publishPage(this.currentPage.id).subscribe({
+        next: () => {
+          alert('Page published successfully!');
+          // Reload to show updated status
+          window.location.reload();
+        },
+        error: (error: any) => {
+          // For 404 errors, show generic message to avoid leaking page IDs
+          if (error.status === 404) {
+            alert('Page not found. It may have been deleted.');
+          } else {
+            alert(error.error?.message || 'Failed to publish page');
+          }
+        }
+      });
     }
   }
 

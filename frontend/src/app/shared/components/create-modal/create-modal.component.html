@@ -1,0 +1,61 @@
+<div class="modal-overlay" (click)="onCancel()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <h2>{{ modalTitle }}</h2>
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <div class="form-group">
+        <label for="title">Title *</label>
+        <input
+          id="title"
+          formControlName="title"
+          placeholder="Enter title"
+          [class.error]="form.get('title')?.invalid && form.get('title')?.touched"
+        />
+        @if (form.get('title')?.invalid && form.get('title')?.touched) {
+          <span class="error-text">
+            @if (form.get('title')?.errors?.['required']) {
+              Title is required
+            }
+            @if (form.get('title')?.errors?.['maxlength']) {
+              Title must be 255 characters or less
+            }
+          </span>
+        }
+      </div>
+
+      @if (showSlug) {
+        <div class="form-group">
+          <label for="slug">URL Slug</label>
+          <input
+            id="slug"
+            formControlName="slug"
+            placeholder="auto-generated-from-title"
+          />
+          <span class="hint">Auto-generated from title (editable)</span>
+        </div>
+      }
+
+      @if (showDescription) {
+        <div class="form-group">
+          <label for="description">Description (optional)</label>
+          <textarea
+            id="description"
+            formControlName="description"
+            rows="3"
+            placeholder="Brief description (optional)"
+          ></textarea>
+        </div>
+      }
+
+      @if (errorMessage) {
+        <div class="error-message">{{ errorMessage }}</div>
+      }
+
+      <div class="modal-actions">
+        <button type="button" (click)="onCancel()" class="btn-cancel">Cancel</button>
+        <button type="submit" [disabled]="form.invalid || isLoading" class="btn-submit">
+          {{ isLoading ? 'Creating...' : 'Create' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

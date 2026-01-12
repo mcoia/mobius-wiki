@@ -1,0 +1,76 @@
+<div class="wiki-detail">
+  @if (error) {
+    <div class="note-box danger">
+      <strong>Error:</strong> {{ error }}
+    </div>
+  }
+
+  @if (wiki$ | async; as wiki) {
+    <div class="wiki-header">
+      <div class="header-content">
+        <h1>{{ wiki.title }}</h1>
+        @if (wiki.description) {
+          <p class="description">{{ wiki.description }}</p>
+        }
+      </div>
+      @if (canEdit$ | async) {
+        <button (click)="showCreateSectionModal = true" class="btn-primary">
+          + New Section
+        </button>
+      }
+    </div>
+
+    @if (sections$ | async; as sections) {
+      @if (sections.length === 0) {
+        <div class="note-box info">
+          <strong>No sections yet</strong>
+          <p>Create a section to organize your pages.</p>
+        </div>
+      } @else {
+        @for (section of sections; track section.id) {
+          <div class="section-block">
+            <h2>{{ section.title }}</h2>
+            @if (section.description) {
+              <p class="section-desc">{{ section.description }}</p>
+            }
+
+            @if (section.pages && section.pages.length > 0) {
+              <ul class="page-list">
+                @for (page of section.pages; track page.id) {
+                  <li>
+                    <a [routerLink]="['/wiki', wiki.slug, section.slug, page.slug]">
+                      {{ page.title }}
+                    </a>
+                    @if (page.status === 'draft') {
+                      <span class="badge draft">Draft</span>
+                    }
+                  </li>
+                }
+              </ul>
+            } @else {
+              <p class="no-pages">No pages in this section yet.</p>
+            }
+          </div>
+        }
+      }
+    } @else {
+      <div class="loading">Loading sections...</div>
+    }
+
+    <!-- Create Section Modal -->
+    @if (showCreateSectionModal) {
+      <app-create-modal
+        #createSectionModal
+        modalTitle="Create New Section"
+        [showSlug]="true"
+        [showDescription]="true"
+        (create)="onCreateSection($event)"
+        (cancel)="showCreateSectionModal = false"
+      />
+    }
+  } @else {
+    @if (!error) {
+      <div class="loading">Loading wiki...</div>
+    }
+  }
+</div>

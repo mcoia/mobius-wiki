@@ -1,6 +1,6 @@
 <div class="editor-container">
-  <!-- TinyMCE Editor (hidden when in source mode) -->
-  <div [hidden]="isSourceMode" class="visual-editor">
+  <!-- TinyMCE Editor (shown when not in source mode) -->
+  <div *ngIf="!isSourceMode" class="visual-editor">
     <editor
       #editor
       [init]="tinymceConfig"
@@ -10,7 +10,7 @@
   </div>
 
   <!-- Source Mode (with toolbar and textarea) -->
-  <div [hidden]="!isSourceMode" class="source-mode-container">
+  <div *ngIf="isSourceMode" class="source-mode-container">
     <!-- Source toolbar with back button -->
     <div class="source-toolbar">
       <button type="button" class="source-back-btn" (click)="toggleSourceMode()">
