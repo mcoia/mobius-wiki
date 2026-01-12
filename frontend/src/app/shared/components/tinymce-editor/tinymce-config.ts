@@ -42,9 +42,16 @@ export const TINYMCE_BASE_CONFIG = {
   statusbar: false,                      // Disable status bar
   branding: false,                       // Remove "Powered by Tiny" branding
 
+  // Font family options (minimal set aligned with design system)
+  font_family_formats: 'System Font=-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen,Ubuntu,Cantarell,sans-serif; Arial=arial,helvetica,sans-serif; Georgia=georgia,serif; Monospace=courier new,courier,monospace',
+
+  // Font size options (aligned with MOBIUS heading hierarchy)
+  font_size_formats: '14px 16px 18px 20px 24px 28px 32px 36px',
+
   // Toolbar configuration
   toolbar: [
     'formatselect',                      // Normal, H1, H2, H3
+    'fontfamily fontsize',               // Font family and size dropdowns
     'bold italic underline strikethrough',
     'forecolor backcolor',
     'bullist numlist outdent indent',
