@@ -51,7 +51,8 @@ export const TINYMCE_BASE_CONFIG = {
     'alignleft aligncenter alignright',
     'link removeformat',
     'undo redo',
-    'insertmenu'                         // Custom menu for element templates
+    'insertmenu',                        // Custom menu for element templates
+    'sourcecode'                         // HTML source toggle button
   ].join(' | '),
 
   // Format dropdown options
@@ -65,7 +66,7 @@ export const TINYMCE_BASE_CONFIG = {
   object_resizing: 'img',                // Enable resize handles on images
 
   // Content styling (loaded inside editor iframe)
-  content_css: '/styles/mobius-ui.css',
+  // REMOVED: content_css: '/styles/mobius-ui.css',  // Causes MIME type error
   content_style: `
     /* Typography */
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; }
@@ -235,10 +236,10 @@ export const TINYMCE_BASE_CONFIG = {
     }
   `,
 
-  // Minimum editor height
-  min_height: 400,
+  // Height configuration - SIMPLE FIXED HEIGHT
+  min_height: 500,
   max_height: 800,
-  autoresize_bottom_margin: 50,
+  resize: true,
 
   // Paste settings (preserve formatting)
   paste_as_text: false,

@@ -71,11 +71,41 @@ export class TinymceEditorComponent implements AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
-    // TinyMCE will initialize automatically via the EditorComponent
-    // The onInit event will be handled in the template
+    // Calculate and set editor height to fill available space
+    setTimeout(() => {
+      this.updateEditorHeight();
+    }, 100);
+
+    // Update on window resize
+    window.addEventListener('resize', () => this.updateEditorHeight());
+  }
+
+  private updateEditorHeight(): void {
+    if (this.editorInstance) {
+      // Calculate available height
+      const viewportHeight = window.innerHeight;
+      const headerHeight = 48; // Top header
+      const breadcrumbEl = document.querySelector('.breadcrumb');
+      const breadcrumbHeight = breadcrumbEl ? breadcrumbEl.clientHeight + 56 : 100; // Include margins
+      const padding = 40; // Bottom padding
+
+      const availableHeight = viewportHeight - headerHeight - breadcrumbHeight - padding;
+      const editorHeight = Math.max(400, availableHeight); // Minimum 400px
+
+      console.log('Setting editor height to:', editorHeight, 'px');
+
+      // Set height on the TinyMCE container via DOM
+      const editorContainer = this.editorInstance.getContainer();
+      if (editorContainer) {
+        editorContainer.style.height = editorHeight + 'px';
+      }
+    }
   }
 
   ngOnDestroy(): void {
+    // Remove resize listener
+    window.removeEventListener('resize', () => this.updateEditorHeight());
+
     // Remove image overlay
     this.hideImageOverlay();
 
@@ -111,10 +141,20 @@ export class TinymceEditorComponent implements AfterViewInit, OnDestroy {
   onEditorInit(event: any): void {
     this.editorInstance = event.editor;
 
+    console.log('TinyMCE initialized, content length:', this._content?.length);
+
     // Set initial content
     if (this._content) {
       this.editorInstance.setContent(this._content);
+      console.log('Content set in editor');
+    } else {
+      console.warn('No content to set!');
     }
+
+    // Set full height after initialization
+    setTimeout(() => {
+      this.updateEditorHeight();
+    }, 100);
 
     // Listen for content changes
     this.editorInstance.on('change input', () => {
@@ -147,6 +187,28 @@ export class TinymceEditorComponent implements AfterViewInit, OnDestroy {
   // Editor Setup (register custom buttons)
 
   private setupEditor(editor: any): void {
+    // Register custom HTML source toggle button
+    editor.ui.registry.addToggleButton('sourcecode', {
+      icon: 'sourcecode',  // TinyMCE built-in code icon
+      tooltip: 'HTML Source',
+      onAction: () => {
+        this.ngZone.run(() => {
+          this.toggleSourceMode();
+        });
+      },
+      onSetup: (api: any) => {
+        // Sync button state with isSourceMode
+        const updateState = () => {
+          api.setActive(this.isSourceMode);
+        };
+
+        updateState();  // Initial state
+        editor.on('SourceModeChange', updateState);
+
+        return () => editor.off('SourceModeChange', updateState);
+      }
+    });
+
     // Register custom "Insert" menu button
     editor.ui.registry.addMenuButton('insertmenu', {
       text: 'Insert',
@@ -250,6 +312,11 @@ export class TinymceEditorComponent implements AfterViewInit, OnDestroy {
 
     this.isSourceMode = !this.isSourceMode;
     console.log('After toggle, isSourceMode is now:', this.isSourceMode);
+
+    // ✅ Emit custom event to sync button state
+    if (this.editorInstance) {
+      this.editorInstance.fire('SourceModeChange');
+    }
 
     // ✅ Force Angular to detect the change
     this.cdr.detectChanges();
