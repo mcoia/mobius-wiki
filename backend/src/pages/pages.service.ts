@@ -202,6 +202,13 @@ export class PagesService {
       throw new ConflictException(`A page with slug '${slug}' already exists in this section`);
     }
 
+    // Get max sort_order for this section to ensure chronological ordering
+    const { rows: maxOrderRows } = await this.pool.query(
+      'SELECT COALESCE(MAX(sort_order), -1) as max_order FROM wiki.pages WHERE section_id = $1 AND deleted_at IS NULL',
+      [sectionId]
+    );
+    const sortOrder = dto.sortOrder ?? (maxOrderRows[0].max_order + 1);
+
     // Create page
     const publishedAt = status === 'published' ? 'NOW()' : 'NULL';
 
@@ -217,7 +224,7 @@ export class PagesService {
         dto.scripts || null,
         dto.allowScripts || false,
         status,
-        dto.sortOrder || 0,
+        sortOrder,
         userId
       ]
     );

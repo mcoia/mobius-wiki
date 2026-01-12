@@ -25,6 +25,7 @@ export const routes: Routes = [
   {
     path: '',
     component: MainLayout,
+    canActivate: [authGuard],
     children: [
       // Wiki routes - ORDER MATTERS!
       // Literal paths must come before dynamic paths

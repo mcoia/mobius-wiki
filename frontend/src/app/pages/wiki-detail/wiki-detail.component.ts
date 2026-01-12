@@ -1,8 +1,8 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, RouterModule } from '@angular/router';
 import { Observable, EMPTY } from 'rxjs';
-import { map, switchMap, shareReplay, catchError, take, tap } from 'rxjs/operators';
+import { map, switchMap, shareReplay, catchError, take } from 'rxjs/operators';
 import { WikiService } from '../../core/services/wiki.service';
 import { SectionService } from '../../core/services/section.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -32,11 +32,14 @@ export class WikiDetailComponent implements OnInit {
   error: string | null = null;
 
   showCreateSectionModal = false;
+  showCreatePageModal = false;
+  selectedSection: SectionWithPages | null = null;
+
   @ViewChild('createSectionModal') createSectionModal?: CreateModalComponent;
+  @ViewChild('createPageModal') createPageModal?: CreateModalComponent;
 
   constructor(
     private route: ActivatedRoute,
-    private router: Router,
     private wikiService: WikiService,
     private sectionService: SectionService,
     private authService: AuthService
@@ -66,16 +69,8 @@ export class WikiDetailComponent implements OnInit {
         console.error('Failed to load sections:', error);
         return EMPTY;
       }),
-      tap((sections: SectionWithPages[]) => {
-        // Check if user explicitly wants to see overview
-        this.route.queryParams.pipe(take(1)).subscribe(params => {
-          const showOverview = params['view'] === 'overview';
-          if (!showOverview) {
-            // Auto-redirect to first page for consistent UX
-            this.redirectToDefaultPage(sections);
-          }
-        });
-      }),
+      // Removed auto-redirect logic - always show overview by default
+      // This prevents redirect loops and makes behavior predictable
       shareReplay(1)
     );
 
@@ -89,37 +84,6 @@ export class WikiDetailComponent implements OnInit {
     );
   }
 
-  /**
-   * Redirect to the first available page in the wiki
-   * Provides consistent UX - clicking wiki name goes to content, not index
-   */
-  private redirectToDefaultPage(sections: SectionWithPages[]): void {
-    // Find first section with pages
-    for (const section of sections) {
-      if (section.pages && section.pages.length > 0) {
-        // Get first published page, or first draft if no published pages
-        const firstPage = section.pages.find(p => p.status === 'published') || section.pages[0];
-
-        // Get current wiki slug from route
-        this.route.params.pipe(take(1)).subscribe(params => {
-          const wikiSlug = params['wikiSlug'];
-
-          console.log(`Auto-redirecting to: /wiki/${wikiSlug}/${section.slug}/${firstPage.slug}`);
-
-          // Redirect to first page
-          this.router.navigate(
-            ['/wiki', wikiSlug, section.slug, firstPage.slug],
-            { replaceUrl: true }  // Replace history so back button works correctly
-          );
-        });
-
-        return; // Exit after first redirect
-      }
-    }
-
-    // If no pages exist, stay on overview (fallback for empty wikis)
-    console.log('No pages found in wiki, showing overview');
-  }
 
   onCreateSection(data: { title: string; slug: string; description: string }): void {
     if (this.createSectionModal) {
@@ -146,6 +110,39 @@ export class WikiDetailComponent implements OnInit {
         if (this.createSectionModal) {
           this.createSectionModal.setError(error.error?.message || 'Failed to create section');
           this.createSectionModal.setLoading(false);
+        }
+      }
+    });
+  }
+
+  onCreatePageInSection(section: SectionWithPages): void {
+    this.selectedSection = section;
+    this.showCreatePageModal = true;
+  }
+
+  onCreatePage(data: { title: string; slug: string }): void {
+    if (!this.selectedSection) return;
+
+    if (this.createPageModal) {
+      this.createPageModal.setLoading(true);
+      this.createPageModal.setError('');
+    }
+
+    this.wikiService.createPage(this.selectedSection.id, {
+      title: data.title,
+      slug: data.slug,
+      content: ''
+    }).subscribe({
+      next: () => {
+        this.showCreatePageModal = false;
+        this.selectedSection = null;
+        // Reload page to show new page
+        window.location.reload();
+      },
+      error: (error: any) => {
+        if (this.createPageModal) {
+          this.createPageModal.setError(error.error?.message || 'Failed to create page');
+          this.createPageModal.setLoading(false);
         }
       }
     });

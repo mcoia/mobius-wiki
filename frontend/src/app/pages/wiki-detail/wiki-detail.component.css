@@ -50,6 +50,30 @@
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
 }
 
+.btn-secondary {
+  padding: 12px 24px;
+  background-color: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn-secondary:hover {
+  background-color: #e5e7eb;
+  border-color: #9ca3af;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 0.875rem;
+}
+
 .section-block {
   background: white;
   border: 1px solid #e5e7eb;
@@ -63,11 +87,20 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  gap: 16px;
+}
+
 .section-block h2 {
   font-size: 1.5rem;
   font-weight: 600;
   color: #1a1a1a;
-  margin: 0 0 8px 0;
+  margin: 0;
+  flex: 1;
 }
 
 .section-desc {

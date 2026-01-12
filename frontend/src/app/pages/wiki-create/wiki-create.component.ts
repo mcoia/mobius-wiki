@@ -69,6 +69,6 @@ export class WikiCreateComponent implements OnInit {
   }
 
   onCancel(): void {
-    this.router.navigate(['/wikis']);
+    this.router.navigate(['/wiki']);
   }
 }

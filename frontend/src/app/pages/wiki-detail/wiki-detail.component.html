@@ -29,7 +29,18 @@
       } @else {
         @for (section of sections; track section.id) {
           <div class="section-block">
-            <h2>{{ section.title }}</h2>
+            <div class="section-header">
+              <h2>{{ section.title }}</h2>
+              @if (canEdit$ | async) {
+                <button
+                  (click)="onCreatePageInSection(section)"
+                  class="btn-secondary btn-sm"
+                  title="Create a new page in this section">
+                  + New Page
+                </button>
+              }
+            </div>
+
             @if (section.description) {
               <p class="section-desc">{{ section.description }}</p>
             }
@@ -48,7 +59,7 @@
                 }
               </ul>
             } @else {
-              <p class="no-pages">No pages in this section yet.</p>
+              <p class="no-pages">No pages in this section yet. Click "+ New Page" above to create one.</p>
             }
           </div>
         }
@@ -66,6 +77,18 @@
         [showDescription]="true"
         (create)="onCreateSection($event)"
         (cancel)="showCreateSectionModal = false"
+      />
+    }
+
+    <!-- Create Page Modal -->
+    @if (showCreatePageModal && selectedSection) {
+      <app-create-modal
+        #createPageModal
+        [modalTitle]="'Create New Page in ' + selectedSection.title"
+        [showSlug]="true"
+        [showDescription]="false"
+        (create)="onCreatePage($event)"
+        (cancel)="showCreatePageModal = false; selectedSection = null"
       />
     }
   } @else {

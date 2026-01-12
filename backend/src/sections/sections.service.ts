@@ -93,11 +93,18 @@ export class SectionsService {
       throw new ConflictException(`A section with slug '${slug}' already exists in this wiki`);
     }
 
+    // Get max sort_order for this wiki to ensure chronological ordering
+    const { rows: maxOrderRows } = await this.pool.query(
+      'SELECT COALESCE(MAX(sort_order), -1) as max_order FROM wiki.sections WHERE wiki_id = $1 AND deleted_at IS NULL',
+      [wikiId]
+    );
+    const sortOrder = dto.sortOrder ?? (maxOrderRows[0].max_order + 1);
+
     const { rows } = await this.pool.query(
       `INSERT INTO wiki.sections (wiki_id, title, slug, description, sort_order, created_by, updated_by)
        VALUES ($1, $2, $3, $4, $5, $6, $6)
        RETURNING *`,
-      [wikiId, dto.title, slug, dto.description || null, dto.sortOrder || 0, userId]
+      [wikiId, dto.title, slug, dto.description || null, sortOrder, userId]
     );
 
     return wrapData(rows[0]);
