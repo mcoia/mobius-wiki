@@ -1,0 +1,348 @@
+<!-- Modal Overlay -->
+<div class="modal-overlay" (click)="closeAllModals()">
+  <!-- Access Control Panel as Modal -->
+  <div class="access-control-panel" (click)="$event.stopPropagation()">
+    <!-- Header -->
+    <div class="panel-header">
+      <h3>Access Control</h3>
+      <button class="btn-close" (click)="closeAllModals()" title="Close">
+        <lucide-angular [img]="X" [size]="20"></lucide-angular>
+      </button>
+    </div>
+
+    <!-- Error Message -->
+    @if (error) {
+      <div class="alert alert-error">
+        {{ error }}
+      </div>
+    }
+
+    <!-- Loading Indicator -->
+    @if (loading) {
+      <div class="loading">
+        <p>Loading...</p>
+      </div>
+    }
+
+  <!-- Current Rules Section -->
+  <div class="panel-body">
+    @if (rules$ | async; as rules) {
+      @if (rules.length === 0) {
+        <!-- No Rules - Shows Inheritance Status -->
+        <div class="inheritance-banner">
+          <span class="info-icon">ℹ️</span>
+          <div>
+            <strong>No custom rules set</strong>
+            <p>This content inherits permissions from its parent</p>
+          </div>
+        </div>
+      } @else {
+        <!-- Has Custom Rules -->
+        <div class="custom-rules-banner">
+          <span class="info-icon">ℹ️</span>
+          <div>
+            <strong>This content has custom permissions</strong>
+            <p>Not inheriting from parent</p>
+          </div>
+        </div>
+
+        <!-- Rule Cards -->
+        <div class="rules-list">
+          @for (rule of rules; track rule.id) {
+            <div class="rule-card">
+              <div class="rule-header">
+                <span class="rule-icon">
+                  <lucide-angular [img]="getRuleDisplay(rule).icon" [size]="24"></lucide-angular>
+                </span>
+                <div class="rule-info">
+                  <strong>{{ getRuleDisplay(rule).title }}</strong>
+                  <p>{{ getRuleDisplay(rule).description }}</p>
+                  <small class="rule-meta">Created {{ getRelativeTime(rule.created_at) }}</small>
+                </div>
+                @if (canManage) {
+                  <button
+                    class="btn-icon btn-delete"
+                    (click)="deleteRule(rule)"
+                    [disabled]="loading"
+                    title="Delete rule">
+                    ⊗
+                  </button>
+                }
+              </div>
+
+              <!-- Share Link Copy Button -->
+              @if (rule.rule_type === 'link' && rule.rule_value) {
+                <div class="share-link-display">
+                  <input
+                    type="text"
+                    readonly
+                    [value]="getShareLinkUrl(rule.rule_value)"
+                    class="share-link-input">
+                  <button
+                    class="btn btn-secondary btn-sm"
+                    (click)="copyShareLink()"
+                    title="Copy to clipboard">
+                    📋 Copy Link
+                  </button>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+    }
+
+    <!-- Add Permission Button -->
+    @if (canManage) {
+      <button
+        class="btn btn-primary btn-add-rule"
+        (click)="openAddRuleModal()"
+        [disabled]="loading">
+        + Add Permission Rule
+      </button>
+    }
+  </div>
+
+  <!-- Add Permission Rule Modal -->
+  @if (showAddRuleModal) {
+    <div class="modal-overlay" (click)="closeAllModals()">
+      <div class="modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>Add Permission Rule</h3>
+          <button class="btn-icon" (click)="closeAllModals()">×</button>
+        </div>
+
+        <div class="modal-body">
+          <p>Choose permission type:</p>
+
+          <!-- Public Access Option -->
+          <div class="permission-option" (click)="selectMakePublic()">
+            <span class="option-icon">
+              <lucide-angular [img]="Globe" [size]="32"></lucide-angular>
+            </span>
+            <div class="option-content">
+              <strong>Make Public</strong>
+              <p>Anyone can view this content</p>
+            </div>
+            <button class="btn btn-secondary btn-sm">Select</button>
+          </div>
+
+          <!-- Role-Based Access Option -->
+          <div class="permission-option" (click)="selectRestrictByRole()">
+            <span class="option-icon">
+              <lucide-angular [img]="Users" [size]="32"></lucide-angular>
+            </span>
+            <div class="option-content">
+              <strong>Restrict by Role</strong>
+              <p>Only specific staff roles can view</p>
+            </div>
+            <button class="btn btn-secondary btn-sm">Select</button>
+          </div>
+
+          <!-- Share Link Option -->
+          <div class="permission-option" (click)="selectGenerateShareLink()">
+            <span class="option-icon">
+              <lucide-angular [img]="Link2" [size]="32"></lucide-angular>
+            </span>
+            <div class="option-content">
+              <strong>Generate Share Link</strong>
+              <p>Create a shareable link for this content</p>
+            </div>
+            <button class="btn btn-secondary btn-sm">Select</button>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-secondary" (click)="closeAllModals()">Cancel</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Role Selection Modal -->
+  @if (showRoleModal) {
+    <div class="modal-overlay" (click)="closeAllModals()">
+      <div class="modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>Restrict by Role</h3>
+          <button class="btn-icon" (click)="closeAllModals()">×</button>
+        </div>
+
+        <div class="modal-body">
+          <p><strong>Who can access this content?</strong></p>
+
+          <div class="role-options">
+            <label class="radio-option">
+              <input
+                type="radio"
+                name="role"
+                value="library_staff"
+                [(ngModel)]="selectedRole">
+              <div>
+                <strong>Library Staff</strong>
+                <p>Staff at any member library</p>
+              </div>
+            </label>
+
+            <label class="radio-option">
+              <input
+                type="radio"
+                name="role"
+                value="mobius_staff"
+                [(ngModel)]="selectedRole">
+              <div>
+                <strong>MOBIUS Staff</strong>
+                <p>MOBIUS organization staff only</p>
+              </div>
+            </label>
+
+            <label class="radio-option">
+              <input
+                type="radio"
+                name="role"
+                value="site_admin"
+                [(ngModel)]="selectedRole">
+              <div>
+                <strong>Site Administrators</strong>
+                <p>Site admins only</p>
+              </div>
+            </label>
+          </div>
+
+          <div class="role-note">
+            <span class="warning-icon">
+              <lucide-angular [img]="AlertTriangle" [size]="18"></lucide-angular>
+            </span>
+            <p>Note: Higher roles automatically inherit lower role permissions</p>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-secondary" (click)="closeAllModals()">Cancel</button>
+          <button
+            class="btn btn-primary"
+            (click)="createRoleRule()"
+            [disabled]="loading || !selectedRole">
+            Add Rule
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Share Link Generation Modal -->
+  @if (showShareLinkModal) {
+    <div class="modal-overlay" (click)="closeAllModals()">
+      <div class="modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>Generate Share Link</h3>
+          <button class="btn-icon" (click)="closeAllModals()">×</button>
+        </div>
+
+        <div class="modal-body">
+          <p><strong>Create a shareable link for this content</strong></p>
+
+          <div class="expiration-options">
+            <label class="radio-option">
+              <input
+                type="radio"
+                name="expiration"
+                [checked]="linkNeverExpires"
+                (change)="linkNeverExpires = true">
+              <div>
+                <strong>Never expires</strong>
+              </div>
+            </label>
+
+            <label class="radio-option">
+              <input
+                type="radio"
+                name="expiration"
+                [checked]="!linkNeverExpires"
+                (change)="linkNeverExpires = false">
+              <div>
+                <strong>Expires after:</strong>
+                <select
+                  [(ngModel)]="linkExpirationHours"
+                  [disabled]="linkNeverExpires"
+                  class="form-control">
+                  <option [value]="1">1 hour</option>
+                  <option [value]="6">6 hours</option>
+                  <option [value]="24">24 hours</option>
+                  <option [value]="168">1 week</option>
+                  <option [value]="720">30 days</option>
+                </select>
+              </div>
+            </label>
+          </div>
+
+          <div class="warning-banner">
+            <span class="warning-icon">
+              <lucide-angular [img]="AlertTriangle" [size]="18"></lucide-angular>
+            </span>
+            <p>Warning: Anyone with this link can access this content until it expires</p>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-secondary" (click)="closeAllModals()">Cancel</button>
+          <button
+            class="btn btn-primary"
+            (click)="generateShareLink()"
+            [disabled]="loading">
+            Generate Link
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Share Link Result Modal -->
+  @if (showShareLinkResult) {
+    <div class="modal-overlay" (click)="closeAllModals()">
+      <div class="modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>Share Link Generated</h3>
+          <button class="btn-icon" (click)="closeAllModals()">×</button>
+        </div>
+
+        <div class="modal-body">
+          <div class="success-banner">
+            <span class="success-icon">
+              <lucide-angular [img]="CheckCircle" [size]="18"></lucide-angular>
+            </span>
+            <p>Share link created successfully!</p>
+          </div>
+
+          <div class="share-link-result">
+            <input
+              type="text"
+              readonly
+              [value]="generatedShareLink"
+              class="share-link-input">
+            <button
+              class="btn btn-primary"
+              (click)="copyShareLink()">
+              📋 Copy to Clipboard
+            </button>
+          </div>
+
+          <p class="expiration-info">
+            Link expires: {{ formatExpirationDate(shareExpiresAt) }}
+          </p>
+
+          <div class="warning-banner">
+            <span class="warning-icon">
+              <lucide-angular [img]="AlertTriangle" [size]="18"></lucide-angular>
+            </span>
+            <p>Keep this link private - anyone with it can access this content</p>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-primary" (click)="closeAllModals()">Done</button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

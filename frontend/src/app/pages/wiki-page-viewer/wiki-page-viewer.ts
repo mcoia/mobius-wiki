@@ -11,16 +11,21 @@ import { Observable, throwError, EMPTY, Subject } from 'rxjs';
 import { switchMap, catchError, shareReplay, tap, map, take, takeUntil } from 'rxjs/operators';
 import { TinymceEditorComponent } from '../../shared/components/tinymce-editor/tinymce-editor.component';
 import { CreateModalComponent } from '../../shared/components/create-modal/create-modal.component';
+import { AccessControlPanelComponent } from '../../shared/components/access-control-panel/access-control-panel.component';
+import { LucideAngularModule, Lock } from 'lucide-angular';
 
 @Component({
   selector: 'app-wiki-page-viewer',
-  imports: [CommonModule, FormsModule, RouterLink, TinymceEditorComponent, CreateModalComponent],
+  imports: [CommonModule, FormsModule, RouterLink, TinymceEditorComponent, CreateModalComponent, AccessControlPanelComponent, LucideAngularModule],
   templateUrl: './wiki-page-viewer.html',
   styleUrl: './wiki-page-viewer.css'
 })
 export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
   page$!: Observable<Page>;
   error: string | null = null;
+
+  // Lucide icons
+  readonly Lock = Lock;
 
   // Track script elements for cleanup
   private scriptElements: HTMLScriptElement[] = [];
@@ -51,6 +56,7 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
   // Modal state
   showCreateSectionModal = false;
   showCreatePageModal = false;
+  showAccessControlPanel = false;
   @ViewChild('createSectionModal') createSectionModal?: CreateModalComponent;
   @ViewChild('createPageModal') createPageModal?: CreateModalComponent;
 

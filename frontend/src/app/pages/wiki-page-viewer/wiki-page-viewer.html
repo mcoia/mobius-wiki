@@ -27,6 +27,13 @@
               Publish Page
             </button>
           }
+          <button
+            (click)="showAccessControlPanel = !showAccessControlPanel"
+            class="btn-permissions"
+            title="Manage page permissions">
+            <lucide-angular [img]="Lock" [size]="16"></lucide-angular>
+            <span>Permissions</span>
+          </button>
           <button (click)="showCreateSectionModal = true" class="btn-secondary" title="Create a new section in this wiki">
             + New Section
           </button>
@@ -62,6 +69,19 @@
         @if (page.author) {
           by {{ page.author.name }}
         }
+      </div>
+    }
+
+    <!-- Access Control Panel -->
+    @if (showAccessControlPanel && (canEdit$ | async)) {
+      <div class="access-control-section">
+        <app-access-control-panel
+          [contentType]="'pages'"
+          [contentId]="page.id"
+          [canManage]="true"
+          (rulesChanged)="showAccessControlPanel = false"
+          (close)="showAccessControlPanel = false">
+        </app-access-control-panel>
       </div>
     }
 

@@ -1,0 +1,506 @@
+/* Modal Overlay */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+/* Access Control Panel as Modal */
+.access-control-panel {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 0;
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1),
+              0 2px 4px rgba(0, 0, 0, 0.06);
+  animation: slideIn 0.2s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
+  border-radius: 8px 8px 0 0;
+}
+
+.panel-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #333;
+  font-weight: 600;
+}
+
+.btn-close {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.btn-close:hover {
+  background-color: #e5e7eb;
+  color: #374151;
+}
+
+.panel-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+}
+
+/* Alert Messages */
+.alert {
+  padding: 12px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+}
+
+.alert-error {
+  background-color: #fee;
+  color: #c00;
+  border: 1px solid #fcc;
+}
+
+.loading {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+}
+
+/* Inheritance Banner */
+.inheritance-banner,
+.custom-rules-banner {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  background-color: #f0f8ff;
+  border: 1px solid #b3d9ff;
+  border-radius: 4px;
+}
+
+.custom-rules-banner {
+  background-color: #fff8e6;
+  border-color: #ffd966;
+}
+
+.info-icon {
+  font-size: 1.5rem;
+}
+
+.inheritance-banner strong,
+.custom-rules-banner strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #333;
+}
+
+.inheritance-banner p,
+.custom-rules-banner p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+/* Rules List */
+.rules-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.rule-card {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 16px;
+  background: #fafafa;
+}
+
+.rule-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.rule-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.rule-info {
+  flex: 1;
+}
+
+.rule-info strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #333;
+}
+
+.rule-info p {
+  margin: 0 0 4px 0;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.rule-meta {
+  font-size: 0.8rem;
+  color: #999;
+}
+
+.btn-icon {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 4px;
+  color: #666;
+  transition: color 0.2s;
+}
+
+.btn-icon:hover {
+  color: #333;
+}
+
+.btn-delete {
+  color: #c00;
+}
+
+.btn-delete:hover {
+  color: #900;
+}
+
+.btn-icon:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Share Link Display */
+.share-link-display {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.share-link-input {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-family: monospace;
+  background: #f9f9f9;
+}
+
+/* Add Rule Button */
+.btn-add-rule {
+  margin-top: 8px;
+  width: 100%;
+}
+
+/* Buttons */
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background-color 0.2s, opacity 0.2s;
+  font-weight: 500;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background-color: #007bff;
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  color: white;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: #545b62;
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 0.85rem;
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: white;
+  border-radius: 8px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px;
+  border-bottom: 1px solid #ddd;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #333;
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+.modal-body > p {
+  margin-top: 0;
+  margin-bottom: 16px;
+  color: #333;
+  font-weight: 500;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 20px;
+  border-top: 1px solid #ddd;
+}
+
+/* Permission Options */
+.permission-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.permission-option:hover {
+  border-color: #007bff;
+  background-color: #f8f9fa;
+}
+
+.option-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.option-content {
+  flex: 1;
+}
+
+.option-content strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #333;
+}
+
+.option-content p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+/* Role Options */
+.role-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.radio-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.radio-option:hover {
+  border-color: #007bff;
+  background-color: #f8f9fa;
+}
+
+.radio-option input[type="radio"] {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.radio-option div {
+  flex: 1;
+}
+
+.radio-option strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #333;
+}
+
+.radio-option p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.role-note {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  background-color: #fff8e6;
+  border: 1px solid #ffd966;
+  border-radius: 4px;
+}
+
+.warning-icon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.role-note p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #856404;
+}
+
+/* Expiration Options */
+.expiration-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.form-control {
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  margin-top: 8px;
+}
+
+.form-control:disabled {
+  background-color: #f5f5f5;
+  cursor: not-allowed;
+}
+
+/* Warning Banner */
+.warning-banner {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  background-color: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 4px;
+  margin-top: 16px;
+}
+
+.warning-banner p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #856404;
+}
+
+/* Success Banner */
+.success-banner {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  background-color: #d4edda;
+  border: 1px solid #c3e6cb;
+  border-radius: 4px;
+  margin-bottom: 16px;
+}
+
+.success-icon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.success-banner p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #155724;
+}
+
+/* Share Link Result */
+.share-link-result {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.expiration-info {
+  margin: 8px 0;
+  font-size: 0.9rem;
+  color: #666;
+}
