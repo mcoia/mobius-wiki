@@ -1,4 +1,4 @@
-import { Injectable, Inject, NotFoundException, ConflictException, ForbiddenException } from '@nestjs/common';
+import { Injectable, Inject, NotFoundException, ConflictException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { Pool } from 'pg';
 import { CreatePageDto } from './dto/create-page.dto';
 import { UpdatePageDto } from './dto/update-page.dto';
@@ -22,30 +22,74 @@ export class PagesService {
   ) {}
 
   /**
-   * Check if user can view a page based on its status
-   * - Published pages: anyone with ACL access can view
-   * - Draft pages: only users with EDIT permission can view
-   *
-   * @throws NotFoundException if user cannot view (returns 404, not 403)
+   * Get the version of a page that should be shown to the current user
+   * - Editors see current draft (unless forcePublished=true)
+   * - Non-editors see last published version (if page is draft but was published before)
+   * - Non-editors see current if page is published
+   * - Non-editors get 404 if page has never been published and is draft
    */
-  private async checkPageVisibility(
-    page: any,
-    user: User | null
-  ): Promise<void> {
-    // Published pages are visible to anyone with ACL access
-    if (page.status === 'published') {
-      return;
+  private async getVisibleVersion(page: any, user: User | null, forcePublished = false) {
+    const canEdit = await this.aclService.canEdit(user, 'page', page.id);
+
+    // Get current version number
+    const { rows: versionRows } = await this.pool.query(
+      'SELECT MAX(version_number) as current_version FROM wiki.page_versions WHERE page_id = $1',
+      [page.id]
+    );
+    const currentVersion = versionRows[0]?.current_version || 0;
+
+    // If editor explicitly wants published version, skip to published logic
+    if (!forcePublished && canEdit) {
+      // Editors see current draft with metadata
+      return {
+        ...page,
+        currentVersionNumber: currentVersion,
+        isViewingDraft: page.status === 'draft',
+        hasDraft: page.status === 'draft' && page.published_version_number !== null
+      };
     }
 
-    // Draft pages require edit permission
-    if (page.status === 'draft') {
-      const canEdit = await this.aclService.canEdit(user, 'page', page.id);
+    // Published pages - show current
+    if (page.status === 'published') {
+      return {
+        ...page,
+        currentVersionNumber: currentVersion,
+        isViewingDraft: false,
+        hasDraft: false
+      };
+    }
 
-      if (!canEdit) {
-        // Return 404 (not 403) to avoid leaking page existence
-        throw new NotFoundException(`Page with ID ${page.id} not found`);
+    // Draft but previously published - show last published version
+    if (page.status === 'draft' && page.published_version_number) {
+      const { rows } = await this.pool.query(
+        `SELECT pv.content, pv.title, pv.scripts
+         FROM wiki.page_versions pv
+         WHERE pv.page_id = $1 AND pv.version_number = $2`,
+        [page.id, page.published_version_number]
+      );
+
+      if (rows.length > 0) {
+        const publishedVersion = rows[0];
+        // Return page with published version content
+        return {
+          ...page,
+          content: publishedVersion.content,
+          title: publishedVersion.title,
+          scripts: publishedVersion.scripts || null,
+          currentVersionNumber: currentVersion,
+          isViewingDraft: false,
+          hasDraft: true
+        };
       }
     }
+
+    // If editor forced published view but no published version exists
+    if (forcePublished && canEdit && !page.published_version_number) {
+      throw new BadRequestException('No published version exists');
+    }
+
+    // Truly unpublished draft - hide from non-editors
+    throw new NotFoundException(`Page with ID ${page.id} not found`);
   }
 
   async findAllInSection(sectionId: number, user: User | null = null, includeDeleted = false) {
@@ -94,7 +138,7 @@ export class PagesService {
     };
   }
 
-  async findOne(id: number, user: User | null = null, includeDeleted = false) {
+  async findOne(id: number, user: User | null = null, includeDeleted = false, viewPublished = false) {
     const whereClause = includeDeleted
       ? 'WHERE id = $1'
       : 'WHERE id = $1 AND deleted_at IS NULL';
@@ -108,10 +152,10 @@ export class PagesService {
       throw new NotFoundException(`Page with ID ${id} not found`);
     }
 
-    // Check page visibility based on status
-    await this.checkPageVisibility(rows[0], user);
+    // Get visible version based on user permissions and page status
+    const visibleVersion = await this.getVisibleVersion(rows[0], user, viewPublished);
 
-    return wrapData(rows[0]);
+    return wrapData(visibleVersion);
   }
 
   async findBySlug(
@@ -119,8 +163,8 @@ export class PagesService {
     sectionSlug: string,
     pageSlug: string,
     user: any,
-    token: string | undefined,
-    includeDeleted = false
+    includeDeleted = false,
+    viewPublished = false
   ) {
     const deletedClause = includeDeleted ? '' : 'AND p.deleted_at IS NULL';
 
@@ -166,16 +210,16 @@ export class PagesService {
     const page = rows[0];
 
     // Check ACL after fetching the page
-    const hasAccess = await this.aclService.canAccess(user, 'page', page.id, token);
+    const hasAccess = await this.aclService.canAccess(user, 'page', page.id);
 
     if (!hasAccess) {
       throw new ForbiddenException('Access denied');
     }
 
-    // Check page visibility based on status
-    await this.checkPageVisibility(page, user);
+    // Get visible version (replaces checkPageVisibility)
+    const visibleVersion = await this.getVisibleVersion(page, user, viewPublished);
 
-    return wrapData(page);
+    return wrapData(visibleVersion);
   }
 
   async create(sectionId: number, dto: CreatePageDto, userId: number) {
@@ -255,6 +299,11 @@ export class PagesService {
     let newContent = page.content;
     let newScripts = page.scripts || null;
 
+    // AUTO-DRAFT: If editing a published page, change to draft
+    if (page.status === 'published' && (dto.content !== undefined || dto.title !== undefined)) {
+      updates.push(`status = 'draft'`);
+    }
+
     if (dto.title !== undefined) {
       updates.push(`title = $${paramCount}`);
       values.push(dto.title);
@@ -328,20 +377,80 @@ export class PagesService {
   }
 
   async publish(id: number, userId: number) {
+    // Get current max version for this page
+    const { rows: versionRows } = await this.pool.query(
+      'SELECT MAX(version_number) as max_version FROM wiki.page_versions WHERE page_id = $1',
+      [id]
+    );
+    const publishedVersion = versionRows[0]?.max_version || 1;
+
     const { rows } = await this.pool.query(
       `UPDATE wiki.pages
        SET status = 'published',
-           published_at = NOW(),
-           updated_by = $2,
+           published_at = COALESCE(published_at, NOW()),
+           published_version_number = $2,
+           updated_by = $3,
            updated_at = NOW()
        WHERE id = $1 AND deleted_at IS NULL
        RETURNING *`,
-      [id, userId]
+      [id, publishedVersion, userId]
     );
 
     if (rows.length === 0) {
       throw new NotFoundException(`Page with ID ${id} not found`);
     }
+
+    return wrapData(rows[0]);
+  }
+
+  async discardDraft(id: number, user: User | null) {
+    // Check edit permission
+    const canEdit = await this.aclService.canEdit(user, 'page', id);
+    if (!canEdit) {
+      throw new ForbiddenException('You do not have permission to modify this page');
+    }
+
+    // Get page
+    const { rows: pageRows } = await this.pool.query(
+      'SELECT * FROM wiki.pages WHERE id = $1 AND deleted_at IS NULL',
+      [id]
+    );
+
+    if (pageRows.length === 0) {
+      throw new NotFoundException(`Page with ID ${id} not found`);
+    }
+
+    const page = pageRows[0];
+
+    // Only works if page has been published before
+    if (!page.published_version_number) {
+      throw new BadRequestException('Cannot discard draft - page has never been published');
+    }
+
+    // Get published version content
+    const { rows: versionRows } = await this.pool.query(
+      'SELECT content, title, scripts FROM wiki.page_versions WHERE page_id = $1 AND version_number = $2',
+      [id, page.published_version_number]
+    );
+
+    if (versionRows.length === 0) {
+      throw new NotFoundException('Published version not found');
+    }
+
+    const publishedVersion = versionRows[0];
+
+    // Revert to published version
+    const { rows } = await this.pool.query(
+      `UPDATE wiki.pages
+       SET content = $2,
+           title = $3,
+           scripts = $4,
+           status = 'published',
+           updated_at = NOW()
+       WHERE id = $1
+       RETURNING *`,
+      [id, publishedVersion.content, publishedVersion.title, publishedVersion.scripts]
+    );
 
     return wrapData(rows[0]);
   }

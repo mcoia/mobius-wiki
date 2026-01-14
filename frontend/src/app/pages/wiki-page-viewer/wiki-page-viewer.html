@@ -6,6 +6,23 @@
   }
 
   @if (page$ | async; as page) {
+    <!-- Version banner (only for editors) -->
+    @if (canEdit$ | async) {
+      <app-version-banner
+        [status]="page.status"
+        [isViewingDraft]="page.isViewingDraft || false"
+        [hasDraft]="page.hasDraft || false"
+        [publishedVersionNumber]="page.publishedVersionNumber"
+        [currentVersionNumber]="page.currentVersionNumber"
+        [publishedAt]="page.published_at"
+        [canEdit]="true"
+        (viewDraft)="viewDraftVersion()"
+        (viewPublished)="viewPublishedVersion()"
+        (publish)="publishPage()"
+        (discardDraft)="discardDraft()">
+      </app-version-banner>
+    }
+
     <!-- Breadcrumb and action buttons -->
     <div class="page-header">
       <nav class="breadcrumb">

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { BehaviorSubject, Observable, tap, map } from 'rxjs';
 import { ApiService } from './api.service';
 import { User, LoginRequest, AuthResponse } from '../models/user.model';
 
@@ -9,6 +9,7 @@ import { User, LoginRequest, AuthResponse } from '../models/user.model';
 export class AuthService {
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
+  public isGuest$ = this.currentUser$.pipe(map(user => user === null));
 
   constructor(private api: ApiService) {
     // Initialize by checking current session

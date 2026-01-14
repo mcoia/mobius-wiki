@@ -1,7 +1,6 @@
 import { Injectable, Inject, NotFoundException, BadRequestException } from '@nestjs/common';
 import { Pool } from 'pg';
 import { CreateAccessRuleDto } from './dto/create-access-rule.dto';
-import { generateShareToken } from '../access-control/utils/token.util';
 
 @Injectable()
 export class AccessRulesService {
@@ -26,15 +25,14 @@ export class AccessRulesService {
     await this.verifyRuleableExists(ruleableType, ruleableId);
 
     const { rows } = await this.pool.query(
-      `INSERT INTO wiki.access_rules (ruleable_type, ruleable_id, rule_type, rule_value, expires_at, created_by)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO wiki.access_rules (ruleable_type, ruleable_id, rule_type, rule_value, created_by)
+       VALUES ($1, $2, $3, $4, $5)
        RETURNING *`,
       [
         ruleableType,
         ruleableId,
         dto.ruleType,
         dto.ruleValue || null,
-        dto.expiresAt || null,
         userId,
       ],
     );
@@ -55,7 +53,7 @@ export class AccessRulesService {
     return rows;
   }
 
-  async remove(ruleId: number, userId: number) {
+  async remove(ruleId: number) {
     const { rows } = await this.pool.query(
       'DELETE FROM wiki.access_rules WHERE id = $1 RETURNING *',
       [ruleId],
@@ -66,24 +64,6 @@ export class AccessRulesService {
     }
 
     return rows[0];
-  }
-
-  async generateShareLink(ruleableType: string, ruleableId: number, expiresAt: string | null, userId: number) {
-    await this.verifyRuleableExists(ruleableType, ruleableId);
-
-    const token = generateShareToken();
-
-    const { rows } = await this.pool.query(
-      `INSERT INTO wiki.access_rules (ruleable_type, ruleable_id, rule_type, rule_value, expires_at, created_by)
-       VALUES ($1, $2, 'link', $3, $4, $5)
-       RETURNING *`,
-      [ruleableType, ruleableId, token, expiresAt || null, userId],
-    );
-
-    return {
-      token,
-      rule: rows[0],
-    };
   }
 
   private async verifyRuleableExists(ruleableType: string, ruleableId: number) {

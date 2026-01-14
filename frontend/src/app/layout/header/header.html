@@ -52,8 +52,22 @@
       <input type="text" placeholder="Search...">
     </div>
 
-    <a routerLink="/login" class="user-link">
-      <i class="fas fa-user"></i> Login
-    </a>
+    <!-- User menu - show login or user info based on auth state -->
+    @if (currentUser$ | async; as user) {
+      <!-- Authenticated user -->
+      <div class="user-menu">
+        <span class="user-name">
+          <i class="fas fa-user"></i> {{ user.name }}
+        </span>
+        <button class="logout-btn" (click)="logout()" type="button">
+          Logout
+        </button>
+      </div>
+    } @else {
+      <!-- Guest user -->
+      <a routerLink="/login" class="user-link">
+        <i class="fas fa-user"></i> Login
+      </a>
+    }
   </div>
 </header>

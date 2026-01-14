@@ -42,8 +42,9 @@ export class PagesController {
     @Param('id', ParseIntPipe) id: number,
     @User() user: any,
     @Query('includeDeleted') includeDeleted?: string,
+    @Query('viewPublished') viewPublished?: string,
   ) {
-    return this.pagesService.findOne(id, user, includeDeleted === 'true');
+    return this.pagesService.findOne(id, user, includeDeleted === 'true', viewPublished === 'true');
   }
 
   @Get('pages/:id/versions')
@@ -114,6 +115,12 @@ export class PagesController {
   @UseGuards(AuthGuard)
   async publish(@Param('id', ParseIntPipe) id: number, @User() user: any) {
     return this.pagesService.publish(id, user.id);
+  }
+
+  @Post('pages/:id/discard-draft')
+  @UseGuards(AuthGuard)
+  async discardDraft(@Param('id', ParseIntPipe) id: number, @User() user: any) {
+    return this.pagesService.discardDraft(id, user);
   }
 
   @Delete('pages/:id')

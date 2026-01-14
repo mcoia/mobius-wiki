@@ -13,12 +13,14 @@ export class WikiService {
     return this.api.get(`/wikis/slug/${slug}`);
   }
 
-  getPageBySlug(wikiSlug: string, pageSlug: string): Observable<{ data: Page }> {
-    return this.api.get(`/wikis/slug/${wikiSlug}/pages/slug/${pageSlug}`);
+  getPageBySlug(wikiSlug: string, pageSlug: string, viewPublished = false): Observable<{ data: Page }> {
+    const params = viewPublished ? '?viewPublished=true' : '';
+    return this.api.get(`/wikis/slug/${wikiSlug}/pages/slug/${pageSlug}${params}`);
   }
 
-  getPagesBySlugs(wikiSlug: string, sectionSlug: string, pageSlug: string): Observable<{ data: Page }> {
-    return this.api.get(`/wikis/slug/${wikiSlug}/sections/slug/${sectionSlug}/pages/slug/${pageSlug}`);
+  getPagesBySlugs(wikiSlug: string, sectionSlug: string, pageSlug: string, viewPublished = false): Observable<{ data: Page }> {
+    const params = viewPublished ? '?viewPublished=true' : '';
+    return this.api.get(`/wikis/slug/${wikiSlug}/sections/slug/${sectionSlug}/pages/slug/${pageSlug}${params}`);
   }
 
   getWikis(): Observable<{ data: Wiki[]; meta: { total: number } }> {
@@ -67,5 +69,10 @@ export class WikiService {
   // Publish page
   publishPage(id: number): Observable<{ data: Page }> {
     return this.api.post(`/pages/${id}/publish`, {});
+  }
+
+  // Discard draft and revert to published version
+  discardDraft(id: number): Observable<{ data: Page }> {
+    return this.api.post(`/pages/${id}/discard-draft`, {});
   }
 }

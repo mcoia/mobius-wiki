@@ -49,19 +49,9 @@ export class AccessControlPanelComponent implements OnInit {
   // Modal states
   showAddRuleModal = false;
   showRoleModal = false;
-  showShareLinkModal = false;
-  showShareLinkResult = false;
-
-  // Share link data
-  generatedShareLink: string | null = null;
-  shareExpiresAt: string | null = null;
 
   // Role selection
   selectedRole: RoleType | null = null;
-
-  // Share link expiration settings
-  linkNeverExpires = true;
-  linkExpirationHours = 24;
 
   constructor(private accessControlService: AccessControlService) {}
 
@@ -98,8 +88,6 @@ export class AccessControlPanelComponent implements OnInit {
   closeAllModals(): void {
     this.showAddRuleModal = false;
     this.showRoleModal = false;
-    this.showShareLinkModal = false;
-    this.showShareLinkResult = false;
     this.error = null;
 
     // Emit close event to parent component
@@ -137,15 +125,6 @@ export class AccessControlPanelComponent implements OnInit {
     this.selectedRole = 'library_staff'; // Default selection
   }
 
-  /**
-   * User selected "Generate Share Link" option
-   */
-  selectGenerateShareLink(): void {
-    this.showAddRuleModal = false;
-    this.showShareLinkModal = true;
-    this.linkNeverExpires = true;
-    this.linkExpirationHours = 24;
-  }
 
   /**
    * Create role-based access rule
@@ -174,55 +153,6 @@ export class AccessControlPanelComponent implements OnInit {
       });
   }
 
-  /**
-   * Generate share link with optional expiration
-   */
-  generateShareLink(): void {
-    this.loading = true;
-    this.error = null;
-
-    let expiresAt: string | undefined;
-
-    if (!this.linkNeverExpires) {
-      const expirationDate = new Date();
-      expirationDate.setHours(expirationDate.getHours() + this.linkExpirationHours);
-      expiresAt = expirationDate.toISOString();
-    }
-
-    this.accessControlService.generateShareLink(this.contentType, this.contentId, expiresAt)
-      .subscribe({
-        next: (response) => {
-          this.loading = false;
-          this.generatedShareLink = `${window.location.origin}${response.data.shareUrl}`;
-          this.shareExpiresAt = response.data.rule.expires_at;
-          this.showShareLinkModal = false;
-          this.showShareLinkResult = true;
-          this.loadRules();
-          this.rulesChanged.emit();
-        },
-        error: (error) => {
-          this.loading = false;
-          this.error = error.error?.message || 'Failed to generate share link';
-        }
-      });
-  }
-
-  /**
-   * Copy share link to clipboard
-   */
-  copyShareLink(): void {
-    if (!this.generatedShareLink) return;
-
-    navigator.clipboard.writeText(this.generatedShareLink).then(
-      () => {
-        alert('Link copied to clipboard!');
-      },
-      (err) => {
-        console.error('Failed to copy link:', err);
-        alert('Failed to copy link. Please copy manually.');
-      }
-    );
-  }
 
   /**
    * Delete an access rule
@@ -312,20 +242,5 @@ export class AccessControlPanelComponent implements OnInit {
     if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
     if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
     return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-  }
-
-  /**
-   * Get full share link URL for a rule
-   */
-  getShareLinkUrl(token: string): string {
-    return `${window.location.origin}/${this.contentType}/${this.contentId}?token=${token}`;
-  }
-
-  /**
-   * Format expiration date for display
-   */
-  formatExpirationDate(dateString: string | null): string {
-    if (!dateString) return 'Never';
-    return new Date(dateString).toLocaleString();
   }
 }

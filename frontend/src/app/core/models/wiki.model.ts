@@ -57,4 +57,9 @@ export interface Page {
     name: string;
     email: string;
   };
+  // Version metadata (added by backend getVisibleVersion)
+  publishedVersionNumber?: number;
+  currentVersionNumber?: number;
+  isViewingDraft?: boolean;
+  hasDraft?: boolean;
 }

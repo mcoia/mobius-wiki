@@ -14,7 +14,6 @@ interface AccessRule {
   ruleable_id: number;
   rule_type: string;
   rule_value: string | null;
-  expires_at: Date | null;
 }
 
 @Injectable()
@@ -30,11 +29,10 @@ export class AccessControlService {
     user: User | null,
     contentType: string,
     contentId: number,
-    token?: string,
   ): Promise<boolean> {
     // Special handling for files: most restrictive wins
     if (contentType === 'file') {
-      return this.canAccessFile(user, contentId, token);
+      return this.canAccessFile(user, contentId);
     }
 
     // Get rules for this content
@@ -45,7 +43,7 @@ export class AccessControlService {
       const parent = await this.getParent(contentType, contentId);
 
       if (parent) {
-        return this.canAccess(user, parent.type, parent.id, token);
+        return this.canAccess(user, parent.type, parent.id);
       }
 
       // No rules anywhere in chain = public
@@ -54,7 +52,7 @@ export class AccessControlService {
 
     // Check rules (OR logic - matching ANY rule grants access)
     for (const rule of rules) {
-      if (this.matchesRule(rule, user, token)) {
+      if (this.matchesRule(rule, user)) {
         return true;
       }
     }
@@ -69,7 +67,6 @@ export class AccessControlService {
    * 1. User is authenticated
    * 2. User has staff-level role (library_staff or higher)
    * 3. User has READ access to the content (via canAccess)
-   * 4. If library_staff, content must be in their library
    */
   async canEdit(
     user: User | null,
@@ -95,62 +92,9 @@ export class AccessControlService {
       return false;
     }
 
-    // mobius_staff or site_admin can edit anything they can read
-    if (roleLevel >= ROLE_LEVELS.mobius_staff) {
-      return true;
-    }
-
-    // For library_staff, check library boundary
-    const wiki = await this.getWikiForContent(contentType, contentId);
-
-    if (!wiki) {
-      return false;
-    }
-
-    // library_staff can only edit content in their library's wiki
-    return user.libraryId !== null && user.libraryId === wiki.library_id;
-  }
-
-  /**
-   * Helper: Get the wiki for any content type
-   * Used to check library boundaries for edit permissions
-   */
-  private async getWikiForContent(
-    contentType: string,
-    contentId: number
-  ): Promise<{ id: number; library_id: number | null } | null> {
-    if (contentType === 'wiki') {
-      const { rows } = await this.pool.query(
-        'SELECT id, library_id FROM wiki.wikis WHERE id = $1',
-        [contentId]
-      );
-      return rows[0] || null;
-    }
-
-    if (contentType === 'section') {
-      const { rows } = await this.pool.query(
-        `SELECT w.id, w.library_id
-         FROM wiki.wikis w
-         JOIN wiki.sections s ON s.wiki_id = w.id
-         WHERE s.id = $1`,
-        [contentId]
-      );
-      return rows[0] || null;
-    }
-
-    if (contentType === 'page') {
-      const { rows } = await this.pool.query(
-        `SELECT w.id, w.library_id
-         FROM wiki.wikis w
-         JOIN wiki.sections s ON s.wiki_id = w.id
-         JOIN wiki.pages p ON p.section_id = s.id
-         WHERE p.id = $1`,
-        [contentId]
-      );
-      return rows[0] || null;
-    }
-
-    return null;
+    // If user can read and has staff role, they can edit
+    // (No more library boundary check)
+    return true;
   }
 
   /**
@@ -160,7 +104,6 @@ export class AccessControlService {
   private async canAccessFile(
     user: User | null,
     fileId: number,
-    token?: string,
   ): Promise<boolean> {
     // First check file's own ACL
     const fileRules = await this.getRules('file', fileId);
@@ -172,7 +115,7 @@ export class AccessControlService {
     } else {
       // Check if any file rule matches
       for (const rule of fileRules) {
-        if (this.matchesRule(rule, user, token)) {
+        if (this.matchesRule(rule, user)) {
           fileAccessGranted = true;
           break;
         }
@@ -200,8 +143,7 @@ export class AccessControlService {
       const linkedAccessGranted = await this.canAccess(
         user,
         link.linkable_type,
-        link.linkable_id,
-        token
+        link.linkable_id
       );
 
       if (linkedAccessGranted) {
@@ -260,33 +202,16 @@ export class AccessControlService {
   }
 
   /**
-   * Check if a single rule matches the user/token
+   * Check if a single rule matches the user
    */
-  private matchesRule(rule: AccessRule, user: User | null, token?: string): boolean {
+  private matchesRule(rule: AccessRule, user: User | null): boolean {
     switch (rule.rule_type) {
       case 'public':
-        return true;
-
-      case 'link':
-        if (!token) return false;
-        if (token !== rule.rule_value) return false;
-
-        // Check expiration
-        if (rule.expires_at) {
-          const now = new Date();
-          const expiresAt = new Date(rule.expires_at);
-          if (expiresAt < now) return false;  // Expired
-        }
-
         return true;
 
       case 'role':
         if (!user || !user.role) return false;
         return hasRoleAccess(user.role, rule.rule_value);
-
-      case 'library':
-        if (!user || user.libraryId === null || user.libraryId === undefined) return false;
-        return user.libraryId.toString() === rule.rule_value;
 
       case 'user':
         if (!user || !user.id) return false;

@@ -5,7 +5,10 @@ import { WikiListComponent } from './pages/wiki-list/wiki-list';
 import { WikiCreateComponent } from './pages/wiki-create/wiki-create.component';
 import { WikiDetailComponent } from './pages/wiki-detail/wiki-detail.component';
 import { MainLayout } from './layout/main-layout/main-layout';
+import { Error404Component } from './pages/error-404/error-404.component';
+import { Error403Component } from './pages/error-403/error-403.component';
 import { authGuard } from './core/guards/auth.guard';
+import { optionalAuthGuard } from './core/guards/optional-auth.guard';
 
 export const routes: Routes = [
   // Root redirects to site wiki home
@@ -21,26 +24,27 @@ export const routes: Routes = [
     component: LoginComponent
   },
 
-  // Main app with layout
+  // Main app with layout (public by default)
   {
     path: '',
     component: MainLayout,
-    canActivate: [authGuard],
+    canActivate: [optionalAuthGuard],  // Check auth but don't block guests
     children: [
       // Wiki routes - ORDER MATTERS!
       // Literal paths must come before dynamic paths
       {
         path: 'wiki',
-        component: WikiListComponent  // Browse all wikis
+        component: WikiListComponent  // Browse all wikis (public)
       },
       {
         path: 'wiki/new',
-        component: WikiCreateComponent  // Create new wiki
+        component: WikiCreateComponent,  // Create new wiki (requires auth)
+        canActivate: [authGuard]
       },
       // Dynamic paths - most specific first
       {
         path: 'wiki/:wikiSlug/:sectionSlug/:pageSlug',
-        component: WikiPageViewer  // View specific page (3-level)
+        component: WikiPageViewer  // View specific page (public, ACL enforced by backend)
       },
       {
         path: 'wiki/site',
@@ -49,8 +53,24 @@ export const routes: Routes = [
       },
       {
         path: 'wiki/:wikiSlug',
-        component: WikiDetailComponent  // Wiki overview
+        component: WikiDetailComponent  // Wiki overview (public)
       }
     ]
+  },
+
+  // Error pages (no auth required)
+  {
+    path: '403',
+    component: Error403Component
+  },
+  {
+    path: '404',
+    component: Error404Component
+  },
+
+  // Wildcard route - must be last
+  {
+    path: '**',
+    redirectTo: '/404'
   }
 ];

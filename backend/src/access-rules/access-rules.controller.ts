@@ -64,36 +64,7 @@ export class AccessRulesController {
     @Param('ruleId', ParseIntPipe) ruleId: number,
     @Session() session: Record<string, any>,
   ) {
-    const rule = await this.accessRulesService.remove(ruleId, session.userId);
+    const rule = await this.accessRulesService.remove(ruleId);
     return { data: rule };
-  }
-
-  @Post(':type/:id/share-link')
-  async generateShareLink(
-    @Param('type') type: string,
-    @Param('id', ParseIntPipe) id: number,
-    @Body() body: { expiresAt?: string },
-    @Session() session: Record<string, any>,
-  ) {
-    const validTypes = ['wikis', 'sections', 'pages', 'files'];
-    if (!validTypes.includes(type)) {
-      throw new BadRequestException(`Invalid type. Must be one of: ${validTypes.join(', ')}`);
-    }
-
-    const ruleableType = type.slice(0, -1);
-    const result = await this.accessRulesService.generateShareLink(
-      ruleableType,
-      id,
-      body.expiresAt || null,
-      session.userId,
-    );
-
-    return {
-      data: {
-        token: result.token,
-        shareUrl: `/${type}/${id}?token=${result.token}`,
-        rule: result.rule,
-      },
-    };
   }
 }

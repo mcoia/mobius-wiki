@@ -1,0 +1,55 @@
+@if (canEdit && hasDraft && isViewingDraft) {
+  <!-- Viewing draft version -->
+  <div class="version-banner draft-banner">
+    <div class="banner-content">
+      <div class="status-info">
+        <span class="status-badge draft">🟠 DRAFT VERSION (Not Live)</span>
+        <div class="version-details">
+          <span class="detail">Guests see: Published v{{ publishedVersionNumber }} ({{ publishedAt | date:'MMM d, y' }})</span>
+          <span class="detail">You're viewing: Draft v{{ currentVersionNumber }}</span>
+        </div>
+      </div>
+      <div class="banner-actions">
+        <button class="btn-secondary" (click)="viewPublished.emit()">View Published</button>
+        <button class="btn-warning" (click)="discardDraft.emit()">Discard Draft</button>
+        <button class="btn-primary" (click)="publish.emit()">Publish Draft</button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (canEdit && hasDraft && !isViewingDraft) {
+  <!-- Viewing published version but draft exists -->
+  <div class="version-banner published-banner">
+    <div class="banner-content">
+      <div class="status-info">
+        <span class="status-badge published">🟢 PUBLISHED VERSION (Live)</span>
+        <div class="version-details">
+          <span class="detail">Last published: {{ publishedAt | date:'MMM d, y' }} (v{{ publishedVersionNumber }})</span>
+          <span class="detail">Draft exists: v{{ currentVersionNumber }}</span>
+        </div>
+      </div>
+      <div class="banner-actions">
+        <button class="btn-primary" (click)="viewDraft.emit()">View Draft</button>
+        <button class="btn-secondary" (click)="edit.emit()">Edit Page</button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (canEdit && !hasDraft && status === 'published') {
+  <!-- Published, no draft -->
+  <div class="version-banner published-banner">
+    <div class="banner-content">
+      <div class="status-info">
+        <span class="status-badge published">🟢 PUBLISHED VERSION (Live)</span>
+        <div class="version-details">
+          <span class="detail">Last published: {{ publishedAt | date:'MMM d, y' }} (v{{ currentVersionNumber }})</span>
+        </div>
+      </div>
+      <div class="banner-actions">
+        <button class="btn-secondary" (click)="edit.emit()">Edit Page</button>
+      </div>
+    </div>
+  </div>
+}

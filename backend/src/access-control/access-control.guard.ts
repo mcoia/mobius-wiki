@@ -36,11 +36,8 @@ export class AccessControlGuard implements CanActivate {
         }
       : null;
 
-    // Get token from query params (for link shares)
-    const token = request.query.token;
-
     // Check access
-    const hasAccess = await this.aclService.canAccess(user, type, contentId, token);
+    const hasAccess = await this.aclService.canAccess(user, type, contentId);
 
     if (!hasAccess) {
       throw new ForbiddenException('Access denied');

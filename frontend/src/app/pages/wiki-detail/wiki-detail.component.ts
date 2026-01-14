@@ -8,6 +8,7 @@ import { SectionService } from '../../core/services/section.service';
 import { AuthService } from '../../core/services/auth.service';
 import { Wiki, Section } from '../../core/models/wiki.model';
 import { CreateModalComponent } from '../../shared/components/create-modal/create-modal.component';
+import { AccessControlPanelComponent } from '../../shared/components/access-control-panel/access-control-panel.component';
 
 interface SectionWithPages extends Section {
   pages?: Array<{
@@ -21,7 +22,7 @@ interface SectionWithPages extends Section {
 @Component({
   selector: 'app-wiki-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule, CreateModalComponent],
+  imports: [CommonModule, RouterModule, CreateModalComponent, AccessControlPanelComponent],
   templateUrl: './wiki-detail.component.html',
   styleUrls: ['./wiki-detail.component.css']
 })
@@ -33,6 +34,7 @@ export class WikiDetailComponent implements OnInit {
 
   showCreateSectionModal = false;
   showCreatePageModal = false;
+  showAccessControlPanel = false;
   selectedSection: SectionWithPages | null = null;
 
   @ViewChild('createSectionModal') createSectionModal?: CreateModalComponent;

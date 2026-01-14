@@ -1,8 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { Observable } from 'rxjs';
 import { PageContextService, PageEditState } from '../../core/services/page-context.service';
+import { AuthService } from '../../core/services/auth.service';
+import { User } from '../../core/models/user.model';
 
 @Component({
   selector: 'app-header',
@@ -12,13 +14,17 @@ import { PageContextService, PageEditState } from '../../core/services/page-cont
 })
 export class Header implements OnInit {
   editState$!: Observable<PageEditState>;
+  currentUser$!: Observable<User | null>;
 
   constructor(
-    private pageContext: PageContextService
+    private pageContext: PageContextService,
+    private authService: AuthService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
     this.editState$ = this.pageContext.editState$;
+    this.currentUser$ = this.authService.currentUser$;
   }
 
   toggleEdit(): void {
@@ -32,6 +38,19 @@ export class Header implements OnInit {
     // Trigger save event - WikiPageViewer will handle actual save
     this.pageContext.updateEditState({
       isSaving: true
+    });
+  }
+
+  logout(): void {
+    this.authService.logout().subscribe({
+      next: () => {
+        this.router.navigate(['/login']);
+      },
+      error: (err) => {
+        console.error('Logout error:', err);
+        // Navigate to login anyway
+        this.router.navigate(['/login']);
+      }
     });
   }
 }

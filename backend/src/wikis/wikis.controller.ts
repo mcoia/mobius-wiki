@@ -36,16 +36,16 @@ export class WikisController {
     @Param('sectionSlug') sectionSlug: string,
     @Param('pageSlug') pageSlug: string,
     @User() user: any = null,
-    @Query('token') token?: string,
     @Query('includeDeleted') includeDeleted?: string,
+    @Query('viewPublished') viewPublished?: string,
   ) {
     return this.pagesService.findBySlug(
       wikiSlug,
       sectionSlug,
       pageSlug,
       user,
-      token,
-      includeDeleted === 'true'
+      includeDeleted === 'true',
+      viewPublished === 'true'
     );
   }
 

@@ -14,11 +14,30 @@
         }
       </div>
       @if (canEdit$ | async) {
-        <button (click)="showCreateSectionModal = true" class="btn-primary">
-          + New Section
-        </button>
+        <div class="header-actions">
+          <button
+            (click)="showAccessControlPanel = !showAccessControlPanel"
+            class="btn-secondary"
+            title="Manage Wiki Permissions">
+            🔒 Permissions
+          </button>
+          <button (click)="showCreateSectionModal = true" class="btn-primary">
+            + New Section
+          </button>
+        </div>
       }
     </div>
+
+    <!-- Access Control Panel for Wiki -->
+    @if (showAccessControlPanel && (canEdit$ | async)) {
+      <app-access-control-panel
+        contentType="wikis"
+        [contentId]="wiki.id"
+        [canManage]="true"
+        (rulesChanged)="showAccessControlPanel = false"
+        (close)="showAccessControlPanel = false">
+      </app-access-control-panel>
+    }
 
     @if (sections$ | async; as sections) {
       @if (sections.length === 0) {

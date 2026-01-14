@@ -7,16 +7,17 @@ import { AuthService } from '../../core/services/auth.service';
 import { PageContextService } from '../../core/services/page-context.service';
 import { Page, Section } from '../../core/models/wiki.model';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { Observable, throwError, EMPTY, Subject } from 'rxjs';
+import { Observable, throwError, EMPTY, Subject, combineLatest } from 'rxjs';
 import { switchMap, catchError, shareReplay, tap, map, take, takeUntil } from 'rxjs/operators';
 import { TinymceEditorComponent } from '../../shared/components/tinymce-editor/tinymce-editor.component';
 import { CreateModalComponent } from '../../shared/components/create-modal/create-modal.component';
 import { AccessControlPanelComponent } from '../../shared/components/access-control-panel/access-control-panel.component';
+import { VersionBannerComponent } from '../../shared/components/version-banner/version-banner.component';
 import { LucideAngularModule, Lock } from 'lucide-angular';
 
 @Component({
   selector: 'app-wiki-page-viewer',
-  imports: [CommonModule, FormsModule, RouterLink, TinymceEditorComponent, CreateModalComponent, AccessControlPanelComponent, LucideAngularModule],
+  imports: [CommonModule, FormsModule, RouterLink, TinymceEditorComponent, CreateModalComponent, AccessControlPanelComponent, VersionBannerComponent, LucideAngularModule],
   templateUrl: './wiki-page-viewer.html',
   styleUrl: './wiki-page-viewer.css'
 })
@@ -70,24 +71,25 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
   ) {}
 
   ngOnInit(): void {
-    this.page$ = this.route.params.pipe(
-      tap(params => {
-        console.log('Route params changed:', params);
+    this.page$ = combineLatest([this.route.params, this.route.queryParams]).pipe(
+      tap(([params, queryParams]) => {
+        console.log('Route params/query changed:', params, queryParams);
         this.error = null;
         this.cleanupScripts();
         this.lastExecutedPageId = null; // Reset on navigation
         this.currentPage = null;
       }),
-      switchMap(params => {
+      switchMap(([params, queryParams]) => {
         const wikiSlug = params['wikiSlug'];
         const sectionSlug = params['sectionSlug'];
         const pageSlug = params['pageSlug'];
+        const viewPublished = queryParams['viewPublished'] === 'true';
 
-        console.log('Loading page:', { wikiSlug, sectionSlug, pageSlug });
+        console.log('Loading page:', { wikiSlug, sectionSlug, pageSlug, viewPublished });
 
         const request = sectionSlug
-          ? this.wikiService.getPagesBySlugs(wikiSlug, sectionSlug, pageSlug)
-          : this.wikiService.getPageBySlug(wikiSlug, pageSlug);
+          ? this.wikiService.getPagesBySlugs(wikiSlug, sectionSlug, pageSlug, viewPublished)
+          : this.wikiService.getPageBySlug(wikiSlug, pageSlug, viewPublished);
 
         return request.pipe(
           map(response => response.data), // Unwrap response
@@ -102,17 +104,27 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
           }),
           catchError(err => {
             console.error('Page load error:', err);
-            // For 404 errors, show generic message to avoid leaking page IDs
-            if (err.status === 404) {
-              this.error = 'Page not found';
-            } else {
-              this.error = err.error?.message || 'Failed to load page';
-            }
+
             this.currentPage = null;
             this.pageContext.updateEditState({
               currentPageId: null,
               canEdit: false
             });
+
+            // Navigate to error pages based on status code
+            if (err.status === 403) {
+              // Access denied - navigate to 403 page with returnUrl
+              this.router.navigate(['/403'], {
+                queryParams: { returnUrl: this.router.url }
+              });
+            } else if (err.status === 404) {
+              // Page not found - navigate to 404 page
+              this.router.navigate(['/404']);
+            } else {
+              // Other errors - show inline error message
+              this.error = err.error?.message || 'Failed to load page';
+            }
+
             return EMPTY;
           })
         );
@@ -319,6 +331,48 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
     return this.quillEditor.getValue() !== this.editableContent;
   }
 
+  /**
+   * View published version (for version banner toggle)
+   */
+  viewPublishedVersion(): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { viewPublished: 'true' },
+      queryParamsHandling: 'merge'
+    });
+  }
+
+  /**
+   * View draft version (for version banner toggle)
+   */
+  viewDraftVersion(): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { viewPublished: null },
+      queryParamsHandling: 'merge'
+    });
+  }
+
+  /**
+   * Discard draft and revert to published version
+   */
+  discardDraft(): void {
+    if (!confirm('Discard all draft changes and revert to published version?')) {
+      return;
+    }
+
+    this.page$.pipe(take(1)).subscribe(page => {
+      this.wikiService.discardDraft(page.id).subscribe({
+        next: () => {
+          window.location.reload();
+        },
+        error: (err) => {
+          console.error('Discard error:', err);
+          this.error = 'Failed to discard draft';
+        }
+      });
+    });
+  }
 
   /**
    * Warn about unsaved changes before leaving
