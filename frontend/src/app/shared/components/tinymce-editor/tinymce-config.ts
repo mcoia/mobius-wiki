@@ -10,9 +10,13 @@ export const TINYMCE_BASE_CONFIG = {
   // Allow ALL elements and attributes
   valid_elements: '*[*]',                // Allow all elements with all attributes
   valid_children: '+body[style]',        // Allow <style> in body
-  extended_valid_elements: '*[style|class|id|data-*|href|src|alt|title|width|height|align]',  // Explicit whitelist for security
   valid_classes: '*',                    // Allow all classes
-  valid_styles: '*',                     // Allow all inline styles
+
+  // Explicitly allow inline styles (MUST be object format, not string!)
+  // Reference: https://www.tiny.cloud/docs/tinymce/latest/content-filtering/
+  valid_styles: {
+    '*': 'font-size,font-family,color,text-align,background-color,text-decoration,border,padding,margin,width,height,display,float,line-height,letter-spacing,vertical-align,white-space'
+  },
 
   // Whitespace preservation
   allow_html_in_named_anchor: true,
@@ -33,6 +37,38 @@ export const TINYMCE_BASE_CONFIG = {
     /<div class="note-box">[\s\S]*?<\/div>/g,
     /<div class="stats-grid">[\s\S]*?<\/div>/g,
   ],
+
+  // Override built-in formats to use inline styles instead of CSS classes
+  // Reference: https://www.tiny.cloud/docs/tinymce/latest/content-formatting/
+  formats: {
+    // Text alignment - use inline styles (TinyMCE default uses CSS classes)
+    alignleft: {
+      selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li,table,img',
+      styles: { textAlign: 'left' }
+    },
+    aligncenter: {
+      selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li,table,img',
+      styles: { textAlign: 'center' }
+    },
+    alignright: {
+      selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li,table,img',
+      styles: { textAlign: 'right' }
+    },
+    alignjustify: {
+      selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li,table,img',
+      styles: { textAlign: 'justify' }
+    },
+
+    // Font size - ensure it uses inline styles (default should already do this)
+    fontsize: { inline: 'span', styles: { fontSize: '%value' } },
+
+    // Font family - ensure it uses inline styles
+    fontfamily: { inline: 'span', styles: { fontFamily: '%value' } },
+
+    // Colors - ensure inline styles
+    forecolor: { inline: 'span', styles: { color: '%value' } },
+    backcolor: { inline: 'span', styles: { backgroundColor: '%value' } }
+  },
 
   // TinyMCE Configuration
   base_url: '/tinymce',                  // Self-hosted TinyMCE
