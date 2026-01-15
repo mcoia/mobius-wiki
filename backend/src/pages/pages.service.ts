@@ -549,6 +549,65 @@ export class PagesService {
     return wrapData(rows[0]);
   }
 
+  /**
+   * Restore a page to a specific historical version
+   * Creates a new version entry with the old content (non-destructive)
+   */
+  async restoreVersion(id: number, versionNumber: number, user: User | null) {
+    // Check edit permission
+    const canEdit = await this.aclService.canEdit(user, 'page', id);
+    if (!canEdit) {
+      throw new ForbiddenException('You do not have permission to modify this page');
+    }
+
+    // Get page
+    const { rows: pageRows } = await this.pool.query(
+      'SELECT * FROM wiki.pages WHERE id = $1 AND deleted_at IS NULL',
+      [id]
+    );
+
+    if (pageRows.length === 0) {
+      throw new NotFoundException(`Page with ID ${id} not found`);
+    }
+
+    // Get the version to restore
+    const { rows: versionRows } = await this.pool.query(
+      'SELECT content, title, scripts FROM wiki.page_versions WHERE page_id = $1 AND version_number = $2',
+      [id, versionNumber]
+    );
+
+    if (versionRows.length === 0) {
+      throw new NotFoundException(`Version ${versionNumber} not found for page ${id}`);
+    }
+
+    const versionToRestore = versionRows[0];
+
+    // Update page with restored content (always becomes draft)
+    const { rows } = await this.pool.query(
+      `UPDATE wiki.pages
+       SET content = $2,
+           title = $3,
+           scripts = $4,
+           status = 'draft',
+           updated_by = $5,
+           updated_at = NOW()
+       WHERE id = $1
+       RETURNING *`,
+      [id, versionToRestore.content, versionToRestore.title, versionToRestore.scripts, user?.id]
+    );
+
+    // Create a new version entry (preserves history - this is now the latest version)
+    await this.pageVersionsService.createVersion(
+      id,
+      versionToRestore.title,
+      versionToRestore.content,
+      versionToRestore.scripts,
+      user?.id || null
+    );
+
+    return wrapData(rows[0]);
+  }
+
   async remove(id: number, userId: number) {
     const { rows } = await this.pool.query(
       `UPDATE wiki.pages

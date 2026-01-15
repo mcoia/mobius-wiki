@@ -63,3 +63,15 @@ export interface Page {
   isViewingDraft?: boolean;
   hasDraft?: boolean;
 }
+
+export interface PageVersion {
+  id: number;
+  page_id: number;
+  version_number: number;
+  title: string;
+  content: string;
+  scripts: string | null;
+  created_at: string;
+  created_by: number | null;
+  author_name: string | null;
+}

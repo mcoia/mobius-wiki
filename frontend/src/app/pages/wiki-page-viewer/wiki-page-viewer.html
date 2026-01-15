@@ -18,16 +18,20 @@
         [canEdit]="true"
         [authorName]="page.author?.name"
         [updatedAt]="page.updated_at"
+        [versions]="(versions$ | async) || []"
+        [viewingVersionNumber]="viewingVersionNumber"
         (viewDraft)="viewDraftVersion()"
         (viewPublished)="viewPublishedVersion()"
         (publish)="publishPage()"
         (discardDraft)="discardDraft()"
-        (edit)="toggleEdit()">
+        (edit)="toggleEdit()"
+        (selectVersion)="selectVersion($event)"
+        (restoreVersion)="restoreVersion($event)">
       </app-version-banner>
     }
 
-    <!-- Action toolbar (editors only) -->
-    @if (canEdit$ | async) {
+    <!-- Action toolbar (editors only, not for historical versions) -->
+    @if ((canEdit$ | async) && !viewingVersionNumber) {
       <div class="page-toolbar">
         @if (isEditing) {
           <!-- Edit mode: Save and Cancel -->

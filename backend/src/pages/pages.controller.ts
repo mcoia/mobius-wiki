@@ -123,6 +123,16 @@ export class PagesController {
     return this.pagesService.discardDraft(id, user);
   }
 
+  @Post('pages/:id/restore/:versionNumber')
+  @UseGuards(AuthGuard)
+  async restoreVersion(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('versionNumber', ParseIntPipe) versionNumber: number,
+    @User() user: any,
+  ) {
+    return this.pagesService.restoreVersion(id, versionNumber, user);
+  }
+
   @Delete('pages/:id')
   @UseGuards(AuthGuard)
   async remove(@Param('id', ParseIntPipe) id: number, @User() user: any) {

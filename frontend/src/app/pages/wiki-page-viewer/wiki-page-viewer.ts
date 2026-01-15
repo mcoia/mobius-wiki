@@ -7,7 +7,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { PageContextService } from '../../core/services/page-context.service';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 import { ToastService } from '../../core/services/toast.service';
-import { Page, Section } from '../../core/models/wiki.model';
+import { Page, Section, PageVersion } from '../../core/models/wiki.model';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Observable, throwError, EMPTY, Subject, combineLatest, of } from 'rxjs';
 import { switchMap, catchError, shareReplay, tap, map, take, takeUntil } from 'rxjs/operators';
@@ -58,6 +58,10 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
   availableSections$!: Observable<Section[]>;
   private availableSections: Section[] = [];
 
+  // Version history
+  versions$!: Observable<PageVersion[]>;
+  viewingVersionNumber: number | null = null;
+
   // UI state
   saveError: string | null = null;
 
@@ -97,14 +101,19 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
         this.cleanupScripts();
         this.lastExecutedPageId = null; // Reset on navigation
         this.currentPage = null;
+
+        // Track which version we're viewing (null = current)
+        const versionParam = queryParams['version'];
+        this.viewingVersionNumber = versionParam ? parseInt(versionParam, 10) : null;
       }),
       switchMap(([params, queryParams]) => {
         const wikiSlug = params['wikiSlug'];
         const sectionSlug = params['sectionSlug'];
         const pageSlug = params['pageSlug'];
         const viewPublished = queryParams['viewPublished'] === 'true';
+        const versionNumber = queryParams['version'] ? parseInt(queryParams['version'], 10) : null;
 
-        console.log('Loading page:', { wikiSlug, sectionSlug, pageSlug, viewPublished });
+        console.log('Loading page:', { wikiSlug, sectionSlug, pageSlug, viewPublished, versionNumber });
 
         const request = sectionSlug
           ? this.wikiService.getPagesBySlugs(wikiSlug, sectionSlug, pageSlug, viewPublished)
@@ -112,6 +121,26 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
 
         return request.pipe(
           map(response => response.data), // Unwrap response
+          switchMap(page => {
+            // If viewing a specific historical version, fetch that version's content
+            if (versionNumber && versionNumber !== page.currentVersionNumber) {
+              return this.wikiService.getPageVersion(page.id, versionNumber).pipe(
+                map(version => ({
+                  ...page,
+                  content: version.content,
+                  title: version.title,
+                  scripts: version.scripts
+                })),
+                catchError(() => {
+                  // If version not found, just show current page
+                  this.toast.warning(`Version ${versionNumber} not found, showing current version`);
+                  this.viewingVersionNumber = null;
+                  return of(page);
+                })
+              );
+            }
+            return of(page);
+          }),
           tap(page => {
             console.log('Page response:', page);
             this.currentPage = page; // Store for AfterViewChecked
@@ -193,6 +222,20 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
     ).subscribe(sections => {
       this.availableSections = sections;
     });
+
+    // Load version history for version dropdown
+    this.versions$ = this.page$.pipe(
+      switchMap(page => {
+        if (!page) {
+          return of([]);
+        }
+        return this.wikiService.getPageVersions(page.id).pipe(
+          map(response => response.data),
+          catchError(() => of([]))
+        );
+      }),
+      shareReplay(1)
+    );
 
     // Subscribe to canEdit$ to ensure tap executes - USE takeUntil for cleanup
     this.canEdit$.pipe(
@@ -425,8 +468,66 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
   viewDraftVersion(): void {
     this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { viewPublished: null },
+      queryParams: { viewPublished: null, version: null },
       queryParamsHandling: 'merge'
+    });
+  }
+
+  /**
+   * Select a specific version to view
+   */
+  selectVersion(versionNumber: number): void {
+    // If selecting the current version, clear the version param
+    if (this.currentPage && versionNumber === this.currentPage.currentVersionNumber) {
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { version: null, viewPublished: null },
+        queryParamsHandling: 'merge'
+      });
+    } else {
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { version: versionNumber, viewPublished: null },
+        queryParamsHandling: 'merge'
+      });
+    }
+  }
+
+  /**
+   * Restore a historical version as a new draft
+   */
+  restoreVersion(versionNumber: number): void {
+    if (!this.currentPage) {
+      this.toast.error('No page loaded');
+      return;
+    }
+
+    this.confirmDialog.open({
+      title: 'Restore Version',
+      message: `Restore version ${versionNumber} as a new draft? The current content will be preserved in version history.`,
+      type: 'info',
+      confirmText: 'Restore as Draft',
+      cancelText: 'Cancel'
+    }).subscribe(confirmed => {
+      if (!confirmed) return;
+
+      this.wikiService.restoreVersion(this.currentPage!.id, versionNumber).subscribe({
+        next: () => {
+          this.toast.success(`Version ${versionNumber} restored as new draft`);
+          // Navigate to the page without version param to show the new draft
+          this.router.navigate([], {
+            relativeTo: this.route,
+            queryParams: { version: null, viewPublished: null },
+            queryParamsHandling: 'merge'
+          }).then(() => {
+            window.location.reload();
+          });
+        },
+        error: (err) => {
+          console.error('Restore error:', err);
+          this.toast.error(err.error?.message || 'Failed to restore version');
+        }
+      });
     });
   }
 

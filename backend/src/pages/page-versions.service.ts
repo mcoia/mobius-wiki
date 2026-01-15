@@ -33,9 +33,11 @@ export class PageVersionsService {
 
   async findAllForPage(pageId: number) {
     const { rows } = await this.pool.query(
-      `SELECT * FROM wiki.page_versions
-       WHERE page_id = $1
-       ORDER BY version_number DESC`,
+      `SELECT pv.*, u.name as author_name
+       FROM wiki.page_versions pv
+       LEFT JOIN wiki.users u ON pv.created_by = u.id
+       WHERE pv.page_id = $1
+       ORDER BY pv.version_number DESC`,
       [pageId]
     );
 

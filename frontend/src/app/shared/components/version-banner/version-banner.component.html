@@ -1,11 +1,106 @@
-@if (canEdit && hasDraft && isViewingDraft) {
-  <!-- Viewing draft version -->
+<!-- Viewing Historical Version -->
+@if (canEdit && isViewingHistorical) {
+  <div class="version-banner historical-banner">
+    <div class="banner-content">
+      <div class="banner-info">
+        <div class="status-row">
+          <lucide-icon [img]="History" class="status-icon historical"></lucide-icon>
+          <span class="status-label historical">Viewing v{{ viewingVersionNumber }}</span>
+
+          <!-- Version Dropdown -->
+          <div class="version-dropdown-container">
+            <button class="version-dropdown-btn" (click)="toggleVersionDropdown()">
+              {{ dropdownButtonText }}
+              <lucide-icon [img]="ChevronDown" [size]="14" class="dropdown-chevron" [class.open]="showVersionDropdown"></lucide-icon>
+            </button>
+            @if (showVersionDropdown) {
+              <div class="version-dropdown-menu">
+                @for (version of versions; track version.version_number) {
+                  <button
+                    class="version-dropdown-item"
+                    [class.active]="version.version_number === viewingVersionNumber"
+                    [class.is-current]="version.version_number === currentVersionNumber"
+                    [class.is-published]="version.version_number === publishedVersionNumber"
+                    (click)="onSelectVersion(version.version_number)">
+                    <span class="version-number">v{{ version.version_number }}</span>
+                    <span class="version-meta">
+                      @if (version.version_number === currentVersionNumber && isDraftStatus()) {
+                        <span class="version-badge draft">Draft</span>
+                      }
+                      @if (version.version_number === publishedVersionNumber) {
+                        <span class="version-badge published">Published</span>
+                      }
+                      @if (version.version_number === currentVersionNumber) {
+                        <span class="version-badge current">Current</span>
+                      }
+                    </span>
+                    <span class="version-date">{{ version.created_at | date:'MMM d, y' }}</span>
+                    @if (version.author_name) {
+                      <span class="version-author">{{ version.author_name }}</span>
+                    }
+                  </button>
+                }
+              </div>
+            }
+          </div>
+        </div>
+        <div class="author-row">
+          <span class="status-description">This is a historical version (read-only)</span>
+        </div>
+      </div>
+      <div class="banner-actions">
+        <button class="btn-primary" (click)="onRestoreVersion()">Restore as Draft</button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Viewing Draft Version (current) -->
+@if (canEdit && !isViewingHistorical && hasDraft && isViewingDraft) {
   <div class="version-banner draft-banner">
     <div class="banner-content">
       <div class="banner-info">
         <div class="status-row">
           <lucide-icon [img]="FileText" class="status-icon draft"></lucide-icon>
           <span class="status-label draft">Draft</span>
+
+          <!-- Version Dropdown -->
+          <div class="version-dropdown-container">
+            <button class="version-dropdown-btn" (click)="toggleVersionDropdown()">
+              {{ dropdownButtonText }}
+              <lucide-icon [img]="ChevronDown" [size]="14" class="dropdown-chevron" [class.open]="showVersionDropdown"></lucide-icon>
+            </button>
+            @if (showVersionDropdown) {
+              <div class="version-dropdown-menu">
+                @for (version of versions; track version.version_number) {
+                  <button
+                    class="version-dropdown-item"
+                    [class.active]="version.version_number === currentVersionNumber"
+                    [class.is-current]="version.version_number === currentVersionNumber"
+                    [class.is-published]="version.version_number === publishedVersionNumber"
+                    (click)="onSelectVersion(version.version_number)">
+                    <span class="version-number">v{{ version.version_number }}</span>
+                    <span class="version-meta">
+                      @if (version.version_number === currentVersionNumber && isDraftStatus()) {
+                        <span class="version-badge draft">Draft</span>
+                      }
+                      @if (version.version_number === publishedVersionNumber) {
+                        <span class="version-badge published">Published</span>
+                      }
+                      @if (version.version_number === currentVersionNumber) {
+                        <span class="version-badge current">Current</span>
+                      }
+                    </span>
+                    <span class="version-date">{{ version.created_at | date:'MMM d, y' }}</span>
+                    @if (version.author_name) {
+                      <span class="version-author">{{ version.author_name }}</span>
+                    }
+                  </button>
+                }
+              </div>
+            }
+          </div>
+
           <span class="status-description">Guests see: Published v{{ publishedVersionNumber }} ({{ publishedAt | date:'MMM d, y' }})</span>
         </div>
         <div class="author-row">
@@ -22,7 +117,6 @@
         </div>
       </div>
       <div class="banner-actions">
-        <button class="btn-secondary" (click)="viewPublished.emit()">View Published</button>
         <button class="btn-warning" (click)="discardDraft.emit()">Discard Draft</button>
         <button class="btn-primary" (click)="publish.emit()">Publish</button>
       </div>
@@ -30,14 +124,52 @@
   </div>
 }
 
-@if (canEdit && hasDraft && !isViewingDraft) {
-  <!-- Viewing published version but draft exists -->
+<!-- Viewing Published Version (but draft exists) -->
+@if (canEdit && !isViewingHistorical && hasDraft && !isViewingDraft) {
   <div class="version-banner published-banner">
     <div class="banner-content">
       <div class="banner-info">
         <div class="status-row">
           <lucide-icon [img]="Check" class="status-icon published"></lucide-icon>
           <span class="status-label published">Published</span>
+
+          <!-- Version Dropdown -->
+          <div class="version-dropdown-container">
+            <button class="version-dropdown-btn" (click)="toggleVersionDropdown()">
+              {{ dropdownButtonText }}
+              <lucide-icon [img]="ChevronDown" [size]="14" class="dropdown-chevron" [class.open]="showVersionDropdown"></lucide-icon>
+            </button>
+            @if (showVersionDropdown) {
+              <div class="version-dropdown-menu">
+                @for (version of versions; track version.version_number) {
+                  <button
+                    class="version-dropdown-item"
+                    [class.active]="version.version_number === publishedVersionNumber"
+                    [class.is-current]="version.version_number === currentVersionNumber"
+                    [class.is-published]="version.version_number === publishedVersionNumber"
+                    (click)="onSelectVersion(version.version_number)">
+                    <span class="version-number">v{{ version.version_number }}</span>
+                    <span class="version-meta">
+                      @if (version.version_number === currentVersionNumber && isDraftStatus()) {
+                        <span class="version-badge draft">Draft</span>
+                      }
+                      @if (version.version_number === publishedVersionNumber) {
+                        <span class="version-badge published">Published</span>
+                      }
+                      @if (version.version_number === currentVersionNumber) {
+                        <span class="version-badge current">Current</span>
+                      }
+                    </span>
+                    <span class="version-date">{{ version.created_at | date:'MMM d, y' }}</span>
+                    @if (version.author_name) {
+                      <span class="version-author">{{ version.author_name }}</span>
+                    }
+                  </button>
+                }
+              </div>
+            }
+          </div>
+
           <span class="status-description">Last published: {{ publishedAt | date:'MMM d, y' }} (v{{ publishedVersionNumber }})</span>
         </div>
         <div class="author-row">
@@ -58,14 +190,52 @@
   </div>
 }
 
-@if (canEdit && !hasDraft && status === 'published') {
-  <!-- Published, no draft -->
+<!-- Published, no draft -->
+@if (canEdit && !isViewingHistorical && !hasDraft && status === 'published') {
   <div class="version-banner published-banner">
     <div class="banner-content">
       <div class="banner-info">
         <div class="status-row">
           <lucide-icon [img]="Check" class="status-icon published"></lucide-icon>
           <span class="status-label published">Published</span>
+
+          <!-- Version Dropdown -->
+          <div class="version-dropdown-container">
+            <button class="version-dropdown-btn" (click)="toggleVersionDropdown()">
+              {{ dropdownButtonText }}
+              <lucide-icon [img]="ChevronDown" [size]="14" class="dropdown-chevron" [class.open]="showVersionDropdown"></lucide-icon>
+            </button>
+            @if (showVersionDropdown) {
+              <div class="version-dropdown-menu">
+                @for (version of versions; track version.version_number) {
+                  <button
+                    class="version-dropdown-item"
+                    [class.active]="version.version_number === currentVersionNumber"
+                    [class.is-current]="version.version_number === currentVersionNumber"
+                    [class.is-published]="version.version_number === publishedVersionNumber"
+                    (click)="onSelectVersion(version.version_number)">
+                    <span class="version-number">v{{ version.version_number }}</span>
+                    <span class="version-meta">
+                      @if (version.version_number === currentVersionNumber && isDraftStatus()) {
+                        <span class="version-badge draft">Draft</span>
+                      }
+                      @if (version.version_number === publishedVersionNumber) {
+                        <span class="version-badge published">Published</span>
+                      }
+                      @if (version.version_number === currentVersionNumber) {
+                        <span class="version-badge current">Current</span>
+                      }
+                    </span>
+                    <span class="version-date">{{ version.created_at | date:'MMM d, y' }}</span>
+                    @if (version.author_name) {
+                      <span class="version-author">{{ version.author_name }}</span>
+                    }
+                  </button>
+                }
+              </div>
+            }
+          </div>
+
           <span class="status-description">Last published: {{ publishedAt | date:'MMM d, y' }} (v{{ currentVersionNumber }})</span>
         </div>
         <div class="author-row">

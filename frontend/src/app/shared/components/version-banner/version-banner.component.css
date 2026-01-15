@@ -18,6 +18,20 @@
   background-color: #ECFDF5;
 }
 
+/* Historical banner - soft blue/gray */
+.historical-banner {
+  background-color: #F0F9FF;
+  border-color: #bae6fd;
+}
+
+.status-icon.historical {
+  color: #0284c7;
+}
+
+.status-label.historical {
+  color: #0284c7;
+}
+
 /* Main content layout */
 .banner-content {
   display: flex;
@@ -160,6 +174,127 @@
   background-color: #0f766e;
 }
 
+/* Version Dropdown */
+.version-dropdown-container {
+  position: relative;
+  display: inline-block;
+}
+
+.version-dropdown-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #374151;
+  background-color: white;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.version-dropdown-btn:hover {
+  background-color: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.dropdown-chevron {
+  transition: transform 0.2s ease;
+}
+
+.dropdown-chevron.open {
+  transform: rotate(180deg);
+}
+
+.version-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 280px;
+  max-height: 300px;
+  overflow-y: auto;
+  background-color: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+}
+
+.version-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.85rem;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.version-dropdown-item:hover {
+  background-color: #f3f4f6;
+}
+
+.version-dropdown-item.active {
+  background-color: #e0f2fe;
+}
+
+.version-dropdown-item .version-number {
+  font-weight: 600;
+  color: #374151;
+  min-width: 32px;
+}
+
+.version-dropdown-item .version-meta {
+  display: flex;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.version-badge {
+  display: inline-block;
+  padding: 0.1rem 0.4rem;
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  border-radius: 3px;
+}
+
+.version-badge.draft {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.version-badge.published {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.version-badge.current {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.version-dropdown-item .version-date {
+  color: #6b7280;
+  font-size: 0.8rem;
+  margin-left: auto;
+}
+
+.version-dropdown-item .version-author {
+  color: #9ca3af;
+  font-size: 0.75rem;
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .banner-content {
@@ -171,5 +306,9 @@
     width: 100%;
     justify-content: flex-start;
     flex-wrap: wrap;
+  }
+
+  .version-dropdown-menu {
+    min-width: 240px;
   }
 }

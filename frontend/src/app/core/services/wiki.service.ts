@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiService } from './api.service';
-import { Wiki, Section, Page } from '../models/wiki.model';
+import { Wiki, Section, Page, PageVersion } from '../models/wiki.model';
 
 @Injectable({
   providedIn: 'root'
@@ -82,5 +82,18 @@ export class WikiService {
   // Discard draft and revert to published version
   discardDraft(id: number): Observable<{ data: Page }> {
     return this.api.post(`/pages/${id}/discard-draft`, {});
+  }
+
+  // Version history methods
+  getPageVersions(pageId: number): Observable<{ data: PageVersion[]; meta: { total: number } }> {
+    return this.api.get(`/pages/${pageId}/versions`);
+  }
+
+  getPageVersion(pageId: number, versionNumber: number): Observable<PageVersion> {
+    return this.api.get(`/pages/${pageId}/versions/${versionNumber}`);
+  }
+
+  restoreVersion(pageId: number, versionNumber: number): Observable<{ data: Page }> {
+    return this.api.post(`/pages/${pageId}/restore/${versionNumber}`, {});
   }
 }
