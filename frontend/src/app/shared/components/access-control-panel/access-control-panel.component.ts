@@ -5,6 +5,7 @@ import { Observable, of } from 'rxjs';
 import { map, catchError, shareReplay } from 'rxjs/operators';
 import { LucideAngularModule, Lock, Globe, Users, Link2, Info, AlertTriangle, CheckCircle, X } from 'lucide-angular';
 import { AccessControlService } from '../../../core/services/access-control.service';
+import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 import { AccessRule, RoleType } from '../../../core/models/access-control.model';
 
 /**
@@ -53,7 +54,10 @@ export class AccessControlPanelComponent implements OnInit {
   // Role selection
   selectedRole: RoleType | null = null;
 
-  constructor(private accessControlService: AccessControlService) {}
+  constructor(
+    private accessControlService: AccessControlService,
+    private confirmDialog: ConfirmDialogService
+  ) {}
 
   ngOnInit(): void {
     this.loadRules();
@@ -158,24 +162,31 @@ export class AccessControlPanelComponent implements OnInit {
    * Delete an access rule
    */
   deleteRule(rule: AccessRule): void {
-    const confirmed = confirm(`Are you sure you want to remove this access rule?`);
-    if (!confirmed) return;
+    this.confirmDialog.open({
+      title: 'Delete Access Rule',
+      message: 'Are you sure you want to remove this access rule?',
+      type: 'danger',
+      confirmText: 'Delete',
+      cancelText: 'Cancel'
+    }).subscribe(confirmed => {
+      if (!confirmed) return;
 
-    this.loading = true;
-    this.error = null;
+      this.loading = true;
+      this.error = null;
 
-    this.accessControlService.deleteRule(rule.id)
-      .subscribe({
-        next: () => {
-          this.loading = false;
-          this.loadRules();
-          this.rulesChanged.emit();
-        },
-        error: (error) => {
-          this.loading = false;
-          this.error = error.error?.message || 'Failed to delete rule';
-        }
-      });
+      this.accessControlService.deleteRule(rule.id)
+        .subscribe({
+          next: () => {
+            this.loading = false;
+            this.loadRules();
+            this.rulesChanged.emit();
+          },
+          error: (error) => {
+            this.loading = false;
+            this.error = error.error?.message || 'Failed to delete rule';
+          }
+        });
+    });
   }
 
   /**

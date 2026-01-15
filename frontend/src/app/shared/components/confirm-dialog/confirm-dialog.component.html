@@ -1,0 +1,24 @@
+@if (config) {
+  <div class="modal-overlay" (click)="onCancel()">
+    <div class="modal-content confirm-dialog" [class]="'type-' + config.type" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <span class="dialog-icon">{{ getIcon(config.type) }}</span>
+        <h2>{{ config.title }}</h2>
+      </div>
+      <div class="modal-body">
+        <p>{{ config.message }}</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" (click)="onCancel()">
+          {{ config.cancelText }}
+        </button>
+        <button
+          type="button"
+          [class]="config.type === 'danger' ? 'btn-danger' : 'btn-primary'"
+          (click)="onConfirm()">
+          {{ config.confirmText }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

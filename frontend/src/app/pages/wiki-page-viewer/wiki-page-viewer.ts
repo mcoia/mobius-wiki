@@ -5,6 +5,8 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { WikiService } from '../../core/services/wiki.service';
 import { AuthService } from '../../core/services/auth.service';
 import { PageContextService } from '../../core/services/page-context.service';
+import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
+import { ToastService } from '../../core/services/toast.service';
 import { Page, Section } from '../../core/models/wiki.model';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Observable, throwError, EMPTY, Subject, combineLatest, of } from 'rxjs';
@@ -71,7 +73,9 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
     private wikiService: WikiService,
     private sanitizer: DomSanitizer,
     private authService: AuthService,
-    private pageContext: PageContextService
+    private pageContext: PageContextService,
+    private confirmDialog: ConfirmDialogService,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -294,11 +298,20 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
   private exitEditMode(): void {
     // Ask for confirmation if dirty
     if (this.isDirty()) {
-      if (!confirm('You have unsaved changes. Are you sure you want to exit without saving?')) {
-        // Cancel exit - set editing back to true
-        this.pageContext.updateEditState({ isEditing: true });
-        return;
-      }
+      this.confirmDialog.open({
+        title: 'Unsaved Changes',
+        message: 'You have unsaved changes. Are you sure you want to exit without saving?',
+        type: 'warning',
+        confirmText: 'Exit Without Saving',
+        cancelText: 'Continue Editing'
+      }).subscribe(confirmed => {
+        if (!confirmed) {
+          // Cancel exit - set editing back to true
+          this.pageContext.updateEditState({ isEditing: true });
+        }
+        // If confirmed, no manual cleanup needed - Quill handles it
+      });
+      return;
     }
 
     // No manual cleanup needed - Quill handles it
@@ -407,19 +420,25 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
    * Discard draft and revert to published version
    */
   discardDraft(): void {
-    if (!confirm('Discard all draft changes and revert to published version?')) {
-      return;
-    }
+    this.confirmDialog.open({
+      title: 'Discard Draft',
+      message: 'Discard all draft changes and revert to published version? This cannot be undone.',
+      type: 'danger',
+      confirmText: 'Discard Draft',
+      cancelText: 'Keep Draft'
+    }).subscribe(confirmed => {
+      if (!confirmed) return;
 
-    this.page$.pipe(take(1)).subscribe(page => {
-      this.wikiService.discardDraft(page.id).subscribe({
-        next: () => {
-          window.location.reload();
-        },
-        error: (err) => {
-          console.error('Discard error:', err);
-          this.error = 'Failed to discard draft';
-        }
+      this.page$.pipe(take(1)).subscribe(page => {
+        this.wikiService.discardDraft(page.id).subscribe({
+          next: () => {
+            window.location.reload();
+          },
+          error: (err) => {
+            console.error('Discard error:', err);
+            this.error = 'Failed to discard draft';
+          }
+        });
       });
     });
   }
@@ -479,7 +498,7 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
 
         // Show success message after change detection runs
         setTimeout(() => {
-          alert('Section created successfully! You can now create pages in this section.');
+          this.toast.success('Section created successfully! You can now create pages in this section.');
         }, 100);
       },
       error: (error: any) => {
@@ -496,7 +515,7 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
    */
   onCreatePage(data: { title: string; slug: string }): void {
     if (!this.currentPage || !this.currentPage.section_id) {
-      alert('Cannot create page: no section context');
+      this.toast.error('Cannot create page: no section context');
       return;
     }
 
@@ -545,32 +564,40 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
    */
   publishPage(): void {
     if (!this.currentPage) {
-      alert('No page loaded');
+      this.toast.error('No page loaded');
       return;
     }
 
     if (this.currentPage.status !== 'draft') {
-      alert('This page is already published');
+      this.toast.warning('This page is already published');
       return;
     }
 
-    if (confirm('Publish this page? It will become visible to authorized users based on access rules.')) {
-      this.wikiService.publishPage(this.currentPage.id).subscribe({
+    this.confirmDialog.open({
+      title: 'Publish Page',
+      message: 'This page will become visible to authorized users based on access rules.',
+      type: 'warning',
+      confirmText: 'Publish',
+      cancelText: 'Cancel'
+    }).subscribe(confirmed => {
+      if (!confirmed) return;
+
+      this.wikiService.publishPage(this.currentPage!.id).subscribe({
         next: () => {
-          alert('Page published successfully!');
+          this.toast.success('Page published successfully!');
           // Reload to show updated status
-          window.location.reload();
+          setTimeout(() => window.location.reload(), 1000);
         },
         error: (error: any) => {
           // For 404 errors, show generic message to avoid leaking page IDs
           if (error.status === 404) {
-            alert('Page not found. It may have been deleted.');
+            this.toast.error('Page not found. It may have been deleted.');
           } else {
-            alert(error.error?.message || 'Failed to publish page');
+            this.toast.error(error.error?.message || 'Failed to publish page');
           }
         }
       });
-    }
+    });
   }
 
   /**
@@ -578,13 +605,22 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
    */
   deletePage(): void {
     if (!this.currentPage) {
-      alert('No page loaded');
+      this.toast.error('No page loaded');
       return;
     }
 
-    if (confirm('Delete this page? This action cannot be undone.')) {
-      this.wikiService.deletePage(this.currentPage.id).subscribe({
+    this.confirmDialog.open({
+      title: 'Delete Page',
+      message: `Delete page "${this.currentPage.title}"? This action cannot be undone.`,
+      type: 'danger',
+      confirmText: 'Delete',
+      cancelText: 'Cancel'
+    }).subscribe(confirmed => {
+      if (!confirmed) return;
+
+      this.wikiService.deletePage(this.currentPage!.id).subscribe({
         next: () => {
+          this.toast.success('Page deleted successfully');
           // Navigate to parent wiki overview
           const wikiSlug = this.currentPage?.wiki?.slug;
           if (wikiSlug) {
@@ -595,13 +631,13 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
         },
         error: (error: any) => {
           if (error.status === 404) {
-            alert('Page not found. It may have already been deleted.');
+            this.toast.error('Page not found. It may have already been deleted.');
           } else {
-            alert(error.error?.message || 'Failed to delete page');
+            this.toast.error(error.error?.message || 'Failed to delete page');
           }
         }
       });
-    }
+    });
   }
 
   /**
@@ -615,13 +651,25 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
       return;
     }
 
-    if (confirm('Move this page to the selected section?')) {
-      this.wikiService.movePage(this.currentPage.id, targetSectionId).subscribe({
+    // Find the target section to show its name in the confirmation
+    const targetSection = this.availableSections.find(s => s.id === targetSectionId);
+    const targetSectionName = targetSection?.title || 'the selected section';
+
+    this.confirmDialog.open({
+      title: 'Move Page',
+      message: `Move "${this.currentPage.title}" to section "${targetSectionName}"?`,
+      type: 'info',
+      confirmText: 'Move',
+      cancelText: 'Cancel'
+    }).subscribe(confirmed => {
+      if (!confirmed) {
+        select.value = ''; // Reset dropdown on cancel
+        return;
+      }
+
+      this.wikiService.movePage(this.currentPage!.id, targetSectionId).subscribe({
         next: (response) => {
           const updatedPage = response.data;
-
-          // Find the target section to get its slug
-          const targetSection = this.availableSections.find(s => s.id === targetSectionId);
 
           if (!targetSection || !this.currentPage?.wiki?.slug) {
             // Fallback: reload if we can't build the URL
@@ -629,27 +677,29 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
             return;
           }
 
+          this.toast.success(`Page moved to "${targetSectionName}" successfully`);
+
           // Navigate to the new URL
           const wikiSlug = this.currentPage.wiki.slug;
           const sectionSlug = targetSection.slug;
           const pageSlug = updatedPage.slug;
 
-          this.router.navigate(['/wiki', wikiSlug, sectionSlug, pageSlug]);
+          setTimeout(() => {
+            this.router.navigate(['/wiki', wikiSlug, sectionSlug, pageSlug]);
+          }, 500);
         },
         error: (error: any) => {
           select.value = ''; // Reset dropdown
           if (error.status === 404) {
-            alert('Target section not found.');
+            this.toast.error('Target section not found.');
           } else if (error.status === 403) {
-            alert('You do not have permission to move this page to the selected section.');
+            this.toast.error('You do not have permission to move this page to the selected section.');
           } else {
-            alert(error.error?.message || 'Failed to move page');
+            this.toast.error(error.error?.message || 'Failed to move page');
           }
         }
       });
-    } else {
-      select.value = ''; // Reset dropdown on cancel
-    }
+    });
   }
 
   sanitizeHtml(html: string): SafeHtml {
