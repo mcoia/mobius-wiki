@@ -22,4 +22,8 @@ export class UpdatePageDto {
   @IsOptional()
   @IsInt()
   sortOrder?: number;
+
+  @IsOptional()
+  @IsInt()
+  sectionId?: number;
 }

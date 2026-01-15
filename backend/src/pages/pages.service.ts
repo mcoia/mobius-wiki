@@ -287,6 +287,42 @@ export class PagesService {
     return wrapData(page);
   }
 
+  /**
+   * Generate a unique slug for a page in a section by appending numeric suffix if needed
+   */
+  private async generateUniqueSlug(sectionId: number, baseSlug: string, currentPageId: number): Promise<string> {
+    // Check if base slug conflicts
+    const { rows: conflictRows } = await this.pool.query(
+      'SELECT id FROM wiki.pages WHERE section_id = $1 AND slug = $2 AND id != $3 AND deleted_at IS NULL',
+      [sectionId, baseSlug, currentPageId]
+    );
+
+    if (conflictRows.length === 0) {
+      return baseSlug;
+    }
+
+    // Find unique slug by appending numeric suffix
+    let counter = 2;
+    while (true) {
+      const candidateSlug = `${baseSlug}-${counter}`;
+      const { rows: checkRows } = await this.pool.query(
+        'SELECT id FROM wiki.pages WHERE section_id = $1 AND slug = $2 AND deleted_at IS NULL',
+        [sectionId, candidateSlug]
+      );
+
+      if (checkRows.length === 0) {
+        return candidateSlug;
+      }
+
+      counter++;
+
+      // Safety limit to prevent infinite loop
+      if (counter > 1000) {
+        throw new BadRequestException('Unable to generate unique slug after 1000 attempts');
+      }
+    }
+  }
+
   async update(id: number, dto: UpdatePageDto, userId: number, user: User | null = null) {
     // Get current page
     const { data: page } = await this.findOne(id, user);
@@ -298,6 +334,63 @@ export class PagesService {
     let newTitle = page.title;
     let newContent = page.content;
     let newScripts = page.scripts || null;
+    let newSlug = page.slug;
+
+    // Handle section move
+    if (dto.sectionId !== undefined && dto.sectionId !== page.section_id) {
+      // Validate target section exists
+      const { rows: targetSectionRows } = await this.pool.query(
+        'SELECT id, wiki_id FROM wiki.sections WHERE id = $1 AND deleted_at IS NULL',
+        [dto.sectionId]
+      );
+
+      if (targetSectionRows.length === 0) {
+        throw new NotFoundException(`Target section with ID ${dto.sectionId} not found`);
+      }
+
+      const targetSection = targetSectionRows[0];
+
+      // Verify target section belongs to same wiki
+      const { rows: currentSectionRows } = await this.pool.query(
+        'SELECT wiki_id FROM wiki.sections WHERE id = $1',
+        [page.section_id]
+      );
+
+      if (currentSectionRows[0].wiki_id !== targetSection.wiki_id) {
+        throw new BadRequestException('Cannot move page to section in different wiki');
+      }
+
+      // Check edit permission on target section
+      const canEditTargetSection = await this.aclService.canEdit(user, 'section', dto.sectionId);
+      if (!canEditTargetSection) {
+        throw new ForbiddenException('You do not have permission to add pages to the target section');
+      }
+
+      // Check slug conflicts in target section and auto-resolve
+      newSlug = await this.generateUniqueSlug(dto.sectionId, page.slug, id);
+
+      // Update section_id and slug if changed
+      updates.push(`section_id = $${paramCount}`);
+      values.push(dto.sectionId);
+      paramCount++;
+
+      if (newSlug !== page.slug) {
+        updates.push(`slug = $${paramCount}`);
+        values.push(newSlug);
+        paramCount++;
+      }
+
+      // Get max sort_order in target section and append
+      const { rows: maxOrderRows } = await this.pool.query(
+        'SELECT COALESCE(MAX(sort_order), -1) as max_order FROM wiki.pages WHERE section_id = $1 AND deleted_at IS NULL',
+        [dto.sectionId]
+      );
+      const newSortOrder = maxOrderRows[0].max_order + 1;
+
+      updates.push(`sort_order = $${paramCount}`);
+      values.push(newSortOrder);
+      paramCount++;
+    }
 
     // AUTO-DRAFT: If editing a published page, change to draft
     if (page.status === 'published' && (dto.content !== undefined || dto.title !== undefined)) {

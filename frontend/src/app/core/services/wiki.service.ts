@@ -45,6 +45,10 @@ export class WikiService {
   }
 
   // Section CRUD operations
+  getSectionsByWikiId(wikiId: number): Observable<{ data: Section[] }> {
+    return this.api.get(`/wikis/${wikiId}/sections`);
+  }
+
   createSection(wikiId: number, data: { title: string; slug?: string; description?: string }): Observable<{ data: Section }> {
     return this.api.post(`/wikis/${wikiId}/sections`, data);
   }
@@ -64,6 +68,10 @@ export class WikiService {
 
   deletePage(id: number): Observable<{ data: null }> {
     return this.api.delete(`/pages/${id}`);
+  }
+
+  movePage(pageId: number, targetSectionId: number): Observable<{ data: Page }> {
+    return this.api.patch(`/pages/${pageId}`, { sectionId: targetSectionId });
   }
 
   // Publish page

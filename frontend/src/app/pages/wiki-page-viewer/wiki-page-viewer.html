@@ -51,6 +51,15 @@
             <lucide-angular [img]="Lock" [size]="16"></lucide-angular>
             <span>Permissions</span>
           </button>
+          <button (click)="deletePage()" class="btn-danger" title="Delete this page">
+            Delete Page
+          </button>
+          <select (change)="movePage($event)" class="section-selector" title="Move page to another section">
+            <option value="">Move to section...</option>
+            @for (section of availableSections$ | async; track section.id) {
+              <option [value]="section.id">{{ section.title }}</option>
+            }
+          </select>
           <button (click)="showCreateSectionModal = true" class="btn-secondary" title="Create a new section in this wiki">
             + New Section
           </button>

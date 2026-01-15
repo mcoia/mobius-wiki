@@ -7,7 +7,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { PageContextService } from '../../core/services/page-context.service';
 import { Page, Section } from '../../core/models/wiki.model';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { Observable, throwError, EMPTY, Subject, combineLatest } from 'rxjs';
+import { Observable, throwError, EMPTY, Subject, combineLatest, of } from 'rxjs';
 import { switchMap, catchError, shareReplay, tap, map, take, takeUntil } from 'rxjs/operators';
 import { TinymceEditorComponent } from '../../shared/components/tinymce-editor/tinymce-editor.component';
 import { CreateModalComponent } from '../../shared/components/create-modal/create-modal.component';
@@ -44,6 +44,10 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
 
   // Permission checking
   canEdit$!: Observable<boolean>;
+
+  // Available sections for move dropdown
+  availableSections$!: Observable<Section[]>;
+  private availableSections: Section[] = [];
 
   // UI state
   saveError: string | null = null;
@@ -144,6 +148,33 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
       }),
       shareReplay(1)
     );
+
+    // Load available sections for move dropdown
+    this.availableSections$ = this.page$.pipe(
+      switchMap(page => {
+        if (!page || !page.wiki) {
+          return of([]);
+        }
+        // Get wiki ID from the page's wiki property (need to get wiki details first)
+        return this.wikiService.getWikiBySlug(page.wiki.slug).pipe(
+          switchMap(wikiResponse => {
+            return this.wikiService.getSectionsByWikiId(wikiResponse.data.id).pipe(
+              map(sectionsResponse => sectionsResponse.data),
+              map(sections => sections.filter(s => s.id !== page.section_id)) // Exclude current section
+            );
+          }),
+          catchError(() => of([]))
+        );
+      }),
+      shareReplay(1)
+    );
+
+    // Subscribe to store sections for navigation after move
+    this.availableSections$.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(sections => {
+      this.availableSections = sections;
+    });
 
     // Subscribe to canEdit$ to ensure tap executes - USE takeUntil for cleanup
     this.canEdit$.pipe(
@@ -520,6 +551,85 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
           }
         }
       });
+    }
+  }
+
+  /**
+   * Delete the current page
+   */
+  deletePage(): void {
+    if (!this.currentPage) {
+      alert('No page loaded');
+      return;
+    }
+
+    if (confirm('Delete this page? This action cannot be undone.')) {
+      this.wikiService.deletePage(this.currentPage.id).subscribe({
+        next: () => {
+          // Navigate to parent wiki overview
+          const wikiSlug = this.currentPage?.wiki?.slug;
+          if (wikiSlug) {
+            this.router.navigate(['/wiki', wikiSlug]);
+          } else {
+            this.router.navigate(['/']);
+          }
+        },
+        error: (error: any) => {
+          if (error.status === 404) {
+            alert('Page not found. It may have already been deleted.');
+          } else {
+            alert(error.error?.message || 'Failed to delete page');
+          }
+        }
+      });
+    }
+  }
+
+  /**
+   * Move page to a different section
+   */
+  movePage(event: Event): void {
+    const select = event.target as HTMLSelectElement;
+    const targetSectionId = parseInt(select.value);
+
+    if (!targetSectionId || !this.currentPage) {
+      return;
+    }
+
+    if (confirm('Move this page to the selected section?')) {
+      this.wikiService.movePage(this.currentPage.id, targetSectionId).subscribe({
+        next: (response) => {
+          const updatedPage = response.data;
+
+          // Find the target section to get its slug
+          const targetSection = this.availableSections.find(s => s.id === targetSectionId);
+
+          if (!targetSection || !this.currentPage?.wiki?.slug) {
+            // Fallback: reload if we can't build the URL
+            window.location.reload();
+            return;
+          }
+
+          // Navigate to the new URL
+          const wikiSlug = this.currentPage.wiki.slug;
+          const sectionSlug = targetSection.slug;
+          const pageSlug = updatedPage.slug;
+
+          this.router.navigate(['/wiki', wikiSlug, sectionSlug, pageSlug]);
+        },
+        error: (error: any) => {
+          select.value = ''; // Reset dropdown
+          if (error.status === 404) {
+            alert('Target section not found.');
+          } else if (error.status === 403) {
+            alert('You do not have permission to move this page to the selected section.');
+          } else {
+            alert(error.error?.message || 'Failed to move page');
+          }
+        }
+      });
+    } else {
+      select.value = ''; // Reset dropdown on cancel
     }
   }
 
