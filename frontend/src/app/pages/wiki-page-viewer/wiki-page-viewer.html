@@ -38,36 +38,59 @@
         <span>{{ page.title }}</span>
       </nav>
 
-      @if ((canEdit$ | async) && !isEditing) {
+      @if (canEdit$ | async) {
         <div class="page-actions">
-          @if (page.status === 'draft') {
-            <button (click)="publishPage()" class="btn-publish" title="Publish this page">
-              Publish Page
+          @if (isEditing) {
+            <!-- Edit mode: Show Save and Cancel buttons -->
+            <button (click)="toggleEdit()" class="btn-secondary" title="Cancel editing" type="button">
+              Cancel
             </button>
-          }
-          <button
-            (click)="showAccessControlPanel = !showAccessControlPanel"
-            class="btn-permissions"
-            title="Manage page permissions">
-            <lucide-angular [img]="Lock" [size]="16"></lucide-angular>
-            <span>Permissions</span>
-          </button>
-          <button (click)="deletePage()" class="btn-danger" title="Delete this page">
-            Delete Page
-          </button>
-          <select (change)="movePage($event)" class="section-selector" title="Move page to another section">
-            <option value="">Move to section...</option>
-            @for (section of availableSections$ | async; track section.id) {
-              <option [value]="section.id">{{ section.title }}</option>
+            <button
+              (click)="saveContent()"
+              [disabled]="isSaving"
+              class="btn-primary"
+              title="Save changes"
+              type="button">
+              @if (isSaving) {
+                <span>Saving...</span>
+              } @else {
+                <span>Save Changes</span>
+              }
+            </button>
+          } @else {
+            <!-- View mode: Show Edit button and other actions -->
+            <button (click)="toggleEdit()" class="btn-secondary" title="Edit this page" type="button">
+              Edit Page
+            </button>
+            @if (page.status === 'draft') {
+              <button (click)="publishPage()" class="btn-publish" title="Publish this page">
+                Publish Page
+              </button>
             }
-          </select>
-          <button (click)="showCreateSectionModal = true" class="btn-secondary" title="Create a new section in this wiki">
-            + New Section
-          </button>
-          @if (page.section_id) {
-            <button (click)="showCreatePageModal = true" class="btn-secondary" title="Create a new page in this section">
-              + New Page
+            <button
+              (click)="showAccessControlPanel = !showAccessControlPanel"
+              class="btn-permissions"
+              title="Manage page permissions">
+              <lucide-angular [img]="Lock" [size]="16"></lucide-angular>
+              <span>Permissions</span>
             </button>
+            <button (click)="deletePage()" class="btn-danger" title="Delete this page">
+              Delete Page
+            </button>
+            <select (change)="movePage($event)" class="section-selector" title="Move page to another section">
+              <option value="">Move to section...</option>
+              @for (section of availableSections$ | async; track section.id) {
+                <option [value]="section.id">{{ section.title }}</option>
+              }
+            </select>
+            <button (click)="showCreateSectionModal = true" class="btn-secondary" title="Create a new section in this wiki">
+              + New Section
+            </button>
+            @if (page.section_id) {
+              <button (click)="showCreatePageModal = true" class="btn-secondary" title="Create a new page in this section">
+                + New Page
+              </button>
+            }
           }
         </div>
       }

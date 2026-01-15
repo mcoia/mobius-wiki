@@ -363,12 +363,21 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   /**
-   * Toggle edit mode (for version banner Edit Page button)
+   * Toggle edit mode (for Edit Page button)
    */
   toggleEdit(): void {
     const currentState = this.pageContext.currentState;
     this.pageContext.updateEditState({
       isEditing: !currentState.isEditing
+    });
+  }
+
+  /**
+   * Trigger save operation (for Save Changes button)
+   */
+  saveContent(): void {
+    this.pageContext.updateEditState({
+      isSaving: true
     });
   }
 
