@@ -15,7 +15,7 @@ export const TINYMCE_BASE_CONFIG = {
   // Explicitly allow inline styles (MUST be object format, not string!)
   // Reference: https://www.tiny.cloud/docs/tinymce/latest/content-filtering/
   valid_styles: {
-    '*': 'font-size,font-family,color,text-align,background-color,text-decoration,border,padding,margin,width,height,display,float,line-height,letter-spacing,vertical-align,white-space'
+    '*': 'font-size,font-family,color,text-align,background-color,text-decoration,border,padding,margin,margin-left,margin-right,margin-top,margin-bottom,width,height,display,float,line-height,letter-spacing,vertical-align,white-space'
   },
 
   // Whitespace preservation
@@ -42,20 +42,21 @@ export const TINYMCE_BASE_CONFIG = {
   // Reference: https://www.tiny.cloud/docs/tinymce/latest/content-formatting/
   formats: {
     // Text alignment - use inline styles (TinyMCE default uses CSS classes)
-    alignleft: {
-      selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li,table,img',
-      styles: { textAlign: 'left' }
-    },
-    aligncenter: {
-      selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li,table,img',
-      styles: { textAlign: 'center' }
-    },
-    alignright: {
-      selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li,table,img',
-      styles: { textAlign: 'right' }
-    },
+    // Note: Images require display:block + margin for centering (text-align doesn't work on <img>)
+    alignleft: [
+      { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li,table', styles: { textAlign: 'left' } },
+      { selector: 'img', styles: { display: 'block', marginLeft: '0', marginRight: 'auto' } }
+    ],
+    aligncenter: [
+      { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li,table', styles: { textAlign: 'center' } },
+      { selector: 'img', styles: { display: 'block', marginLeft: 'auto', marginRight: 'auto' } }
+    ],
+    alignright: [
+      { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li,table', styles: { textAlign: 'right' } },
+      { selector: 'img', styles: { display: 'block', marginLeft: 'auto', marginRight: '0' } }
+    ],
     alignjustify: {
-      selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li,table,img',
+      selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li,table',
       styles: { textAlign: 'justify' }
     },
 
@@ -73,7 +74,7 @@ export const TINYMCE_BASE_CONFIG = {
   // TinyMCE Configuration
   base_url: '/tinymce',                  // Self-hosted TinyMCE
   suffix: '.min',
-  plugins: 'link image lists code',      // Core plugins
+  plugins: 'link image lists code paste table',  // Core plugins
   menubar: false,                        // Disable menu bar
   statusbar: false,                      // Disable status bar
   branding: false,                       // Remove "Powered by Tiny" branding
@@ -168,25 +169,7 @@ export const TINYMCE_BASE_CONFIG = {
       color: #555;
     }
 
-    /* Image alignment */
-    img.ql-align-left {
-      display: block;
-      margin-left: 0;
-      margin-right: auto;
-    }
-
-    img.ql-align-center {
-      display: block;
-      margin-left: auto;
-      margin-right: auto;
-    }
-
-    img.ql-align-right {
-      display: block;
-      margin-left: auto;
-      margin-right: 0;
-    }
-
+    /* Image styling */
     img {
       cursor: pointer;
       transition: box-shadow 0.2s;

@@ -94,8 +94,6 @@ export class TinymceEditorComponent implements AfterViewInit, OnDestroy {
       const availableHeight = viewportHeight - headerHeight - breadcrumbHeight - padding;
       const editorHeight = Math.max(400, availableHeight); // Minimum 400px
 
-      console.log('Setting editor height to:', editorHeight, 'px');
-
       // Set height on the TinyMCE container via DOM
       const editorContainer = this.editorInstance.getContainer();
       if (editorContainer) {
@@ -146,14 +144,9 @@ export class TinymceEditorComponent implements AfterViewInit, OnDestroy {
   onEditorInit(event: any): void {
     this.editorInstance = event.editor;
 
-    console.log('TinyMCE initialized, content length:', this._content?.length);
-
     // Set initial content
     if (this._content) {
       this.editorInstance.setContent(this._content);
-      console.log('Content set in editor');
-    } else {
-      console.warn('No content to set!');
     }
 
     // Set full height after initialization
@@ -305,26 +298,19 @@ export class TinymceEditorComponent implements AfterViewInit, OnDestroy {
   // Source Mode Toggle
 
   toggleSourceMode(): void {
-    console.log('toggleSourceMode called, current isSourceMode:', this.isSourceMode);
-
     if (!this.isSourceMode) {
       // Switch TO source mode
       const html = this.editorInstance.getContent({ format: 'raw' });
-      console.log('Switching TO source mode, HTML length:', html.length);
       this.sourceContent = this.formatHtml(html);
-      console.log('Formatted HTML length:', this.sourceContent.length);
-      // TinyMCE will be hidden via [hidden] directive in template
+      // TinyMCE will be hidden via *ngIf directive in template
     } else {
       // Switch FROM source mode
-      console.log('Switching FROM source mode, sourceContent length:', this.sourceContent.length);
-      console.log('sourceContent value:', this.sourceContent.substring(0, 200));
       this.editorInstance.setContent(this.sourceContent, { format: 'raw' });
       this._content = this.sourceContent;
       this.contentChange.emit(this.sourceContent);
     }
 
     this.isSourceMode = !this.isSourceMode;
-    console.log('After toggle, isSourceMode is now:', this.isSourceMode);
 
     // ✅ Emit custom event to sync button state
     if (this.editorInstance) {
@@ -336,7 +322,6 @@ export class TinymceEditorComponent implements AfterViewInit, OnDestroy {
   }
 
   onSourceChange(): void {
-    console.log('onSourceChange called, sourceContent length:', this.sourceContent.length);
     this._content = this.sourceContent;
     this.contentChange.emit(this.sourceContent);
   }
@@ -451,12 +436,24 @@ export class TinymceEditorComponent implements AfterViewInit, OnDestroy {
   }
 
   private alignImage(editor: any, img: HTMLImageElement, align: string): void {
-    // Remove existing alignment classes
-    img.classList.remove('ql-align-left', 'ql-align-center', 'ql-align-right');
+    // Clear existing alignment styles
+    img.style.display = '';
+    img.style.marginLeft = '';
+    img.style.marginRight = '';
 
-    // Add new alignment
-    if (align) {
-      img.classList.add(`ql-align-${align}`);
+    // Apply new alignment using inline styles (matches toolbar behavior)
+    if (align === 'left') {
+      img.style.display = 'block';
+      img.style.marginLeft = '0';
+      img.style.marginRight = 'auto';
+    } else if (align === 'center') {
+      img.style.display = 'block';
+      img.style.marginLeft = 'auto';
+      img.style.marginRight = 'auto';
+    } else if (align === 'right') {
+      img.style.display = 'block';
+      img.style.marginLeft = 'auto';
+      img.style.marginRight = '0';
     }
 
     // Trigger change event

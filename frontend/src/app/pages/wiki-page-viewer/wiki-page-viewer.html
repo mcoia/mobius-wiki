@@ -24,7 +24,103 @@
       </app-version-banner>
     }
 
-    <!-- Breadcrumb and action buttons -->
+    <!-- Action toolbar (editors only) -->
+    @if (canEdit$ | async) {
+      <div class="page-toolbar">
+        @if (isEditing) {
+          <!-- Edit mode: Save and Cancel -->
+          <div class="toolbar-group">
+            <button (click)="toggleEdit()" class="toolbar-btn" title="Cancel editing" type="button">
+              <lucide-angular [img]="X" [size]="16"></lucide-angular>
+              <span>Cancel</span>
+            </button>
+            <button
+              (click)="saveContent()"
+              [disabled]="isSaving"
+              class="toolbar-btn toolbar-btn-primary"
+              title="Save changes"
+              type="button">
+              <lucide-angular [img]="Save" [size]="16"></lucide-angular>
+              @if (isSaving) {
+                <span>Saving...</span>
+              } @else {
+                <span>Save</span>
+              }
+            </button>
+          </div>
+        } @else {
+          <!-- View mode: Grouped toolbar -->
+          <!-- Primary: Edit -->
+          <div class="toolbar-group">
+            <button (click)="toggleEdit()" class="toolbar-btn" title="Edit this page" type="button">
+              <lucide-angular [img]="Pencil" [size]="16"></lucide-angular>
+              <span>Edit</span>
+            </button>
+          </div>
+
+          <!-- Page Management: Permissions, Move, Delete -->
+          <div class="toolbar-group">
+            <button
+              (click)="showAccessControlPanel = !showAccessControlPanel"
+              class="toolbar-btn"
+              title="Manage page permissions">
+              <lucide-angular [img]="Lock" [size]="16"></lucide-angular>
+              <span>Permissions</span>
+            </button>
+
+            <!-- Move dropdown -->
+            <div class="dropdown-container">
+              <button
+                (click)="toggleMoveDropdown(); $event.stopPropagation()"
+                class="toolbar-btn"
+                title="Move to another section">
+                <lucide-angular [img]="ArrowRightFromLine" [size]="16"></lucide-angular>
+                <span>Move</span>
+                <lucide-angular [img]="ChevronDown" [size]="14" class="chevron"></lucide-angular>
+              </button>
+              @if (showMoveDropdown) {
+                <div class="dropdown-menu">
+                  @for (section of availableSections$ | async; track section.id) {
+                    <button
+                      class="dropdown-item"
+                      (click)="movePageToSection(section.id)"
+                      type="button">
+                      {{ section.title }}
+                    </button>
+                  } @empty {
+                    <div class="dropdown-item dropdown-empty">No other sections available</div>
+                  }
+                </div>
+              }
+            </div>
+
+            <!-- Delete (icon only) -->
+            <button
+              (click)="deletePage()"
+              class="toolbar-btn toolbar-btn-icon toolbar-btn-danger"
+              title="Delete this page">
+              <lucide-angular [img]="Trash2" [size]="16"></lucide-angular>
+            </button>
+          </div>
+
+          <!-- Creation: New Section, New Page -->
+          <div class="toolbar-group">
+            <button (click)="showCreateSectionModal = true" class="toolbar-btn" title="Create a new section">
+              <lucide-angular [img]="Plus" [size]="16"></lucide-angular>
+              <span>Section</span>
+            </button>
+            @if (page.section_id) {
+              <button (click)="showCreatePageModal = true" class="toolbar-btn" title="Create a new page">
+                <lucide-angular [img]="Plus" [size]="16"></lucide-angular>
+                <span>Page</span>
+              </button>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Breadcrumb navigation -->
     <div class="page-header">
       <nav class="breadcrumb">
         @if (page.wiki) {
@@ -37,63 +133,6 @@
         }
         <span>{{ page.title }}</span>
       </nav>
-
-      @if (canEdit$ | async) {
-        <div class="page-actions">
-          @if (isEditing) {
-            <!-- Edit mode: Show Save and Cancel buttons -->
-            <button (click)="toggleEdit()" class="btn-secondary" title="Cancel editing" type="button">
-              Cancel
-            </button>
-            <button
-              (click)="saveContent()"
-              [disabled]="isSaving"
-              class="btn-primary"
-              title="Save changes"
-              type="button">
-              @if (isSaving) {
-                <span>Saving...</span>
-              } @else {
-                <span>Save Changes</span>
-              }
-            </button>
-          } @else {
-            <!-- View mode: Show Edit button and other actions -->
-            <button (click)="toggleEdit()" class="btn-secondary" title="Edit this page" type="button">
-              Edit Page
-            </button>
-            @if (page.status === 'draft') {
-              <button (click)="publishPage()" class="btn-publish" title="Publish this page">
-                Publish Page
-              </button>
-            }
-            <button
-              (click)="showAccessControlPanel = !showAccessControlPanel"
-              class="btn-permissions"
-              title="Manage page permissions">
-              <lucide-angular [img]="Lock" [size]="16"></lucide-angular>
-              <span>Permissions</span>
-            </button>
-            <button (click)="deletePage()" class="btn-danger" title="Delete this page">
-              Delete Page
-            </button>
-            <select (change)="movePage($event)" class="section-selector" title="Move page to another section">
-              <option value="">Move to section...</option>
-              @for (section of availableSections$ | async; track section.id) {
-                <option [value]="section.id">{{ section.title }}</option>
-              }
-            </select>
-            <button (click)="showCreateSectionModal = true" class="btn-secondary" title="Create a new section in this wiki">
-              + New Section
-            </button>
-            @if (page.section_id) {
-              <button (click)="showCreatePageModal = true" class="btn-secondary" title="Create a new page in this section">
-                + New Page
-              </button>
-            }
-          }
-        </div>
-      }
     </div>
 
     <!-- Page Content -->

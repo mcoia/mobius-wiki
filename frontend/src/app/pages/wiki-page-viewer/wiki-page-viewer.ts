@@ -15,7 +15,7 @@ import { TinymceEditorComponent } from '../../shared/components/tinymce-editor/t
 import { CreateModalComponent } from '../../shared/components/create-modal/create-modal.component';
 import { AccessControlPanelComponent } from '../../shared/components/access-control-panel/access-control-panel.component';
 import { VersionBannerComponent } from '../../shared/components/version-banner/version-banner.component';
-import { LucideAngularModule, Lock } from 'lucide-angular';
+import { LucideAngularModule, Lock, Pencil, ArrowRightFromLine, Trash2, Plus, Save, X, ChevronDown } from 'lucide-angular';
 
 @Component({
   selector: 'app-wiki-page-viewer',
@@ -29,6 +29,13 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
 
   // Lucide icons
   readonly Lock = Lock;
+  readonly Pencil = Pencil;
+  readonly ArrowRightFromLine = ArrowRightFromLine;
+  readonly Trash2 = Trash2;
+  readonly Plus = Plus;
+  readonly Save = Save;
+  readonly X = X;
+  readonly ChevronDown = ChevronDown;
 
   // Track script elements for cleanup
   private scriptElements: HTMLScriptElement[] = [];
@@ -64,6 +71,7 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
   showCreateSectionModal = false;
   showCreatePageModal = false;
   showAccessControlPanel = false;
+  showMoveDropdown = false;
   @ViewChild('createSectionModal') createSectionModal?: CreateModalComponent;
   @ViewChild('createPageModal') createPageModal?: CreateModalComponent;
 
@@ -641,7 +649,80 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   /**
-   * Move page to a different section
+   * Toggle move dropdown
+   */
+  toggleMoveDropdown(): void {
+    this.showMoveDropdown = !this.showMoveDropdown;
+  }
+
+  /**
+   * Close move dropdown (for click outside)
+   */
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.dropdown-container')) {
+      this.showMoveDropdown = false;
+    }
+  }
+
+  /**
+   * Move page to a specific section (from dropdown)
+   */
+  movePageToSection(targetSectionId: number): void {
+    this.showMoveDropdown = false;
+
+    if (!targetSectionId || !this.currentPage) {
+      return;
+    }
+
+    // Find the target section to show its name in the confirmation
+    const targetSection = this.availableSections.find(s => s.id === targetSectionId);
+    const targetSectionName = targetSection?.title || 'the selected section';
+
+    this.confirmDialog.open({
+      title: 'Move Page',
+      message: `Move "${this.currentPage.title}" to section "${targetSectionName}"?`,
+      type: 'info',
+      confirmText: 'Move',
+      cancelText: 'Cancel'
+    }).subscribe(confirmed => {
+      if (!confirmed) return;
+
+      this.wikiService.movePage(this.currentPage!.id, targetSectionId).subscribe({
+        next: (response) => {
+          const updatedPage = response.data;
+
+          if (!targetSection || !this.currentPage?.wiki?.slug) {
+            window.location.reload();
+            return;
+          }
+
+          this.toast.success(`Page moved to "${targetSectionName}" successfully`);
+
+          const wikiSlug = this.currentPage.wiki.slug;
+          const sectionSlug = targetSection.slug;
+          const pageSlug = updatedPage.slug;
+
+          setTimeout(() => {
+            this.router.navigate(['/wiki', wikiSlug, sectionSlug, pageSlug]);
+          }, 500);
+        },
+        error: (error: any) => {
+          if (error.status === 404) {
+            this.toast.error('Target section not found.');
+          } else if (error.status === 403) {
+            this.toast.error('You do not have permission to move this page to the selected section.');
+          } else {
+            this.toast.error(error.error?.message || 'Failed to move page');
+          }
+        }
+      });
+    });
+  }
+
+  /**
+   * Move page to a different section (legacy - for select element)
    */
   movePage(event: Event): void {
     const select = event.target as HTMLSelectElement;
