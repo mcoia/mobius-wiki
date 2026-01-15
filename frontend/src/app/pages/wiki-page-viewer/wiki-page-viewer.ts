@@ -61,6 +61,9 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
   // UI state
   saveError: string | null = null;
 
+  // Cached sanitized HTML (prevents re-render on every change detection cycle)
+  sanitizedContent: SafeHtml | null = null;
+
   // Destroy subject for automatic unsubscribe
   private destroy$ = new Subject<void>();
 
@@ -112,6 +115,9 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
           tap(page => {
             console.log('Page response:', page);
             this.currentPage = page; // Store for AfterViewChecked
+
+            // Cache sanitized HTML to prevent re-render flash on every change detection cycle
+            this.sanitizedContent = this.sanitizer.bypassSecurityTrustHtml(page.content || '');
 
             // Update page context with current page ID
             this.pageContext.updateEditState({
@@ -660,6 +666,8 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
    */
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
+    if (!this.showMoveDropdown) return; // Skip if already closed
+
     const target = event.target as HTMLElement;
     if (!target.closest('.dropdown-container')) {
       this.showMoveDropdown = false;

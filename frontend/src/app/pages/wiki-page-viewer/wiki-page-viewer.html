@@ -16,6 +16,8 @@
         [currentVersionNumber]="page.currentVersionNumber"
         [publishedAt]="page.published_at"
         [canEdit]="true"
+        [authorName]="page.author?.name"
+        [updatedAt]="page.updated_at"
         (viewDraft)="viewDraftVersion()"
         (viewPublished)="viewPublishedVersion()"
         (publish)="publishPage()"
@@ -147,7 +149,7 @@
     } @else {
       <!-- Read-only view mode -->
       <div class="page-content">
-        <div [innerHTML]="sanitizeHtml(page.content)"></div>
+        <div [innerHTML]="sanitizedContent"></div>
       </div>
     }
 

@@ -1,20 +1,22 @@
+/* Version Banner - Modern Redesign */
+
 .version-banner {
   padding: 1rem 1.5rem;
   margin-bottom: 1.5rem;
-  border-radius: 6px;
-  border-left: 4px solid;
+  border-radius: 10px;
 }
 
+/* Draft banner - warm cream yellow */
 .draft-banner {
-  background-color: #fff3cd;
-  border-left-color: #ff9800;
+  background-color: #FEF9E7;
 }
 
+/* Published banner - soft green */
 .published-banner {
-  background-color: #d4edda;
-  border-left-color: #28a745;
+  background-color: #ECFDF5;
 }
 
+/* Main content layout */
 .banner-content {
   display: flex;
   justify-content: space-between;
@@ -22,37 +24,90 @@
   gap: 1.5rem;
 }
 
-.status-info {
+.banner-info {
   flex: 1;
-}
-
-.status-badge {
-  display: inline-block;
-  font-weight: 600;
-  font-size: 0.875rem;
-  margin-bottom: 0.5rem;
-}
-
-.status-badge.draft {
-  color: #ff9800;
-}
-
-.status-badge.published {
-  color: #28a745;
-}
-
-.version-details {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.5rem;
+}
+
+/* Status row with icon and label */
+.status-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.status-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.status-icon.draft {
+  color: #f59e0b;
+}
+
+.status-icon.published {
+  color: #10b981;
+}
+
+.status-label {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.status-label.draft {
+  color: #f59e0b;
+}
+
+.status-label.published {
+  color: #10b981;
+}
+
+.status-description {
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+/* Author info row */
+.author-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   font-size: 0.875rem;
-  color: #666;
+  color: #6b7280;
 }
 
-.detail {
-  line-height: 1.4;
+.author-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background-color: #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9ca3af;
 }
 
+.author-avatar lucide-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.author-name {
+  font-weight: 500;
+  color: #374151;
+}
+
+.author-separator {
+  color: #9ca3af;
+}
+
+.author-date {
+  color: #6b7280;
+}
+
+/* Action buttons */
 .banner-actions {
   display: flex;
   gap: 0.75rem;
@@ -60,46 +115,50 @@
 }
 
 .banner-actions button {
-  padding: 0.5rem 1rem;
+  padding: 0.5rem 1.25rem;
   font-size: 0.875rem;
-  border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
   font-weight: 500;
-  transition: all 0.2s;
+  transition: all 0.15s ease;
 }
 
-.btn-primary {
-  background-color: #0097A7;
-  color: white;
-}
-
-.btn-primary:hover {
-  background-color: #00838f;
-}
-
+/* View Published / View Draft - outlined white */
 .btn-secondary {
-  background-color: #f5f5f5;
-  color: #555;
-  border: 1px solid #e0e0e0;
+  background-color: white;
+  color: #374151;
+  border: 1px solid #d1d5db;
 }
 
 .btn-secondary:hover {
-  background-color: #e0e0e0;
-  color: #333;
+  background-color: #f9fafb;
+  border-color: #9ca3af;
 }
 
+/* Discard Draft - soft pink/salmon */
 .btn-warning {
-  background-color: #fee2e2;
-  color: #dc2626;
-  border: 1px solid #fecaca;
+  background-color: #fecaca;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
 }
 
 .btn-warning:hover {
-  background-color: #fecaca;
-  color: #b91c1c;
+  background-color: #fca5a5;
+  color: #7f1d1d;
 }
 
+/* Publish / Primary action - teal */
+.btn-primary {
+  background-color: #0d9488;
+  color: white;
+  border: none;
+}
+
+.btn-primary:hover {
+  background-color: #0f766e;
+}
+
+/* Responsive */
 @media (max-width: 768px) {
   .banner-content {
     flex-direction: column;

@@ -2,17 +2,29 @@
   <!-- Viewing draft version -->
   <div class="version-banner draft-banner">
     <div class="banner-content">
-      <div class="status-info">
-        <span class="status-badge draft">🟠 DRAFT VERSION (Not Live)</span>
-        <div class="version-details">
-          <span class="detail">Guests see: Published v{{ publishedVersionNumber }} ({{ publishedAt | date:'MMM d, y' }})</span>
-          <span class="detail">You're viewing: Draft v{{ currentVersionNumber }}</span>
+      <div class="banner-info">
+        <div class="status-row">
+          <lucide-icon [img]="FileText" class="status-icon draft"></lucide-icon>
+          <span class="status-label draft">Draft</span>
+          <span class="status-description">Guests see: Published v{{ publishedVersionNumber }} ({{ publishedAt | date:'MMM d, y' }})</span>
+        </div>
+        <div class="author-row">
+          <div class="author-avatar">
+            <lucide-icon [img]="User" [size]="16"></lucide-icon>
+          </div>
+          @if (authorName) {
+            <span class="author-name">{{ authorName }}</span>
+            <span class="author-separator">&middot;</span>
+          }
+          @if (updatedAt) {
+            <span class="author-date">{{ updatedAt | date:'MMM d, h:mm a' }}</span>
+          }
         </div>
       </div>
       <div class="banner-actions">
         <button class="btn-secondary" (click)="viewPublished.emit()">View Published</button>
         <button class="btn-warning" (click)="discardDraft.emit()">Discard Draft</button>
-        <button class="btn-primary" (click)="publish.emit()">Publish Draft</button>
+        <button class="btn-primary" (click)="publish.emit()">Publish</button>
       </div>
     </div>
   </div>
@@ -22,11 +34,21 @@
   <!-- Viewing published version but draft exists -->
   <div class="version-banner published-banner">
     <div class="banner-content">
-      <div class="status-info">
-        <span class="status-badge published">🟢 PUBLISHED VERSION (Live)</span>
-        <div class="version-details">
-          <span class="detail">Last published: {{ publishedAt | date:'MMM d, y' }} (v{{ publishedVersionNumber }})</span>
-          <span class="detail">Draft exists: v{{ currentVersionNumber }}</span>
+      <div class="banner-info">
+        <div class="status-row">
+          <lucide-icon [img]="Check" class="status-icon published"></lucide-icon>
+          <span class="status-label published">Published</span>
+          <span class="status-description">Last published: {{ publishedAt | date:'MMM d, y' }} (v{{ publishedVersionNumber }})</span>
+        </div>
+        <div class="author-row">
+          <div class="author-avatar">
+            <lucide-icon [img]="User" [size]="16"></lucide-icon>
+          </div>
+          @if (authorName) {
+            <span class="author-name">{{ authorName }}</span>
+            <span class="author-separator">&middot;</span>
+          }
+          <span class="author-date">Draft v{{ currentVersionNumber }} available</span>
         </div>
       </div>
       <div class="banner-actions">
@@ -40,10 +62,23 @@
   <!-- Published, no draft -->
   <div class="version-banner published-banner">
     <div class="banner-content">
-      <div class="status-info">
-        <span class="status-badge published">🟢 PUBLISHED VERSION (Live)</span>
-        <div class="version-details">
-          <span class="detail">Last published: {{ publishedAt | date:'MMM d, y' }} (v{{ currentVersionNumber }})</span>
+      <div class="banner-info">
+        <div class="status-row">
+          <lucide-icon [img]="Check" class="status-icon published"></lucide-icon>
+          <span class="status-label published">Published</span>
+          <span class="status-description">Last published: {{ publishedAt | date:'MMM d, y' }} (v{{ currentVersionNumber }})</span>
+        </div>
+        <div class="author-row">
+          <div class="author-avatar">
+            <lucide-icon [img]="User" [size]="16"></lucide-icon>
+          </div>
+          @if (authorName) {
+            <span class="author-name">{{ authorName }}</span>
+            @if (updatedAt) {
+              <span class="author-separator">&middot;</span>
+              <span class="author-date">{{ updatedAt | date:'MMM d, h:mm a' }}</span>
+            }
+          }
         </div>
       </div>
       <div class="banner-actions">
