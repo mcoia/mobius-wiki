@@ -180,6 +180,7 @@ export class PagesService {
         p.status,
         p.sort_order,
         p.published_at,
+        p.published_version_number,
         p.created_at,
         p.updated_at,
         p.created_by,
