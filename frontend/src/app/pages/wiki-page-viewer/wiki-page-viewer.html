@@ -60,7 +60,7 @@
             </button>
           </div>
 
-          <!-- Page Management: Permissions, Move, Delete -->
+          <!-- Page Management: Permissions, Move -->
           <div class="toolbar-group">
             <button
               (click)="showAccessControlPanel = !showAccessControlPanel"
@@ -95,14 +95,6 @@
                 </div>
               }
             </div>
-
-            <!-- Delete (icon only) -->
-            <button
-              (click)="deletePage()"
-              class="toolbar-btn toolbar-btn-icon toolbar-btn-danger"
-              title="Delete this page">
-              <lucide-angular [img]="Trash2" [size]="16"></lucide-angular>
-            </button>
           </div>
 
           <!-- Creation: New Section, New Page -->
@@ -117,6 +109,16 @@
                 <span>Page</span>
               </button>
             }
+          </div>
+
+          <!-- Destructive: Delete (isolated at end) -->
+          <div class="toolbar-group">
+            <button
+              (click)="deletePage()"
+              class="toolbar-btn toolbar-btn-icon toolbar-btn-danger"
+              title="Delete this page">
+              <lucide-angular [img]="Trash2" [size]="16"></lucide-angular>
+            </button>
           </div>
         }
       </div>
