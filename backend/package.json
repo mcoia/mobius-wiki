@@ -19,6 +19,8 @@
     "db:setup": "npm run db:create && npm run migrate && npm run db:seed",
     "db:setup:dev": "npm run db:create && npm run migrate && npm run db:seed:all",
     "test:connection": "node scripts/test-connection.js",
+    "sql": "node scripts/sql.js",
+    "db:snapshot": "node scripts/db-snapshot.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

@@ -428,6 +428,68 @@ VALUES (
   NOW()
 );
 
+-- Contact Page
+INSERT INTO wiki.pages (section_id, title, slug, content, scripts, allow_scripts, created_by, updated_by, created_at, updated_at)
+VALUES (
+  (SELECT id FROM wiki.sections WHERE wiki_id = (SELECT id FROM wiki.wikis WHERE slug = 'site') AND slug = 'main'),
+  'Contact',
+  'contact',
+  '<h1>Contact Us</h1>
+<p>Get in touch with the MOBIUS Library Consortium.</p>
+<h2>General Inquiries</h2>
+<ul>
+<li><strong>Email:</strong> info@mobius.org</li>
+<li><strong>Phone:</strong> (800) 555-0199</li>
+</ul>
+<h2>Technical Support</h2>
+<ul>
+<li><strong>Email:</strong> support@mobius.org</li>
+<li><strong>Help Desk:</strong> Available Monday-Friday, 8am-5pm CT</li>
+</ul>
+<h2>Mailing Address</h2>
+<p>MOBIUS<br>111 E. Broadway, Suite 220<br>Columbia, MO 65203</p>',
+  NULL,
+  false,
+  1,
+  1,
+  NOW(),
+  NOW()
+);
+
+-- Privacy Policy Page
+INSERT INTO wiki.pages (section_id, title, slug, content, scripts, allow_scripts, created_by, updated_by, created_at, updated_at)
+VALUES (
+  (SELECT id FROM wiki.sections WHERE wiki_id = (SELECT id FROM wiki.wikis WHERE slug = 'site') AND slug = 'main'),
+  'Privacy Policy',
+  'privacy',
+  '<h1>Privacy Policy</h1>
+<p><em>Last updated: January 2026</em></p>
+<h2>Information We Collect</h2>
+<p>MOBIUS Wiki collects information necessary to provide our services:</p>
+<ul>
+<li>Account information (email, name, library affiliation)</li>
+<li>Usage data (page views, session information)</li>
+<li>Content you create or upload</li>
+</ul>
+<h2>How We Use Information</h2>
+<p>We use collected information to:</p>
+<ul>
+<li>Provide and improve the MOBIUS Wiki platform</li>
+<li>Analyze usage patterns and popular content</li>
+<li>Ensure platform security and prevent abuse</li>
+</ul>
+<h2>Data Sharing</h2>
+<p>We do not sell personal information. Data may be shared with member libraries for legitimate consortium purposes.</p>
+<h2>Contact</h2>
+<p>Questions about this policy? Contact support@mobius.org</p>',
+  NULL,
+  false,
+  1,
+  1,
+  NOW(),
+  NOW()
+);
+
 -- =============================================================================
 -- 5. CREATE PAGE VERSIONS (Initial versions)
 -- =============================================================================

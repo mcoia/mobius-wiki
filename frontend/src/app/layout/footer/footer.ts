@@ -1,20 +1,22 @@
 import { Component } from '@angular/core';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-footer',
+  imports: [RouterLink],
   template: `
     <footer class="site-footer">
       <div class="footer-content">
         <nav class="footer-links">
-          <a href="#">About</a>
+          <a routerLink="/wiki/site/main/about">About</a>
           <span class="footer-separator">&middot;</span>
-          <a href="#">Contact</a>
+          <a routerLink="/wiki/site/main/contact">Contact</a>
           <span class="footer-separator">&middot;</span>
-          <a href="#">Privacy Policy</a>
+          <a routerLink="/wiki/site/main/privacy">Privacy Policy</a>
           <span class="footer-separator">&middot;</span>
-          <a href="#">Terms of Use</a>
+          <a routerLink="/wiki/site/main/terms">Terms of Use</a>
         </nav>
-        <span class="footer-copyright">&copy; 2025 MOBIUS Library Consortium</span>
+        <span class="footer-copyright">&copy; 2026 MOBIUS - Linking Libraries</span>
       </div>
     </footer>
   `,
