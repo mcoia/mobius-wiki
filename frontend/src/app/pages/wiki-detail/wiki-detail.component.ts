@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { Observable, EMPTY } from 'rxjs';
 import { map, switchMap, shareReplay, catchError, take } from 'rxjs/operators';
+import { LucideAngularModule, Lock, Plus, FileText } from 'lucide-angular';
 import { WikiService } from '../../core/services/wiki.service';
 import { SectionService } from '../../core/services/section.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -22,11 +23,15 @@ interface SectionWithPages extends Section {
 @Component({
   selector: 'app-wiki-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule, CreateModalComponent, AccessControlPanelComponent],
+  imports: [CommonModule, RouterModule, LucideAngularModule, CreateModalComponent, AccessControlPanelComponent],
   templateUrl: './wiki-detail.component.html',
   styleUrls: ['./wiki-detail.component.css']
 })
 export class WikiDetailComponent implements OnInit {
+  readonly Lock = Lock;
+  readonly Plus = Plus;
+  readonly FileText = FileText;
+
   wiki$!: Observable<Wiki>;
   sections$!: Observable<SectionWithPages[]>;
   canEdit$!: Observable<boolean>;

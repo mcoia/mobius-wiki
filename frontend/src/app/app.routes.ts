@@ -47,11 +47,6 @@ export const routes: Routes = [
         component: WikiPageViewer  // View specific page (public, ACL enforced by backend)
       },
       {
-        path: 'wiki/site',
-        pathMatch: 'full',
-        redirectTo: '/wiki/site/main/home'
-      },
-      {
         path: 'wiki/:wikiSlug',
         component: WikiDetailComponent  // Wiki overview (public)
       }

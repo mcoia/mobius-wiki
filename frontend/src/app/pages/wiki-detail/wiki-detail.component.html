@@ -17,12 +17,14 @@
         <div class="header-actions">
           <button
             (click)="showAccessControlPanel = !showAccessControlPanel"
-            class="btn-secondary"
+            class="toolbar-btn"
             title="Manage Wiki Permissions">
-            🔒 Permissions
+            <lucide-angular [img]="Lock" [size]="16"></lucide-angular>
+            <span>Permissions</span>
           </button>
-          <button (click)="showCreateSectionModal = true" class="btn-primary">
-            + New Section
+          <button (click)="showCreateSectionModal = true" class="toolbar-btn toolbar-btn-primary">
+            <lucide-angular [img]="Plus" [size]="16"></lucide-angular>
+            <span>New Section</span>
           </button>
         </div>
       }
@@ -53,9 +55,10 @@
               @if (canEdit$ | async) {
                 <button
                   (click)="onCreatePageInSection(section)"
-                  class="btn-secondary btn-sm"
+                  class="toolbar-btn"
                   title="Create a new page in this section">
-                  + New Page
+                  <lucide-angular [img]="Plus" [size]="16"></lucide-angular>
+                  <span>New Page</span>
                 </button>
               }
             </div>
@@ -68,6 +71,7 @@
               <ul class="page-list">
                 @for (page of section.pages; track page.id) {
                   <li>
+                    <lucide-angular [img]="FileText" [size]="16" class="page-icon"></lucide-angular>
                     <a [routerLink]="['/wiki', wiki.slug, section.slug, page.slug]">
                       {{ page.title }}
                     </a>

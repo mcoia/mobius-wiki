@@ -184,7 +184,7 @@ pre code {
 
 /* ===== HEADER COMPONENT ===== */
 .top-header {
-    background: var(--mobius-navy);
+    background: linear-gradient(to bottom, var(--mobius-navy), #001a33);
     color: white;
     padding: 12px 24px;
     display: flex;

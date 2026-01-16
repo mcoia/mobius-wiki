@@ -262,3 +262,35 @@
   padding-top: 24px;
   border-top: 1px solid #e5e7eb;
 }
+
+/* ===== Scrollbar Styling ===== */
+/* Main content scrollbar (WebKit browsers) */
+:host ::ng-deep .main-content::-webkit-scrollbar,
+:host ::ng-deep .page-content::-webkit-scrollbar {
+  width: 10px;
+}
+
+:host ::ng-deep .main-content::-webkit-scrollbar-track,
+:host ::ng-deep .page-content::-webkit-scrollbar-track {
+  background: #f5f5f5;
+  border-radius: 5px;
+}
+
+:host ::ng-deep .main-content::-webkit-scrollbar-thumb,
+:host ::ng-deep .page-content::-webkit-scrollbar-thumb {
+  background: #c0c0c0;
+  border-radius: 5px;
+  border: 2px solid #f5f5f5;
+}
+
+:host ::ng-deep .main-content::-webkit-scrollbar-thumb:hover,
+:host ::ng-deep .page-content::-webkit-scrollbar-thumb:hover {
+  background: #999;
+}
+
+/* Firefox support */
+:host ::ng-deep .main-content,
+:host ::ng-deep .page-content {
+  scrollbar-width: thin;
+  scrollbar-color: #c0c0c0 #f5f5f5;
+}

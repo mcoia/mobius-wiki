@@ -18,21 +18,26 @@
 }
 
 .btn-primary {
-  display: inline-block;
-  padding: 10px 20px;
-  background-color: #3b82f6;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: #0097A7;
   color: white;
   text-decoration: none;
-  border-radius: 6px;
-  font-size: 0.95rem;
+  border: 1px solid #0097A7;
+  border-radius: 4px;
+  font-size: 13px;
   font-weight: 500;
-  transition: all 0.2s;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  cursor: pointer;
+  transition: all 0.15s ease;
   white-space: nowrap;
 }
 
 .btn-primary:hover {
-  background-color: #2563eb;
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+  background: #00838f;
+  border-color: #00838f;
 }
 
 .wiki-grid {
@@ -52,7 +57,7 @@
 
 .wiki-card:hover {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border-color: #00a0b0;
+  border-color: #aaa;
 }
 
 .wiki-card h3 {
@@ -67,7 +72,7 @@
 }
 
 .wiki-card h3 a:hover {
-  color: #00a0b0;
+  color: #002a4a;
   text-decoration: underline;
 }
 
