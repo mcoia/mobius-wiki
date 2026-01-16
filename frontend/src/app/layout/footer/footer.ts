@@ -23,10 +23,11 @@ import { RouterLink } from '@angular/router';
   styles: [`
     .site-footer {
       flex-shrink: 0;
-      background: var(--bg-sidebar-left);
-      color: rgba(255, 255, 255, 0.8);
+      background: var(--bg-page);
+      color: var(--gray-600);
       padding: var(--space-lg) var(--space-2xl);
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      border-top: 1px solid var(--gray-200);
+      margin-left: var(--sidebar-left-width);
     }
 
     .footer-content {
@@ -38,7 +39,7 @@ import { RouterLink } from '@angular/router';
     }
 
     .footer-copyright {
-      color: rgba(255, 255, 255, 0.6);
+      color: var(--gray-500);
       font-size: 12px;
     }
 
@@ -49,17 +50,17 @@ import { RouterLink } from '@angular/router';
     }
 
     .footer-links a {
-      color: rgba(255, 255, 255, 0.8);
+      color: var(--gray-600);
       text-decoration: none;
       transition: color 0.2s;
     }
 
     .footer-links a:hover {
-      color: white;
+      color: var(--gray-800);
     }
 
     .footer-separator {
-      color: rgba(255, 255, 255, 0.4);
+      color: var(--gray-400);
     }
 
     @media (max-width: 768px) {

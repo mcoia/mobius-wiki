@@ -181,6 +181,7 @@ pre code {
     flex: 1;
     min-height: 0;
     overflow: hidden;
+    margin-left: var(--sidebar-left-width);
 }
 
 /* ===== HEADER COMPONENT ===== */
@@ -192,6 +193,8 @@ pre code {
     justify-content: space-between;
     align-items: center;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    position: relative;
+    z-index: 20;
 }
 
 .logo {
@@ -251,7 +254,11 @@ pre code {
     overflow-y: auto;
     padding: var(--space-lg) 0;
     flex-shrink: 0;
-    height: 100%;
+    position: fixed;
+    top: var(--header-height);
+    left: 0;
+    bottom: 0;
+    z-index: 10;
 }
 
 .left-sidebar::-webkit-scrollbar {
