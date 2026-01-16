@@ -1,0 +1,52 @@
+/* Level indentation for nested headings */
+.toc-list li.level-1 {
+  padding-left: 0;
+  font-weight: 500;
+}
+
+.toc-list li.level-2 {
+  padding-left: 0;
+}
+
+.toc-list li.level-3 {
+  padding-left: 12px;
+}
+
+.toc-list li.level-4 {
+  padding-left: 24px;
+}
+
+.toc-list li.level-5 {
+  padding-left: 36px;
+}
+
+.toc-list li.level-6 {
+  padding-left: 48px;
+}
+
+/* Active state highlighting */
+.toc-list li.active a {
+  color: var(--mobius-teal);
+  font-weight: 500;
+}
+
+/* Subtle left border for active item */
+.toc-list li.active {
+  position: relative;
+}
+
+.toc-list li.active::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 2px;
+  bottom: 2px;
+  width: 2px;
+  background: var(--mobius-teal);
+  border-radius: 1px;
+}
+
+/* Smooth transition for hover and active states */
+.toc-list a {
+  transition: color 0.15s ease;
+}

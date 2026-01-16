@@ -1,9 +1,25 @@
 <aside class="right-sidebar">
-  <div class="toc-header">On This Page</div>
-  <ul class="toc-list">
-    <!-- Temporary sample content - will be dynamic later -->
-    <li><a href="#welcome">Welcome to MOBIUS Wiki</a></li>
-    <li><a href="#stats">Platform Statistics</a></li>
-    <li><a href="#getting-started">Getting Started</a></li>
-  </ul>
+  @if (headings$ | async; as headings) {
+    @if (headings.length > 0) {
+      <div class="toc-header">On This Page</div>
+      <ul class="toc-list">
+        @for (item of headings; track item.id) {
+          <li
+            [class.level-1]="item.level === 1"
+            [class.level-2]="item.level === 2"
+            [class.level-3]="item.level === 3"
+            [class.level-4]="item.level === 4"
+            [class.level-5]="item.level === 5"
+            [class.level-6]="item.level === 6"
+            [class.active]="(activeId$ | async) === item.id">
+            <a
+              [href]="'#' + item.id"
+              (click)="scrollTo(item.id, $event)">
+              {{ item.text }}
+            </a>
+          </li>
+        }
+      </ul>
+    }
+  }
 </aside>

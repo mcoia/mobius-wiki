@@ -5,6 +5,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { WikiService } from '../../core/services/wiki.service';
 import { AuthService } from '../../core/services/auth.service';
 import { PageContextService } from '../../core/services/page-context.service';
+import { TocService, TocItem } from '../../core/services/toc.service';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 import { ToastService } from '../../core/services/toast.service';
 import { Page, Section, PageVersion } from '../../core/models/wiki.model';
@@ -43,6 +44,10 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
   // Track which page we've executed scripts for (prevents re-execution)
   private lastExecutedPageId: number | null = null;
   private currentPage: Page | null = null;
+
+  // TOC (table of contents) tracking
+  private lastTocPageId: number | null = null;
+  private tocObserver?: IntersectionObserver;
 
   // Editing state
   isEditing = false;
@@ -89,6 +94,7 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
     private sanitizer: DomSanitizer,
     private authService: AuthService,
     private pageContext: PageContextService,
+    private tocService: TocService,
     private confirmDialog: ConfirmDialogService,
     private toast: ToastService
   ) {}
@@ -277,6 +283,16 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
       this.executeScripts(this.currentPage.scripts);
       this.lastExecutedPageId = this.currentPage.id;
     }
+
+    // Extract TOC headings once per page (not while editing)
+    if (
+      this.currentPage &&
+      !this.isEditing &&
+      this.lastTocPageId !== this.currentPage.id
+    ) {
+      this.extractHeadings();
+      this.lastTocPageId = this.currentPage.id;
+    }
   }
 
   ngOnDestroy(): void {
@@ -286,6 +302,9 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
 
     // Clean up scripts
     this.cleanupScripts();
+
+    // Clear TOC
+    this.clearToc();
 
     // Reset page context
     this.pageContext.resetEditState();
@@ -339,11 +358,106 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   /**
+   * Extract headings from page content and update TOC service
+   */
+  private extractHeadings(): void {
+    const pageContent = document.querySelector('.page-content');
+    if (!pageContent) return;
+
+    const headings = pageContent.querySelectorAll('h1, h2, h3, h4, h5, h6');
+    const tocItems: TocItem[] = [];
+
+    headings.forEach((heading, index) => {
+      const el = heading as HTMLElement;
+
+      // Generate ID if missing
+      if (!el.id) {
+        const slug = this.slugify(el.textContent || '');
+        el.id = slug ? `${slug}-${index}` : `heading-${index}`;
+      }
+
+      tocItems.push({
+        id: el.id,
+        text: el.textContent?.trim() || '',
+        level: parseInt(el.tagName.charAt(1), 10)
+      });
+    });
+
+    this.tocService.setHeadings(tocItems);
+
+    // Set up scroll tracking if we have headings
+    if (tocItems.length > 0) {
+      this.setupScrollTracking(headings as NodeListOf<HTMLElement>);
+    }
+  }
+
+  /**
+   * Convert text to URL-friendly slug
+   */
+  private slugify(text: string): string {
+    return text
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/[\s_-]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .substring(0, 50);
+  }
+
+  /**
+   * Set up Intersection Observer to track which heading is currently visible
+   */
+  private setupScrollTracking(headings: NodeListOf<HTMLElement>): void {
+    // Clean up any existing observer
+    this.cleanupTocObserver();
+
+    this.tocObserver = new IntersectionObserver(
+      (entries) => {
+        // Find the first intersecting entry
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            this.tocService.setActiveHeading(entry.target.id);
+            break;
+          }
+        }
+      },
+      {
+        // Trigger when heading enters top 30% of viewport
+        rootMargin: '-20% 0px -70% 0px'
+      }
+    );
+
+    headings.forEach(h => this.tocObserver!.observe(h));
+  }
+
+  /**
+   * Clean up TOC observer and clear headings
+   */
+  private cleanupTocObserver(): void {
+    if (this.tocObserver) {
+      this.tocObserver.disconnect();
+      this.tocObserver = undefined;
+    }
+  }
+
+  /**
+   * Clear TOC state
+   */
+  private clearToc(): void {
+    this.cleanupTocObserver();
+    this.tocService.clearHeadings();
+    this.lastTocPageId = null;
+  }
+
+  /**
    * Enter editing mode
    */
   private enterEditMode(): void {
     this.cleanupScripts();
     this.lastExecutedPageId = null;
+
+    // Clear TOC while editing
+    this.clearToc();
 
     // Store original content for dirty checking
     this.editableContent = this.currentPage?.content || '';
