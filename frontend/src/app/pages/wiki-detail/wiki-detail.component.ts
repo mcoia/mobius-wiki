@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Observable, EMPTY } from 'rxjs';
 import { map, switchMap, shareReplay, catchError, take } from 'rxjs/operators';
-import { LucideAngularModule, Lock, Plus, FileText, Pencil, Settings, Trash2, ChevronUp, ChevronDown, Archive, ArchiveRestore } from 'lucide-angular';
+import { LucideAngularModule, Lock, Plus, FileText, Pencil, Settings, Trash2, ChevronUp, ChevronDown, Archive, ArchiveRestore, Paperclip } from 'lucide-angular';
 import { WikiService } from '../../core/services/wiki.service';
 import { SectionService } from '../../core/services/section.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -21,6 +21,7 @@ interface SectionWithPages extends Section {
     updated_at?: string;
     updated_by_name?: string;
     canEdit?: boolean;
+    attachment_count?: number;
   }>;
 }
 
@@ -42,6 +43,7 @@ export class WikiDetailComponent implements OnInit {
   readonly ChevronDown = ChevronDown;
   readonly Archive = Archive;
   readonly ArchiveRestore = ArchiveRestore;
+  readonly Paperclip = Paperclip;
 
   wiki$!: Observable<Wiki>;
   sections$!: Observable<SectionWithPages[]>;

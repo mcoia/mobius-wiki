@@ -45,6 +45,12 @@
       }
     }
 
+    <!-- File Attachments Panel -->
+    <app-attachments-panel
+      [pageId]="page.id"
+      [canEdit]="(canEdit$ | async) || false">
+    </app-attachments-panel>
+
     <!-- Action toolbar (editors only, not for historical versions) -->
     @if ((canEdit$ | async) && !viewingVersionNumber) {
       <div class="page-toolbar">

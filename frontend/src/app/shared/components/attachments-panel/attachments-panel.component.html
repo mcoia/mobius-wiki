@@ -1,0 +1,129 @@
+<div class="attachments-panel" [class.collapsed]="isCollapsed">
+  <!-- Header -->
+  <div class="attachments-header" (click)="toggleCollapsed()">
+    <div class="header-left">
+      <lucide-angular [img]="Paperclip" [size]="18"></lucide-angular>
+      <span class="header-title">Attachments</span>
+      @if (attachments$ | async; as attachments) {
+        @if (attachments.length > 0) {
+          <span class="attachment-count">{{ attachments.length }}</span>
+        }
+      }
+    </div>
+    <button class="btn-toggle" type="button" (click)="$event.stopPropagation()">
+      <lucide-angular [img]="isCollapsed ? ChevronDown : ChevronUp" [size]="16"></lucide-angular>
+    </button>
+  </div>
+
+  <!-- Content (hidden when collapsed) -->
+  @if (!isCollapsed) {
+    <div
+      class="attachments-content"
+      [class.drag-over]="isDragOver"
+      (dragover)="onDragOver($event)"
+      (dragleave)="onDragLeave($event)"
+      (drop)="onDrop($event)">
+
+      <!-- Error Message -->
+      @if (error) {
+        <div class="alert alert-error">{{ error }}</div>
+      }
+
+      <!-- Upload Progress -->
+      @for (progress of uploadProgress; track progress.file.name) {
+        <div class="upload-progress-item" [class.error]="progress.status === 'error'">
+          <div class="progress-info">
+            <span class="progress-filename">{{ progress.file.name }}</span>
+            @if (progress.status === 'error') {
+              <span class="progress-error">{{ progress.error }}</span>
+              <button class="btn-dismiss" (click)="clearError(progress)" type="button">
+                <lucide-angular [img]="X" [size]="14"></lucide-angular>
+              </button>
+            } @else {
+              <span class="progress-status">
+                @switch (progress.status) {
+                  @case ('uploading') { Uploading... }
+                  @case ('linking') { Linking to page... }
+                  @case ('complete') { Complete }
+                }
+              </span>
+            }
+          </div>
+          @if (progress.status !== 'error' && progress.status !== 'complete') {
+            <div class="progress-bar">
+              <div class="progress-fill" [style.width.%]="progress.progress"></div>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Attachment List -->
+      @if (attachments$ | async; as attachments) {
+        @if (attachments.length > 0) {
+          <div class="attachments-list">
+            @for (attachment of attachments; track attachment.id) {
+              <div class="attachment-item">
+                <div class="attachment-icon">
+                  <lucide-angular [img]="getFileIcon(attachment.mime_type)" [size]="20"></lucide-angular>
+                </div>
+                <div class="attachment-info">
+                  <button
+                    class="attachment-name"
+                    (click)="downloadAttachment(attachment)"
+                    type="button"
+                    [title]="'Download ' + attachment.filename">
+                    {{ attachment.filename }}
+                  </button>
+                  <span class="attachment-size">{{ formatSize(attachment.size_bytes) }}</span>
+                </div>
+                <div class="attachment-actions">
+                  <button
+                    class="btn-action"
+                    (click)="downloadAttachment(attachment)"
+                    title="Download"
+                    type="button">
+                    <lucide-angular [img]="Download" [size]="16"></lucide-angular>
+                  </button>
+                  @if (canEdit) {
+                    <button
+                      class="btn-action btn-danger"
+                      (click)="removeAttachment(attachment)"
+                      title="Remove from page"
+                      type="button">
+                      <lucide-angular [img]="Trash2" [size]="16"></lucide-angular>
+                    </button>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        } @else if (!canEdit) {
+          <div class="no-attachments">No attachments</div>
+        }
+      }
+
+      <!-- Upload Area (Edit mode only) -->
+      @if (canEdit) {
+        <div class="upload-area">
+          <input
+            type="file"
+            id="file-input-{{ pageId }}"
+            class="file-input"
+            multiple
+            (change)="onFileSelected($event)">
+          <label [for]="'file-input-' + pageId" class="upload-label">
+            <lucide-angular [img]="Upload" [size]="24"></lucide-angular>
+            <span class="upload-text">
+              @if (isDragOver) {
+                Drop files here
+              } @else {
+                Drag files here or click to upload
+              }
+            </span>
+            <span class="upload-hint">Maximum file size: 10 MB</span>
+          </label>
+        </div>
+      }
+    </div>
+  }
+</div>

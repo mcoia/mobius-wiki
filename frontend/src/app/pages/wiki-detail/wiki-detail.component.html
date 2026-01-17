@@ -135,6 +135,12 @@
                     <a [routerLink]="['/wiki', wiki.slug, section.slug, page.slug]">
                       {{ page.title }}
                     </a>
+                    @if (page.attachment_count && page.attachment_count > 0) {
+                      <span class="attachment-badge">
+                        <lucide-angular [img]="Paperclip" [size]="12"></lucide-angular>
+                        {{ page.attachment_count }}
+                      </span>
+                    }
                     <span class="page-meta">
                       @if (page.updated_at) {
                         {{ page.updated_at | date:'MMM d' }}

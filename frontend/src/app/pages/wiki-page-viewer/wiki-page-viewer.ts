@@ -18,11 +18,12 @@ import { TinymceEditorComponent } from '../../shared/components/tinymce-editor/t
 import { CreateModalComponent } from '../../shared/components/create-modal/create-modal.component';
 import { AccessControlPanelComponent } from '../../shared/components/access-control-panel/access-control-panel.component';
 import { VersionBannerComponent } from '../../shared/components/version-banner/version-banner.component';
+import { AttachmentsPanelComponent } from '../../shared/components/attachments-panel/attachments-panel.component';
 import { LucideAngularModule, Lock, Pencil, ArrowRightFromLine, Trash2, Plus, Save, X, ChevronDown } from 'lucide-angular';
 
 @Component({
   selector: 'app-wiki-page-viewer',
-  imports: [CommonModule, FormsModule, RouterLink, TinymceEditorComponent, CreateModalComponent, AccessControlPanelComponent, VersionBannerComponent, LucideAngularModule],
+  imports: [CommonModule, FormsModule, RouterLink, TinymceEditorComponent, CreateModalComponent, AccessControlPanelComponent, VersionBannerComponent, AttachmentsPanelComponent, LucideAngularModule],
   templateUrl: './wiki-page-viewer.html',
   styleUrl: './wiki-page-viewer.css'
 })
