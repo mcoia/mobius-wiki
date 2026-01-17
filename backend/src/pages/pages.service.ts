@@ -107,9 +107,12 @@ export class PagesService {
       ? 'WHERE p.section_id = $1'
       : 'WHERE p.section_id = $1 AND p.deleted_at IS NULL';
 
-    // Join with users table to get author name
+    // Join with users table to get author name, include attachment count
     const { rows } = await this.pool.query(
-      `SELECT p.*, u.name as updated_by_name
+      `SELECT p.*,
+              u.name as updated_by_name,
+              (SELECT COUNT(*)::int FROM wiki.file_links fl
+               WHERE fl.linkable_type = 'page' AND fl.linkable_id = p.id) as attachment_count
        FROM wiki.pages p
        LEFT JOIN wiki.users u ON p.updated_by = u.id
        ${whereClause}
