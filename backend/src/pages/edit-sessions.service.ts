@@ -11,7 +11,7 @@ export interface ActiveEditor {
 @Injectable()
 export class EditSessionsService {
   // Sessions without heartbeat for this duration are considered stale
-  private readonly STALE_THRESHOLD_MINUTES = 5;
+  private readonly STALE_THRESHOLD_MINUTES = 60;
 
   constructor(@Inject('DATABASE_POOL') private pool: Pool) {}
 
