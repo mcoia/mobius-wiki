@@ -79,8 +79,22 @@ export const TINYMCE_BASE_CONFIG = {
   statusbar: false,                      // Disable status bar
   branding: false,                       // Remove "Powered by Tiny" branding
 
-  // Font family options (minimal set aligned with design system)
-  font_family_formats: 'System Font=-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen,Ubuntu,Cantarell,sans-serif; Arial=arial,helvetica,sans-serif; Georgia=georgia,serif; Monospace=courier new,courier,monospace',
+  // Font family options (curated set for wiki documentation)
+  font_family_formats: [
+    // Sans-serif (modern docs)
+    'Outfit=Outfit,sans-serif',
+    'Roboto=Roboto,sans-serif',
+    'Lato=Lato,sans-serif',
+    'Poppins=Poppins,sans-serif',
+    // Serif (classic wiki/book style)
+    'Merriweather=Merriweather,serif',
+    'Crimson Text=Crimson Text,serif',
+    'Source Serif=Source Serif 4,serif',
+    'Georgia=georgia,serif',
+    // Fallbacks
+    'System Font=-apple-system,BlinkMacSystemFont,sans-serif',
+    'Monospace=monospace'
+  ].join('; '),
 
   // Font size options (aligned with MOBIUS heading hierarchy)
   font_size_formats: '14px 16px 18px 20px 24px 28px 32px 36px',
@@ -111,7 +125,7 @@ export const TINYMCE_BASE_CONFIG = {
   object_resizing: 'img',                // Enable resize handles on images
 
   // Content styling (loaded inside editor iframe)
-  // REMOVED: content_css: '/styles/mobius-ui.css',  // Causes MIME type error
+  // Note: Google Fonts are injected via JS in onEditorInit for reliability
   content_style: `
     /* Typography */
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; }

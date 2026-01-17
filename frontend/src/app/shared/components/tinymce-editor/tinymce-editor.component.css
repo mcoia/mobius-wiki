@@ -53,7 +53,7 @@
 /* Compact heading buttons (H1, H2, H3) - first toolbar group */
 :host ::ng-deep .tox-toolbar__group:first-child .tox-tbtn:not(.tox-tbtn--select) {
   min-width: auto !important;
-  padding: 4px 8px !important;
+  padding: 4px 5px !important;  /* Reduced from 8px for narrower buttons */
   font-weight: 600 !important;
   font-size: 12px !important;
 }

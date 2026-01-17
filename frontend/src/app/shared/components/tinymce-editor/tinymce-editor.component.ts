@@ -144,6 +144,15 @@ export class TinymceEditorComponent implements AfterViewInit, OnDestroy {
   onEditorInit(event: any): void {
     this.editorInstance = event.editor;
 
+    // Inject Google Fonts into TinyMCE iframe for real-time font preview
+    const iframeDoc = this.editorInstance.getDoc();
+    if (iframeDoc) {
+      const link = iframeDoc.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = 'https://fonts.googleapis.com/css2?family=Crimson+Text:wght@400;600&family=Lato:wght@400;700&family=Merriweather:wght@400;700&family=Outfit:wght@300;400;500&family=Poppins:wght@300;400;500;600&family=Roboto:wght@400;500&family=Source+Serif+4:wght@400;600&display=swap';
+      iframeDoc.head.appendChild(link);
+    }
+
     // Set initial content
     if (this._content) {
       this.editorInstance.setContent(this._content);
