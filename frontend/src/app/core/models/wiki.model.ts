@@ -76,3 +76,29 @@ export interface PageVersion {
   created_by: number | null;
   author_name: string | null;
 }
+
+// Navigation tree interfaces (for left sidebar)
+export interface NavPage {
+  id: number;
+  title: string;
+  slug: string;
+  status: string;
+}
+
+export interface NavSection {
+  id: number;
+  title: string;
+  slug: string;
+  pages: NavPage[];
+}
+
+export interface NavWiki {
+  id: number;
+  title: string;
+  slug: string;
+  sections: NavSection[];
+}
+
+export interface NavTree {
+  wikis: NavWiki[];
+}

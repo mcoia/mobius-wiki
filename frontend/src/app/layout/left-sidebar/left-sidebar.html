@@ -1,20 +1,61 @@
 <nav class="left-sidebar">
-  <!-- Dynamic Wiki List -->
-  @if (wikis$ | async; as wikis) {
-    @if (wikis.length > 0) {
-      <div class="nav-section-title">WIKIS</div>
-      <ul class="nav-menu">
-        @for (wiki of wikis; track wiki.id) {
-          <li>
-            <a [routerLink]="['/wiki', wiki.slug]" [class.active]="isWikiActive(wiki.slug)">
+  @if (navTree$ | async; as navTree) {
+    @if (navTree.wikis.length > 0) {
+      <div class="nav-tree">
+        @for (wiki of navTree.wikis; track wiki.id) {
+          <div class="nav-wiki">
+            <!-- Wiki title -->
+            <a class="nav-wiki-title"
+               [routerLink]="['/wiki', wiki.slug]"
+               [class.active]="isWikiActive(wiki.slug)">
               {{ wiki.title }}
             </a>
-          </li>
+
+            <!-- Sections under this wiki -->
+            @if (wiki.sections.length > 0) {
+              <div class="nav-sections">
+                @for (section of wiki.sections; track section.id) {
+                  <div class="nav-section" [class.expanded]="isExpanded(section.id)">
+                    <!-- Section header (clickable to expand pages) -->
+                    <div class="nav-section-header"
+                         [class.active]="isSectionActive(wiki.slug, section.slug)"
+                         (click)="toggleSection(section.id, $event)">
+                      <lucide-icon
+                        [img]="isExpanded(section.id) ? ChevronDown : ChevronRight"
+                        class="expand-icon"
+                        [size]="14">
+                      </lucide-icon>
+                      <span class="nav-section-title">{{ section.title }}</span>
+                    </div>
+
+                    <!-- Pages (expanded when section is clicked) -->
+                    @if (isExpanded(section.id) && section.pages.length > 0) {
+                      <div class="nav-pages">
+                        @for (page of section.pages; track page.id) {
+                          <a class="nav-page-item"
+                             [routerLink]="['/wiki', wiki.slug, section.slug, page.slug]"
+                             [class.active]="isPageActive(wiki.slug, section.slug, page.slug)"
+                             [class.draft]="page.status === 'draft'">
+                            {{ page.title }}
+                            @if (page.status === 'draft') {
+                              <span class="draft-indicator">DRAFT</span>
+                            }
+                          </a>
+                        }
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          </div>
         }
-      </ul>
+      </div>
+    } @else {
+      <div class="nav-empty">No wikis available</div>
     }
   } @else {
-    <div class="nav-section-title">Loading...</div>
+    <div class="nav-loading">Loading...</div>
   }
 
   <!-- Footer -->

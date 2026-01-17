@@ -11,6 +11,7 @@ import { PagesModule } from './pages/pages.module';
 import { FilesModule } from './files/files.module';
 import { SearchModule } from './search/search.module';
 import { AnalyticsModule } from './analytics/analytics.module';
+import { NavigationModule } from './navigation/navigation.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { AnalyticsModule } from './analytics/analytics.module';
     FilesModule,
     SearchModule,
     AnalyticsModule,
+    NavigationModule,
   ],
 })
 export class AppModule {}
