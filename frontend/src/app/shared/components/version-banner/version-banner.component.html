@@ -190,6 +190,66 @@
   </div>
 }
 
+<!-- Draft, never published (new page) -->
+@if (canEdit && !isViewingHistorical && !hasDraft && status === 'draft') {
+  <div class="version-banner draft-banner">
+    <div class="banner-content">
+      <div class="banner-info">
+        <div class="status-row">
+          <lucide-icon [img]="FileText" class="status-icon draft"></lucide-icon>
+          <span class="status-label draft">Draft</span>
+
+          <!-- Version Dropdown -->
+          <div class="version-dropdown-container">
+            <button class="version-dropdown-btn" (click)="toggleVersionDropdown()">
+              {{ dropdownButtonText }}
+              <lucide-icon [img]="ChevronDown" [size]="14" class="dropdown-chevron" [class.open]="showVersionDropdown"></lucide-icon>
+            </button>
+            @if (showVersionDropdown) {
+              <div class="version-dropdown-menu">
+                @for (version of versions; track version.version_number) {
+                  <button
+                    class="version-dropdown-item"
+                    [class.active]="version.version_number === currentVersionNumber"
+                    [class.is-current]="version.version_number === currentVersionNumber"
+                    (click)="onSelectVersion(version.version_number)">
+                    <span class="version-number">v{{ version.version_number }}</span>
+                    <span class="version-meta">
+                      <span class="version-badge draft">Draft</span>
+                      <span class="version-badge current">Current</span>
+                    </span>
+                    <span class="version-date">{{ version.created_at | date:'MMM d, y' }}</span>
+                    @if (version.author_name) {
+                      <span class="version-author">{{ version.author_name }}</span>
+                    }
+                  </button>
+                }
+              </div>
+            }
+          </div>
+
+          <span class="status-description">Not yet published</span>
+        </div>
+        <div class="author-row">
+          <div class="author-avatar">
+            <lucide-icon [img]="User" [size]="16"></lucide-icon>
+          </div>
+          @if (authorName) {
+            <span class="author-name">{{ authorName }}</span>
+            <span class="author-separator">&middot;</span>
+          }
+          @if (updatedAt) {
+            <span class="author-date">{{ updatedAt | date:'MMM d, h:mm a' }}</span>
+          }
+        </div>
+      </div>
+      <div class="banner-actions">
+        <button class="btn-primary" (click)="publish.emit()">Publish</button>
+      </div>
+    </div>
+  </div>
+}
+
 <!-- Published, no draft -->
 @if (canEdit && !isViewingHistorical && !hasDraft && status === 'published') {
   <div class="version-banner published-banner">

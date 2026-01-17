@@ -285,7 +285,13 @@ export class PagesService {
       userId
     );
 
-    return wrapData(page);
+    // Return with version metadata (optimized for new pages - skip expensive ACL checks)
+    return wrapData({
+      ...page,
+      currentVersionNumber: 1,
+      isViewingDraft: true,
+      hasDraft: false  // New page, never published
+    });
   }
 
   /**
