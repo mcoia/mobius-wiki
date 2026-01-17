@@ -181,7 +181,6 @@ pre code {
     flex: 1;
     min-height: 0;
     overflow: hidden;
-    margin-left: var(--sidebar-left-width);
 }
 
 /* ===== HEADER COMPONENT ===== */
@@ -193,8 +192,6 @@ pre code {
     justify-content: space-between;
     align-items: center;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    position: relative;
-    z-index: 20;
 }
 
 .logo {
@@ -254,11 +251,9 @@ pre code {
     overflow-y: auto;
     padding: var(--space-lg) 0;
     flex-shrink: 0;
-    position: fixed;
-    top: var(--header-height);
-    left: 0;
-    bottom: 0;
-    z-index: 10;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
 .left-sidebar::-webkit-scrollbar {
@@ -276,6 +271,31 @@ pre code {
 
 .left-sidebar::-webkit-scrollbar-thumb:hover {
     background: var(--scrollbar-thumb-left-hover);
+}
+
+/* Sidebar Footer */
+.sidebar-footer {
+    margin-top: auto;
+    padding: var(--space-lg);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 12px;
+}
+
+.sidebar-footer a {
+    color: rgba(255, 255, 255, 0.6);
+    text-decoration: none;
+}
+
+.sidebar-footer a:hover {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.sidebar-footer .copyright {
+    color: rgba(255, 255, 255, 0.4);
+    margin-top: 8px;
 }
 
 /* Right Sidebar */
