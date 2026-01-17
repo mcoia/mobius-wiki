@@ -10,6 +10,9 @@ interface SectionWithPages extends Section {
     title: string;
     slug: string;
     status: string;
+    updated_at?: string;
+    updated_by_name?: string;
+    canEdit?: boolean;
   }>;
 }
 

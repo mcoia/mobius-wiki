@@ -259,6 +259,18 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
       takeUntil(this.destroy$)
     ).subscribe();
 
+    // Check for edit query param to auto-enter edit mode
+    combineLatest([this.page$, this.canEdit$, this.route.queryParams]).pipe(
+      take(1) // Only check once on initial load
+    ).subscribe(([page, canEdit, queryParams]) => {
+      if (queryParams['edit'] === 'true' && canEdit && page) {
+        // Slight delay to ensure component is fully initialized
+        setTimeout(() => {
+          this.pageContext.updateEditState({ isEditing: true });
+        }, 100);
+      }
+    });
+
     // Subscribe to edit state changes from header - USE takeUntil for cleanup
     this.pageContext.editState$.pipe(
       takeUntil(this.destroy$)

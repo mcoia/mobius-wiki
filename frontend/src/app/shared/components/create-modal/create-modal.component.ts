@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, OnChanges, SimpleChanges, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { debounceTime, map } from 'rxjs/operators';
@@ -10,16 +10,19 @@ import { debounceTime, map } from 'rxjs/operators';
   templateUrl: './create-modal.component.html',
   styleUrls: ['./create-modal.component.css']
 })
-export class CreateModalComponent implements OnInit {
+export class CreateModalComponent implements OnInit, OnChanges {
   @Input() modalTitle: string = 'Create';
   @Input() showSlug: boolean = true;
   @Input() showDescription: boolean = false;
+  @Input() editMode: boolean = false;
+  @Input() initialData: { title: string; slug: string; description: string } | null = null;
   @Output() create = new EventEmitter<any>();
   @Output() cancel = new EventEmitter<void>();
 
   form!: FormGroup;
   isLoading = false;
   errorMessage = '';
+  private slugManuallyEdited = false;
 
   constructor(private fb: FormBuilder) {}
 
@@ -30,15 +33,31 @@ export class CreateModalComponent implements OnInit {
       description: ['']
     });
 
-    // Auto-generate slug from title
+    // Pre-populate form in edit mode
+    if (this.editMode && this.initialData) {
+      this.form.patchValue(this.initialData);
+      this.slugManuallyEdited = true; // Don't auto-generate slug in edit mode
+    }
+
+    // Auto-generate slug from title (only in create mode or if slug not manually edited)
     this.form.get('title')?.valueChanges.pipe(
       debounceTime(300),
       map(title => this.slugify(title))
     ).subscribe(slug => {
-      if (!this.form.get('slug')?.dirty) {
+      if (!this.slugManuallyEdited && !this.form.get('slug')?.dirty) {
         this.form.patchValue({ slug }, { emitEvent: false });
       }
     });
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    // Handle initialData changes (e.g., when modal is reused for different items)
+    if (changes['initialData'] && this.form && this.editMode) {
+      if (this.initialData) {
+        this.form.patchValue(this.initialData);
+        this.slugManuallyEdited = true;
+      }
+    }
   }
 
   slugify(text: string): string {

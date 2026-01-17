@@ -104,15 +104,20 @@ export class PagesService {
     }
 
     const whereClause = includeDeleted
-      ? 'WHERE section_id = $1'
-      : 'WHERE section_id = $1 AND deleted_at IS NULL';
+      ? 'WHERE p.section_id = $1'
+      : 'WHERE p.section_id = $1 AND p.deleted_at IS NULL';
 
+    // Join with users table to get author name
     const { rows } = await this.pool.query(
-      `SELECT * FROM wiki.pages ${whereClause} ORDER BY sort_order, title`,
+      `SELECT p.*, u.name as updated_by_name
+       FROM wiki.pages p
+       LEFT JOIN wiki.users u ON p.updated_by = u.id
+       ${whereClause}
+       ORDER BY p.sort_order, p.title`,
       [sectionId]
     );
 
-    // Filter by ACL and status
+    // Filter by ACL and status, add canEdit flag
     const accessible = [];
     for (const page of rows) {
       // Check ACL access
@@ -121,15 +126,18 @@ export class PagesService {
         continue;  // User can't read this page at all
       }
 
-      // Check status visibility
-      if (page.status === 'draft') {
-        const canEdit = await this.aclService.canEdit(user, 'page', page.id);
-        if (!canEdit) {
-          continue;  // User can't see this draft - skip it
-        }
+      // Check edit permission
+      const canEdit = await this.aclService.canEdit(user, 'page', page.id);
+
+      // Check status visibility - drafts only visible to editors
+      if (page.status === 'draft' && !canEdit) {
+        continue;  // User can't see this draft - skip it
       }
 
-      accessible.push(page);
+      accessible.push({
+        ...page,
+        canEdit,
+      });
     }
 
     return {

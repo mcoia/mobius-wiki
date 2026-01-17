@@ -53,7 +53,11 @@
       <div class="modal-actions">
         <button type="button" (click)="onCancel()" class="btn-cancel">Cancel</button>
         <button type="submit" [disabled]="form.invalid || isLoading" class="btn-submit">
-          {{ isLoading ? 'Creating...' : 'Create' }}
+          @if (isLoading) {
+            {{ editMode ? 'Saving...' : 'Creating...' }}
+          } @else {
+            {{ editMode ? 'Save' : 'Create' }}
+          }
         </button>
       </div>
     </form>

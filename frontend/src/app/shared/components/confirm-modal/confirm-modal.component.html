@@ -1,0 +1,19 @@
+<div class="modal-overlay" (click)="onCancel()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <h2 [class.danger-title]="danger">{{ title }}</h2>
+    <p class="message">{{ message }}</p>
+    <div class="modal-actions">
+      <button type="button" (click)="onCancel()" class="btn-cancel" [disabled]="isLoading">
+        {{ cancelText }}
+      </button>
+      <button
+        type="button"
+        (click)="onConfirm()"
+        class="btn-confirm"
+        [class.btn-danger]="danger"
+        [disabled]="isLoading">
+        {{ isLoading ? 'Please wait...' : confirmText }}
+      </button>
+    </div>
+  </div>
+</div>

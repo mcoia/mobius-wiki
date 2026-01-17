@@ -73,6 +73,29 @@
   border-color: #00838f;
 }
 
+/* Icon-only button variant */
+.toolbar-btn-icon {
+  padding: 6px 8px;
+}
+
+/* Danger button for delete actions */
+.toolbar-btn-danger:hover {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #dc2626;
+}
+
+/* Disabled button state */
+.toolbar-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.toolbar-btn:disabled:hover {
+  background: #f5f5f5;
+  color: #555;
+}
+
 .section-block {
   background: white;
   border: 1px solid #e5e7eb;
@@ -95,6 +118,12 @@
   margin-bottom: 16px;
   border-bottom: 1px solid #e5e7eb;
   gap: 16px;
+}
+
+.section-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .section-block h2 {
@@ -176,6 +205,43 @@
 .badge.draft {
   background-color: #fef3c7;
   color: #92400e;
+}
+
+.badge.published {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.page-meta {
+  color: #9ca3af;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.edit-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: #9ca3af;
+  cursor: pointer;
+  opacity: 0;
+  transition: all 0.15s ease;
+}
+
+.page-list li:hover .edit-btn {
+  opacity: 1;
+}
+
+.edit-btn:hover {
+  background: #e5e7eb;
+  border-color: #d1d5db;
+  color: #374151;
 }
 
 .no-pages {
