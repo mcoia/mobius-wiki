@@ -219,14 +219,17 @@ pre code {
 
 .search-box {
     position: relative;
+    flex: 1;
+    max-width: 500px;
+    margin: 0 40px;
 }
 
 .search-box input {
-    padding: 6px 12px 6px 30px;
+    padding: 8px 12px 8px 36px;
     border: none;
     border-radius: var(--border-radius-md);
     font-size: 13px;
-    width: 200px;
+    width: 100%;
 }
 
 .search-box i {
@@ -236,6 +239,12 @@ pre code {
     transform: translateY(-50%);
     color: var(--gray-600);
     font-size: 12px;
+}
+
+.user-menu-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
 /* ===== SIDEBAR COMPONENTS ===== */
@@ -275,10 +284,14 @@ pre code {
     margin-top: auto;
     padding: var(--space-lg);
     border-top: 1px solid rgba(255, 255, 255, 0.1);
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
     font-size: 12px;
+}
+
+.sidebar-footer .footer-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    margin-bottom: 12px;
 }
 
 .sidebar-footer a {

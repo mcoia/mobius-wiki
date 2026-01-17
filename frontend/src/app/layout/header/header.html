@@ -3,16 +3,14 @@
     <a routerLink="/">MOBIUS</a>
   </div>
 
-  <div class="top-nav">
-    <a routerLink="/wiki">Browse Wikis</a>
-    <a routerLink="/wiki/site/main/home">Home</a>
+  <!-- Search box - centered in header -->
+  <div class="search-box">
+    <i class="fas fa-search"></i>
+    <input type="text" placeholder="Search documentation...">
+  </div>
 
-    <div class="search-box">
-      <i class="fas fa-search"></i>
-      <input type="text" placeholder="Search...">
-    </div>
-
-    <!-- User menu - show login or user info based on auth state -->
+  <!-- User menu -->
+  <div class="user-menu-container">
     @if (currentUser$ | async; as user) {
       <!-- Authenticated user -->
       <div class="user-menu">

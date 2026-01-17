@@ -1,10 +1,4 @@
 <nav class="left-sidebar">
-  <!-- Browse All Wikis -->
-  <div class="nav-section-title">NAVIGATION</div>
-  <ul class="nav-menu">
-    <li><a routerLink="/wiki" [class.active]="isActive('/wiki')">Browse All Wikis</a></li>
-  </ul>
-
   <!-- Dynamic Wiki List -->
   @if (wikis$ | async; as wikis) {
     @if (wikis.length > 0) {
@@ -23,27 +17,16 @@
     <div class="nav-section-title">Loading...</div>
   }
 
-  <!-- Site Wiki (Expanded) - Keeping for backwards compatibility -->
-  <div class="nav-section-title">SITE PAGES</div>
-  <ul class="nav-menu">
-    <li><a routerLink="/wiki/site/main/home" [class.active]="isActive('/wiki/site/main/home')">Home</a></li>
-    <li><a routerLink="/wiki/site/main/about" [class.active]="isActive('/wiki/site/main/about')">About</a></li>
-    <li><a routerLink="/wiki/site/main/terms" [class.active]="isActive('/wiki/site/main/terms')">Terms</a></li>
-    <li><a routerLink="/wiki/site/main/help" [class.active]="isActive('/wiki/site/main/help')">Help</a></li>
-  </ul>
-
-  <!-- Resources -->
-  <div class="nav-section-title">RESOURCES</div>
-  <ul class="nav-menu">
-    <li><a routerLink="/search">Search</a></li>
-  </ul>
-
   <!-- Footer -->
   <div class="sidebar-footer">
-    <a routerLink="/wiki/site/main/about">About</a>
-    <a routerLink="/wiki/site/main/contact">Contact</a>
-    <a routerLink="/wiki/site/main/privacy">Privacy</a>
-    <a routerLink="/wiki/site/main/terms">Terms</a>
+    <div class="footer-links">
+      <a routerLink="/wiki/site/main/home">Home</a>
+      <a routerLink="/wiki/site/main/about">About</a>
+      <a routerLink="/wiki/site/main/help">Help</a>
+      <a routerLink="/wiki/site/main/contact">Contact</a>
+      <a routerLink="/wiki/site/main/terms">Terms</a>
+      <a routerLink="/wiki/site/main/privacy">Privacy</a>
+    </div>
     <span class="copyright">&copy; 2026 MOBIUS</span>
   </div>
 </nav>
