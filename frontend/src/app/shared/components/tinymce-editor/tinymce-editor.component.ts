@@ -193,6 +193,21 @@ export class TinymceEditorComponent implements AfterViewInit, OnDestroy {
   // Editor Setup (register custom buttons)
 
   private setupEditor(editor: any): void {
+    // Register H1, H2, H3 heading buttons for TOC-friendly content
+    const headingButtons = [
+      { id: 'heading1', level: 'h1', text: 'H1', tooltip: 'Heading 1 - Page Title' },
+      { id: 'heading2', level: 'h2', text: 'H2', tooltip: 'Heading 2 - Section' },
+      { id: 'heading3', level: 'h3', text: 'H3', tooltip: 'Heading 3 - Subsection' }
+    ];
+
+    headingButtons.forEach(({ id, level, text, tooltip }) => {
+      editor.ui.registry.addButton(id, {
+        text,
+        tooltip,
+        onAction: () => this.insertElement(editor, level)
+      });
+    });
+
     // Register custom HTML source toggle button
     editor.ui.registry.addToggleButton('sourcecode', {
       icon: 'sourcecode',  // TinyMCE built-in code icon

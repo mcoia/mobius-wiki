@@ -87,6 +87,7 @@ export const TINYMCE_BASE_CONFIG = {
 
   // Toolbar configuration
   toolbar: [
+    'heading1 heading2 heading3',        // Heading buttons (for TOC navigation)
     'formatselect',                      // Normal, H1, H2, H3
     'fontfamily fontsize',               // Font family and size dropdowns
     'bold italic underline strikethrough',
