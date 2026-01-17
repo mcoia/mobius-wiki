@@ -44,6 +44,14 @@ export class WikiService {
     return this.api.delete(`/wikis/${id}`);
   }
 
+  archiveWiki(id: number): Observable<{ data: Wiki }> {
+    return this.api.post(`/wikis/${id}/archive`, {});
+  }
+
+  unarchiveWiki(id: number): Observable<{ data: Wiki }> {
+    return this.api.post(`/wikis/${id}/unarchive`, {});
+  }
+
   // Section CRUD operations
   getSectionsByWikiId(wikiId: number): Observable<{ data: Section[] }> {
     return this.api.get(`/wikis/${wikiId}/sections`);

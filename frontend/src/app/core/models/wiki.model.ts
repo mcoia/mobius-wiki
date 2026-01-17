@@ -10,6 +10,7 @@ export interface Wiki {
   updated_by: number;
   deleted_at: string | null;
   deleted_by: number | null;
+  archived_at: string | null;
 }
 
 export interface Section {

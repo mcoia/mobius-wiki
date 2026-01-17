@@ -6,6 +6,19 @@
   }
 
   @if (wiki$ | async; as wiki) {
+    <!-- Archive Banner -->
+    @if (wiki.archived_at) {
+      <div class="note-box warning archive-banner">
+        <strong>Archived:</strong> This wiki is archived and hidden from normal listings.
+        @if (canEdit$ | async) {
+          <button class="toolbar-btn" (click)="onToggleArchive()" [disabled]="isArchiving">
+            <lucide-angular [img]="ArchiveRestore" [size]="16"></lucide-angular>
+            <span>{{ isArchiving ? 'Unarchiving...' : 'Unarchive' }}</span>
+          </button>
+        }
+      </div>
+    }
+
     <div class="wiki-header">
       <div class="header-content">
         <h1>{{ wiki.title }}</h1>
@@ -15,6 +28,25 @@
       </div>
       @if (canEdit$ | async) {
         <div class="header-actions">
+          <!-- Wiki Management -->
+          <button class="toolbar-btn" (click)="onEditWiki()" title="Edit wiki">
+            <lucide-angular [img]="Settings" [size]="16"></lucide-angular>
+            <span>Edit</span>
+          </button>
+          <button
+            class="toolbar-btn"
+            (click)="onToggleArchive()"
+            [disabled]="isArchiving"
+            [title]="wiki.archived_at ? 'Unarchive wiki' : 'Archive wiki'">
+            <lucide-angular [img]="wiki.archived_at ? ArchiveRestore : Archive" [size]="16"></lucide-angular>
+            <span>{{ wiki.archived_at ? 'Unarchive' : 'Archive' }}</span>
+          </button>
+          <button class="toolbar-btn toolbar-btn-danger" (click)="onDeleteWiki()" title="Delete wiki">
+            <lucide-angular [img]="Trash2" [size]="16"></lucide-angular>
+            <span>Delete</span>
+          </button>
+          <span class="header-separator"></span>
+          <!-- Existing buttons -->
           <button
             (click)="showAccessControlPanel = !showAccessControlPanel"
             class="toolbar-btn"
@@ -184,6 +216,33 @@
         [isLoading]="isDeleting"
         (confirm)="onConfirmDelete()"
         (cancel)="onCancelDelete()">
+      </app-confirm-modal>
+    }
+
+    <!-- Edit Wiki Modal -->
+    @if (showEditWikiModal && currentWiki) {
+      <app-create-modal
+        #editWikiModal
+        [modalTitle]="'Edit Wiki: ' + currentWiki.title"
+        [showSlug]="true"
+        [showDescription]="true"
+        [editMode]="true"
+        [initialData]="{title: currentWiki.title, slug: currentWiki.slug, description: currentWiki.description || ''}"
+        (create)="onSaveWiki($event)"
+        (cancel)="showEditWikiModal = false"
+      />
+    }
+
+    <!-- Delete Wiki Confirmation -->
+    @if (showDeleteWikiModal && currentWiki) {
+      <app-confirm-modal
+        title="Delete Wiki"
+        [message]="deleteWikiConfirmMessage"
+        confirmText="Delete Wiki"
+        [danger]="true"
+        [isLoading]="isDeletingWiki"
+        (confirm)="onConfirmDeleteWiki()"
+        (cancel)="onCancelDeleteWiki()">
       </app-confirm-modal>
     }
   } @else {

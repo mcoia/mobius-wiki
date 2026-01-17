@@ -96,6 +96,28 @@
   color: #555;
 }
 
+/* Header separator between button groups */
+.header-separator {
+  display: inline-block;
+  width: 1px;
+  height: 24px;
+  background: #e0e0e0;
+  margin: 0 8px;
+  vertical-align: middle;
+}
+
+/* Archive banner styling */
+.archive-banner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.archive-banner .toolbar-btn {
+  margin-left: auto;
+}
+
 .section-block {
   background: white;
   border: 1px solid #e5e7eb;

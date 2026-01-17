@@ -181,4 +181,40 @@ export class WikisService {
 
     return wrapData(rows[0]);
   }
+
+  async archive(id: number, userId: number) {
+    const { rows } = await this.pool.query(
+      `UPDATE wiki.wikis
+       SET archived_at = NOW(),
+           updated_by = $2,
+           updated_at = NOW()
+       WHERE id = $1 AND deleted_at IS NULL
+       RETURNING *`,
+      [id, userId]
+    );
+
+    if (rows.length === 0) {
+      throw new NotFoundException(`Wiki with ID ${id} not found`);
+    }
+
+    return wrapData(rows[0]);
+  }
+
+  async unarchive(id: number, userId: number) {
+    const { rows } = await this.pool.query(
+      `UPDATE wiki.wikis
+       SET archived_at = NULL,
+           updated_by = $2,
+           updated_at = NOW()
+       WHERE id = $1 AND deleted_at IS NULL
+       RETURNING *`,
+      [id, userId]
+    );
+
+    if (rows.length === 0) {
+      throw new NotFoundException(`Wiki with ID ${id} not found`);
+    }
+
+    return wrapData(rows[0]);
+  }
 }

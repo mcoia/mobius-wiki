@@ -80,4 +80,16 @@ export class WikisController {
   async remove(@Param('id', ParseIntPipe) id: number, @User() user: any) {
     return this.wikisService.remove(id, user.id);
   }
+
+  @Post(':id/archive')
+  @UseGuards(AuthGuard)
+  async archive(@Param('id', ParseIntPipe) id: number, @User() user: any) {
+    return this.wikisService.archive(id, user.id);
+  }
+
+  @Post(':id/unarchive')
+  @UseGuards(AuthGuard)
+  async unarchive(@Param('id', ParseIntPipe) id: number, @User() user: any) {
+    return this.wikisService.unarchive(id, user.id);
+  }
 }

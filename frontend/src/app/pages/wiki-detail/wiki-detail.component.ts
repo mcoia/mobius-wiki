@@ -1,9 +1,9 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Observable, EMPTY } from 'rxjs';
 import { map, switchMap, shareReplay, catchError, take } from 'rxjs/operators';
-import { LucideAngularModule, Lock, Plus, FileText, Pencil, Settings, Trash2, ChevronUp, ChevronDown } from 'lucide-angular';
+import { LucideAngularModule, Lock, Plus, FileText, Pencil, Settings, Trash2, ChevronUp, ChevronDown, Archive, ArchiveRestore } from 'lucide-angular';
 import { WikiService } from '../../core/services/wiki.service';
 import { SectionService } from '../../core/services/section.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -40,12 +40,15 @@ export class WikiDetailComponent implements OnInit {
   readonly Trash2 = Trash2;
   readonly ChevronUp = ChevronUp;
   readonly ChevronDown = ChevronDown;
+  readonly Archive = Archive;
+  readonly ArchiveRestore = ArchiveRestore;
 
   wiki$!: Observable<Wiki>;
   sections$!: Observable<SectionWithPages[]>;
   canEdit$!: Observable<boolean>;
   error: string | null = null;
 
+  // Section modals
   showCreateSectionModal = false;
   showCreatePageModal = false;
   showEditSectionModal = false;
@@ -56,15 +59,24 @@ export class WikiDetailComponent implements OnInit {
   sectionToDelete: SectionWithPages | null = null;
   isDeleting = false;
 
+  // Wiki modals
+  showEditWikiModal = false;
+  showDeleteWikiModal = false;
+  currentWiki: Wiki | null = null;
+  isArchiving = false;
+  isDeletingWiki = false;
+
   // Keep a local copy of sections for reordering
   private sectionsCache: SectionWithPages[] = [];
 
   @ViewChild('createSectionModal') createSectionModal?: CreateModalComponent;
   @ViewChild('createPageModal') createPageModal?: CreateModalComponent;
   @ViewChild('editSectionModal') editSectionModal?: CreateModalComponent;
+  @ViewChild('editWikiModal') editWikiModal?: CreateModalComponent;
 
   constructor(
     private route: ActivatedRoute,
+    private router: Router,
     private wikiService: WikiService,
     private sectionService: SectionService,
     private authService: AuthService
@@ -79,6 +91,11 @@ export class WikiDetailComponent implements OnInit {
     this.wiki$ = wikiSlug$.pipe(
       switchMap(slug => this.wikiService.getWikiBySlug(slug)),
       map(response => response.data), // Unwrap response
+      map(wiki => {
+        // Cache wiki for edit/delete operations
+        this.currentWiki = wiki;
+        return wiki;
+      }),
       catchError(error => {
         console.error('Failed to load wiki:', error);
         this.error = error.error?.message || 'Failed to load wiki';
@@ -281,5 +298,94 @@ export class WikiDetailComponent implements OnInit {
   get deleteConfirmMessage(): string {
     if (!this.sectionToDelete) return '';
     return `Are you sure you want to delete the section "${this.sectionToDelete.title}"? This will also delete all pages within this section. This action cannot be undone.`;
+  }
+
+  // Wiki Management Methods
+
+  onEditWiki(): void {
+    this.showEditWikiModal = true;
+  }
+
+  onSaveWiki(data: { title: string; slug: string; description: string }): void {
+    if (!this.currentWiki) return;
+
+    if (this.editWikiModal) {
+      this.editWikiModal.setLoading(true);
+      this.editWikiModal.setError('');
+    }
+
+    this.wikiService.updateWiki(this.currentWiki.id, {
+      title: data.title,
+      slug: data.slug,
+      description: data.description
+    }).subscribe({
+      next: () => {
+        this.showEditWikiModal = false;
+        // If slug changed, redirect to new URL
+        if (data.slug !== this.currentWiki?.slug) {
+          this.router.navigate(['/wiki', data.slug]);
+        } else {
+          window.location.reload();
+        }
+      },
+      error: (error: any) => {
+        if (this.editWikiModal) {
+          this.editWikiModal.setError(error.error?.message || 'Failed to update wiki');
+          this.editWikiModal.setLoading(false);
+        }
+      }
+    });
+  }
+
+  onDeleteWiki(): void {
+    this.showDeleteWikiModal = true;
+  }
+
+  onConfirmDeleteWiki(): void {
+    if (!this.currentWiki) return;
+
+    this.isDeletingWiki = true;
+    this.wikiService.deleteWiki(this.currentWiki.id).subscribe({
+      next: () => {
+        this.showDeleteWikiModal = false;
+        this.isDeletingWiki = false;
+        // Navigate to wiki list
+        this.router.navigate(['/wikis']);
+      },
+      error: (error: any) => {
+        console.error('Failed to delete wiki:', error);
+        this.isDeletingWiki = false;
+        this.showDeleteWikiModal = false;
+      }
+    });
+  }
+
+  onCancelDeleteWiki(): void {
+    this.showDeleteWikiModal = false;
+  }
+
+  onToggleArchive(): void {
+    if (!this.currentWiki) return;
+
+    this.isArchiving = true;
+    const operation = this.currentWiki.archived_at
+      ? this.wikiService.unarchiveWiki(this.currentWiki.id)
+      : this.wikiService.archiveWiki(this.currentWiki.id);
+
+    operation.subscribe({
+      next: () => {
+        this.isArchiving = false;
+        window.location.reload();
+      },
+      error: (error: any) => {
+        console.error('Failed to archive/unarchive wiki:', error);
+        this.isArchiving = false;
+      }
+    });
+  }
+
+  get deleteWikiConfirmMessage(): string {
+    if (!this.currentWiki) return '';
+    return `Are you sure you want to delete the wiki "${this.currentWiki.title}"? This will delete ALL sections and pages within this wiki. This action cannot be undone.`;
   }
 }
