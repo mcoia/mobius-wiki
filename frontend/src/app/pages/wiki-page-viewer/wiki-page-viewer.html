@@ -45,6 +45,21 @@
       }
     }
 
+    <!-- Breadcrumb navigation -->
+    <div class="page-header">
+      <nav class="breadcrumb">
+        @if (page.wiki) {
+          <a [routerLink]="['/wiki', page.wiki.slug]">{{ page.wiki.title }}</a>
+          <span> › </span>
+        }
+        @if (page.section) {
+          <span>{{ page.section.title }}</span>
+          <span> › </span>
+        }
+        <span>{{ page.title }}</span>
+      </nav>
+    </div>
+
     <!-- File Attachments Panel -->
     <app-attachments-panel
       [pageId]="page.id"
@@ -148,21 +163,6 @@
         }
       </div>
     }
-
-    <!-- Breadcrumb navigation -->
-    <div class="page-header">
-      <nav class="breadcrumb">
-        @if (page.wiki) {
-          <a [routerLink]="['/wiki', page.wiki.slug]">{{ page.wiki.title }}</a>
-          <span> › </span>
-        }
-        @if (page.section) {
-          <span>{{ page.section.title }}</span>
-          <span> › </span>
-        }
-        <span>{{ page.title }}</span>
-      </nav>
-    </div>
 
     <!-- Page Content -->
     @if (isEditing) {
