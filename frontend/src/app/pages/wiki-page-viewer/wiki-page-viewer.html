@@ -30,6 +30,21 @@
       </app-version-banner>
     }
 
+    <!-- Active editors notification (shown when editing and others are also editing) -->
+    @if (isEditing && (activeEditors$ | async); as editors) {
+      @if (editors.length > 0) {
+        <div class="active-editors-notice">
+          <span class="notice-icon">&#9888;</span>
+          <span class="notice-text">
+            Also editing:
+            @for (editor of editors; track editor.userId; let last = $last) {
+              <strong>{{ editor.displayName }}</strong>@if (!last) {, }
+            }
+          </span>
+        </div>
+      }
+    }
+
     <!-- Action toolbar (editors only, not for historical versions) -->
     @if ((canEdit$ | async) && !viewingVersionNumber) {
       <div class="page-toolbar">

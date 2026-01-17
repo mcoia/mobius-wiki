@@ -27,7 +27,7 @@ export class WikiService {
     return this.api.get('/wikis');
   }
 
-  updatePage(pageId: number, data: { content: string }): Observable<{ data: Page }> {
+  updatePage(pageId: number, data: { content: string; expectedVersion?: number }): Observable<{ data: Page }> {
     return this.api.patch(`/pages/${pageId}`, data);
   }
 

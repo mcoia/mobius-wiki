@@ -334,6 +334,35 @@ export class PagesService {
     // Get current page
     const { data: page } = await this.findOne(id, user);
 
+    // Conflict detection: check if page was modified since user started editing
+    if (dto.expectedVersion !== undefined) {
+      const { rows: versionRows } = await this.pool.query(
+        'SELECT MAX(version_number) as current_version FROM wiki.page_versions WHERE page_id = $1',
+        [id]
+      );
+      const currentVersion = versionRows[0]?.current_version || 0;
+
+      if (currentVersion !== dto.expectedVersion) {
+        // Get info about who last modified the page
+        const { rows: lastModRows } = await this.pool.query(
+          `SELECT u.name, p.updated_at
+           FROM wiki.pages p
+           LEFT JOIN wiki.users u ON p.updated_by = u.id
+           WHERE p.id = $1`,
+          [id]
+        );
+        const lastMod = lastModRows[0] || {};
+
+        throw new ConflictException({
+          message: 'Page was modified by another user',
+          currentVersion,
+          expectedVersion: dto.expectedVersion,
+          lastModifiedBy: lastMod.name || 'Unknown',
+          lastModifiedAt: lastMod.updated_at?.toISOString() || null,
+        });
+      }
+    }
+
     const updates: string[] = [];
     const values: any[] = [id];
     let paramCount = 2;

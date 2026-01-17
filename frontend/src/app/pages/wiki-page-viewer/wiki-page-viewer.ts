@@ -7,10 +7,12 @@ import { AuthService } from '../../core/services/auth.service';
 import { PageContextService } from '../../core/services/page-context.service';
 import { TocService, TocItem } from '../../core/services/toc.service';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
+import { ConflictDialogService } from '../../core/services/conflict-dialog.service';
+import { EditSessionService, ActiveEditor } from '../../core/services/edit-session.service';
 import { ToastService } from '../../core/services/toast.service';
 import { Page, Section, PageVersion } from '../../core/models/wiki.model';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { Observable, throwError, EMPTY, Subject, combineLatest, of } from 'rxjs';
+import { Observable, EMPTY, Subject, combineLatest, of, BehaviorSubject, Subscription } from 'rxjs';
 import { switchMap, catchError, shareReplay, tap, map, take, takeUntil } from 'rxjs/operators';
 import { TinymceEditorComponent } from '../../shared/components/tinymce-editor/tinymce-editor.component';
 import { CreateModalComponent } from '../../shared/components/create-modal/create-modal.component';
@@ -87,6 +89,13 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
   @ViewChild('createSectionModal') createSectionModal?: CreateModalComponent;
   @ViewChild('createPageModal') createPageModal?: CreateModalComponent;
 
+  // Active editors tracking
+  activeEditors$ = new BehaviorSubject<ActiveEditor[]>([]);
+  private activeEditorsPolling?: Subscription;
+
+  // Conflict detection - track version when editing starts
+  private editStartVersion?: number;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -96,6 +105,8 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
     private pageContext: PageContextService,
     private tocService: TocService,
     private confirmDialog: ConfirmDialogService,
+    private conflictDialog: ConflictDialogService,
+    private editSessionService: EditSessionService,
     private toast: ToastService
   ) {}
 
@@ -306,6 +317,14 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
     // Clear TOC
     this.clearToc();
 
+    // Clean up edit session if still active
+    if (this.isEditing) {
+      this.editSessionService.stopSession();
+    }
+    if (this.activeEditorsPolling) {
+      this.activeEditorsPolling.unsubscribe();
+    }
+
     // Reset page context
     this.pageContext.resetEditState();
   }
@@ -461,6 +480,33 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
 
     // Store original content for dirty checking
     this.editableContent = this.currentPage?.content || '';
+
+    // Track version for conflict detection
+    this.editStartVersion = this.currentPage?.currentVersionNumber;
+
+    // Start edit session and fetch active editors
+    if (this.currentPage?.id) {
+      const pageId = this.currentPage.id;
+
+      // Start the edit session (sends heartbeat)
+      this.editSessionService.startSession(pageId).subscribe({
+        error: (err) => console.error('Failed to start edit session:', err)
+      });
+
+      // Initial fetch of active editors
+      this.editSessionService.getActiveEditors(pageId).subscribe({
+        next: (editors) => this.activeEditors$.next(editors),
+        error: (err) => console.error('Failed to fetch active editors:', err)
+      });
+
+      // Start polling for active editors
+      this.activeEditorsPolling = this.editSessionService
+        .startActiveEditorsPolling(pageId)
+        .subscribe({
+          next: (editors) => this.activeEditors$.next(editors),
+          error: (err) => console.error('Active editors polling error:', err)
+        });
+    }
   }
 
   /**
@@ -479,19 +525,46 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
         if (!confirmed) {
           // Cancel exit - set editing back to true
           this.pageContext.updateEditState({ isEditing: true });
+        } else {
+          // User confirmed exit - clean up edit session
+          this.cleanupEditSession();
         }
-        // If confirmed, no manual cleanup needed - Quill handles it
       });
       return;
     }
 
-    // No manual cleanup needed - Quill handles it
+    // Clean up edit session
+    this.cleanupEditSession();
+  }
+
+  /**
+   * Clean up edit session resources
+   */
+  private cleanupEditSession(): void {
+    // Stop polling for active editors
+    if (this.activeEditorsPolling) {
+      this.activeEditorsPolling.unsubscribe();
+      this.activeEditorsPolling = undefined;
+    }
+
+    // Clear active editors
+    this.activeEditors$.next([]);
+
+    // End the edit session on the server
+    if (this.currentPage?.id) {
+      this.editSessionService.endSession(this.currentPage.id).subscribe({
+        error: (err) => console.error('Failed to end edit session:', err)
+      });
+    }
+
+    // Clear version tracking
+    this.editStartVersion = undefined;
   }
 
   /**
    * Perform save operation (triggered by header save button)
    */
-  private performSave(): void {
+  private performSave(forceOverwrite = false): void {
     if (this.isSaving || !this.quillEditor) return;
 
     this.isSaving = true;
@@ -502,13 +575,21 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
 
     this.page$.pipe(
       take(1),
-      switchMap(page =>
-        this.wikiService.updatePage(page.id, { content: html })
-      )
+      switchMap(page => {
+        // Include expectedVersion for conflict detection (unless forcing overwrite)
+        const updateData: { content: string; expectedVersion?: number } = { content: html };
+        if (!forceOverwrite && this.editStartVersion !== undefined) {
+          updateData.expectedVersion = this.editStartVersion;
+        }
+        return this.wikiService.updatePage(page.id, updateData);
+      })
     ).subscribe({
-      next: (response) => {
+      next: () => {
         this.isSaving = false;
         this.isEditing = false;
+
+        // Clean up edit session
+        this.cleanupEditSession();
 
         // Update service state
         this.pageContext.updateEditState({
@@ -522,6 +603,13 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
       },
       error: (err) => {
         this.isSaving = false;
+
+        // Handle conflict (409)
+        if (err.status === 409 && err.error) {
+          this.handleSaveConflict(err.error);
+          return;
+        }
+
         // For 404 errors, show generic message to avoid leaking page IDs
         if (err.status === 404) {
           this.saveError = 'Page not found. It may have been deleted.';
@@ -534,6 +622,54 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
           isSaving: false,
           saveError: this.saveError
         });
+      }
+    });
+  }
+
+  /**
+   * Handle save conflict by showing the conflict dialog
+   */
+  private handleSaveConflict(conflictData: {
+    message: string;
+    currentVersion: number;
+    expectedVersion: number;
+    lastModifiedBy: string;
+    lastModifiedAt: string;
+  }): void {
+    this.conflictDialog.open({
+      lastModifiedBy: conflictData.lastModifiedBy,
+      lastModifiedAt: conflictData.lastModifiedAt,
+      currentVersion: conflictData.currentVersion,
+      expectedVersion: conflictData.expectedVersion
+    }).subscribe(result => {
+      switch (result) {
+        case 'view-changes':
+          // Navigate to version history
+          if (this.currentPage) {
+            this.router.navigate([], {
+              relativeTo: this.route,
+              queryParams: { version: conflictData.currentVersion },
+              queryParamsHandling: 'merge'
+            });
+            // Exit edit mode to view the version
+            this.isEditing = false;
+            this.pageContext.updateEditState({ isEditing: false });
+            this.cleanupEditSession();
+          }
+          break;
+
+        case 'save-anyway':
+          // Re-attempt save without version check
+          this.performSave(true);
+          break;
+
+        case 'cancel':
+          // Update service state
+          this.pageContext.updateEditState({
+            isSaving: false,
+            saveError: null
+          });
+          break;
       }
     });
   }

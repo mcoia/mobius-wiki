@@ -26,4 +26,8 @@ export class UpdatePageDto {
   @IsOptional()
   @IsInt()
   sectionId?: number;
+
+  @IsOptional()
+  @IsInt()
+  expectedVersion?: number;
 }

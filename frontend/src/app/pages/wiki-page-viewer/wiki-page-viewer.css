@@ -294,3 +294,31 @@
   scrollbar-width: thin;
   scrollbar-color: #c0c0c0 #f5f5f5;
 }
+
+/* ===== Active Editors Notice ===== */
+.active-editors-notice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  margin-top: 20px;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: 6px;
+  color: #92400e;
+  font-size: 14px;
+}
+
+.active-editors-notice .notice-icon {
+  font-size: 18px;
+  color: #f59e0b;
+  flex-shrink: 0;
+}
+
+.active-editors-notice .notice-text {
+  flex: 1;
+}
+
+.active-editors-notice .notice-text strong {
+  color: #78350f;
+}
