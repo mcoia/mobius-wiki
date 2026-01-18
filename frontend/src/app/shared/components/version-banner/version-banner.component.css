@@ -212,7 +212,7 @@
   position: absolute;
   top: calc(100% + 4px);
   left: 0;
-  min-width: 280px;
+  min-width: 380px;
   max-height: 300px;
   overflow-y: auto;
   background-color: white;
@@ -289,7 +289,7 @@
 .version-dropdown-item .version-author {
   color: #9ca3af;
   font-size: 0.75rem;
-  max-width: 80px;
+  max-width: 140px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -309,6 +309,6 @@
   }
 
   .version-dropdown-menu {
-    min-width: 240px;
+    min-width: 320px;
   }
 }

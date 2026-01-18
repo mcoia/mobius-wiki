@@ -31,18 +31,27 @@ export class PagesService {
   private async getVisibleVersion(page: any, user: User | null, forcePublished = false) {
     const canEdit = await this.aclService.canEdit(user, 'page', page.id);
 
-    // Get current version number
+    // Get current version number and author
     const { rows: versionRows } = await this.pool.query(
-      'SELECT MAX(version_number) as current_version FROM wiki.page_versions WHERE page_id = $1',
+      `SELECT pv.version_number, pv.created_by, pv.created_at,
+              json_build_object('id', u.id, 'name', u.name, 'email', u.email) as version_author
+       FROM wiki.page_versions pv
+       LEFT JOIN wiki.users u ON pv.created_by = u.id
+       WHERE pv.page_id = $1
+       ORDER BY pv.version_number DESC
+       LIMIT 1`,
       [page.id]
     );
-    const currentVersion = versionRows[0]?.current_version || 0;
+    const currentVersion = versionRows[0]?.version_number || 0;
+    const currentVersionAuthor = versionRows[0]?.version_author || page.author;
 
     // If editor explicitly wants published version, skip to published logic
     if (!forcePublished && canEdit) {
       // Editors see current draft with metadata
+      // Update author to show who created the current version
       return {
         ...page,
+        author: currentVersionAuthor,
         currentVersionNumber: currentVersion,
         isViewingDraft: page.status === 'draft',
         hasDraft: page.status === 'draft' && page.published_version_number !== null
@@ -53,6 +62,7 @@ export class PagesService {
     if (page.status === 'published') {
       return {
         ...page,
+        author: currentVersionAuthor,
         currentVersionNumber: currentVersion,
         isViewingDraft: false,
         hasDraft: false
@@ -62,20 +72,23 @@ export class PagesService {
     // Draft but previously published - show last published version
     if (page.status === 'draft' && page.published_version_number) {
       const { rows } = await this.pool.query(
-        `SELECT pv.content, pv.title, pv.scripts
+        `SELECT pv.content, pv.title, pv.scripts,
+                json_build_object('id', u.id, 'name', u.name, 'email', u.email) as version_author
          FROM wiki.page_versions pv
+         LEFT JOIN wiki.users u ON pv.created_by = u.id
          WHERE pv.page_id = $1 AND pv.version_number = $2`,
         [page.id, page.published_version_number]
       );
 
       if (rows.length > 0) {
         const publishedVersion = rows[0];
-        // Return page with published version content
+        // Return page with published version content and author
         return {
           ...page,
           content: publishedVersion.content,
           title: publishedVersion.title,
           scripts: publishedVersion.scripts || null,
+          author: publishedVersion.version_author || page.author,
           currentVersionNumber: currentVersion,
           isViewingDraft: false,
           hasDraft: true

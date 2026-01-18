@@ -61,9 +61,13 @@ export class FilesController {
     const file = await this.filesService.findOne(id);
     const buffer = await this.filesService.getFileBuffer(id);
 
+    // Use inline for images so they display in <img> tags, attachment for other files
+    const isImage = file.mime_type?.startsWith('image/');
+    const disposition = isImage ? 'inline' : 'attachment';
+
     res.set({
       'Content-Type': file.mime_type,
-      'Content-Disposition': `attachment; filename="${file.filename}"`,
+      'Content-Disposition': `${disposition}; filename="${file.filename}"`,
       'Content-Length': file.size_bytes,
     });
 
