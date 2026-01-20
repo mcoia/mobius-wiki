@@ -8,7 +8,14 @@ export class NavigationController {
 
   @Get('tree')
   async getNavigationTree(@Req() req: Request) {
-    const user = (req as any).user || null;
+    const session = (req as any).session;
+    const user = session?.userId
+      ? {
+          id: session.userId,
+          role: session.role,
+          libraryId: session.libraryId,
+        }
+      : null;
     return this.navigationService.getNavigationTree(user);
   }
 }

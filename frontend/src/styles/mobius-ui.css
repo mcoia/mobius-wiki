@@ -398,9 +398,38 @@ pre code {
     margin-bottom: 8px;
 }
 
+.nav-wiki-header {
+    display: flex;
+    align-items: center;
+}
+
+.nav-wiki-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    padding: 10px 0 10px 12px;
+    color: var(--gray-400);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.nav-wiki-toggle:hover {
+    color: white;
+}
+
+.nav-wiki-toggle .expand-icon {
+    transition: transform 0.2s ease;
+}
+
+.nav-wiki.expanded .nav-wiki-toggle .expand-icon {
+    transform: rotate(0deg);
+}
+
 .nav-wiki-title {
     display: block;
-    padding: 10px 20px;
+    flex: 1;
+    padding: 10px 20px 10px 6px;
     color: white;
     font-size: 14px;
     font-weight: 600;
@@ -420,6 +449,8 @@ pre code {
 
 .nav-sections {
     margin-top: 2px;
+    overflow: hidden;
+    animation: nav-expand 0.2s ease-out;
 }
 
 .nav-section {

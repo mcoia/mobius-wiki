@@ -13,6 +13,7 @@ export interface NavPage {
   title: string;
   slug: string;
   status: string;
+  canEdit: boolean;
 }
 
 export interface NavSection {
@@ -96,19 +97,35 @@ export class NavigationService {
       if (row.page_id && sectionMap.has(row.section_id)) {
         const canAccessPage = await this.aclService.canAccess(user, 'page', row.page_id);
         if (canAccessPage) {
+          const canEdit = await this.aclService.canEdit(user, 'page', row.page_id);
+
+          // Skip draft pages for guests (not logged in)
+          if (row.page_status === 'draft' && !user) {
+            continue;
+          }
+
           sectionMap.get(row.section_id)!.pages.push({
             id: row.page_id,
             title: row.page_title,
             slug: row.page_slug,
             status: row.page_status,
+            canEdit: canEdit,
           });
         }
       }
     }
 
+    // Filter out sections with no accessible pages
+    for (const wiki of wikiMap.values()) {
+      wiki.sections = wiki.sections.filter(s => s.pages.length > 0);
+    }
+
+    // Filter out wikis with no accessible sections
+    const filteredWikis = Array.from(wikiMap.values()).filter(w => w.sections.length > 0);
+
     return {
       data: {
-        wikis: Array.from(wikiMap.values()),
+        wikis: filteredWikis,
       },
     };
   }

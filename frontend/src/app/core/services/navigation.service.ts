@@ -10,16 +10,19 @@ import { NavTree, NavWiki, NavSection } from '../models/wiki.model';
 export class NavigationService {
   private navTreeSubject = new BehaviorSubject<NavTree | null>(null);
   private expandedSectionsSubject = new BehaviorSubject<Set<number>>(new Set());
+  private expandedWikisSubject = new BehaviorSubject<Set<number>>(new Set());
   private isLoadingSubject = new BehaviorSubject<boolean>(false);
 
   // Public observables
   navTree$ = this.navTreeSubject.asObservable();
   expandedSections$ = this.expandedSectionsSubject.asObservable();
+  expandedWikis$ = this.expandedWikisSubject.asObservable();
   isLoading$ = this.isLoadingSubject.asObservable();
 
   constructor(private api: ApiService) {
-    // Load expanded sections from localStorage
+    // Load expanded state from localStorage
     this.loadExpandedSections();
+    this.loadExpandedWikis();
   }
 
   /**
@@ -94,8 +97,60 @@ export class NavigationService {
     return this.expandedSectionsSubject.value.has(sectionId);
   }
 
+  // Wiki expand/collapse methods
+
   /**
-   * Auto-expand the section containing the given page (by wiki/section slug)
+   * Toggle a wiki's expanded state
+   */
+  toggleWiki(wikiId: number): void {
+    const current = this.expandedWikisSubject.value;
+    const updated = new Set(current);
+
+    if (updated.has(wikiId)) {
+      updated.delete(wikiId);
+    } else {
+      updated.add(wikiId);
+    }
+
+    this.expandedWikisSubject.next(updated);
+    this.saveExpandedWikis(updated);
+  }
+
+  /**
+   * Expand a specific wiki
+   */
+  expandWiki(wikiId: number): void {
+    const current = this.expandedWikisSubject.value;
+    if (!current.has(wikiId)) {
+      const updated = new Set(current);
+      updated.add(wikiId);
+      this.expandedWikisSubject.next(updated);
+      this.saveExpandedWikis(updated);
+    }
+  }
+
+  /**
+   * Collapse a specific wiki
+   */
+  collapseWiki(wikiId: number): void {
+    const current = this.expandedWikisSubject.value;
+    if (current.has(wikiId)) {
+      const updated = new Set(current);
+      updated.delete(wikiId);
+      this.expandedWikisSubject.next(updated);
+      this.saveExpandedWikis(updated);
+    }
+  }
+
+  /**
+   * Check if a wiki is expanded
+   */
+  isWikiExpanded(wikiId: number): boolean {
+    return this.expandedWikisSubject.value.has(wikiId);
+  }
+
+  /**
+   * Auto-expand the wiki and section containing the given page (by wiki/section slug)
    */
   autoExpandForPage(wikiSlug: string, sectionSlug: string): void {
     const tree = this.navTreeSubject.value;
@@ -105,11 +160,13 @@ export class NavigationService {
     const wiki = tree.wikis.find(w => w.slug === wikiSlug);
     if (!wiki) return;
 
-    // Find the section
+    // Expand the wiki first
+    this.expandWiki(wiki.id);
+
+    // Find and expand the section
     const section = wiki.sections.find(s => s.slug === sectionSlug);
     if (!section) return;
 
-    // Expand it
     this.expandSection(section.id);
   }
 
@@ -136,6 +193,26 @@ export class NavigationService {
   private saveExpandedSections(sections: Set<number>): void {
     try {
       localStorage.setItem('nav_expanded_sections', JSON.stringify(Array.from(sections)));
+    } catch {
+      // Ignore localStorage errors
+    }
+  }
+
+  private loadExpandedWikis(): void {
+    try {
+      const stored = localStorage.getItem('nav_expanded_wikis');
+      if (stored) {
+        const ids = JSON.parse(stored) as number[];
+        this.expandedWikisSubject.next(new Set(ids));
+      }
+    } catch {
+      // Ignore localStorage errors
+    }
+  }
+
+  private saveExpandedWikis(wikis: Set<number>): void {
+    try {
+      localStorage.setItem('nav_expanded_wikis', JSON.stringify(Array.from(wikis)));
     } catch {
       // Ignore localStorage errors
     }

@@ -3,16 +3,27 @@
     @if (navTree.wikis.length > 0) {
       <div class="nav-tree">
         @for (wiki of navTree.wikis; track wiki.id) {
-          <div class="nav-wiki">
-            <!-- Wiki title -->
-            <a class="nav-wiki-title"
-               [routerLink]="['/wiki', wiki.slug]"
-               [class.active]="isWikiActive(wiki.slug)">
-              {{ wiki.title }}
-            </a>
+          <div class="nav-wiki" [class.expanded]="isWikiExpanded(wiki.id)">
+            <!-- Wiki header with toggle chevron and title -->
+            <div class="nav-wiki-header">
+              <!-- Chevron toggle for wiki -->
+              <div class="nav-wiki-toggle" (click)="toggleWiki(wiki.id, $event)">
+                <lucide-icon
+                  [img]="isWikiExpanded(wiki.id) ? ChevronDown : ChevronRight"
+                  class="expand-icon"
+                  [size]="14">
+                </lucide-icon>
+              </div>
+              <!-- Wiki title link -->
+              <a class="nav-wiki-title"
+                 [routerLink]="['/wiki', wiki.slug]"
+                 [class.active]="isWikiActive(wiki.slug)">
+                {{ wiki.title }}
+              </a>
+            </div>
 
-            <!-- Sections under this wiki -->
-            @if (wiki.sections.length > 0) {
+            <!-- Sections under this wiki (only shown when wiki is expanded) -->
+            @if (isWikiExpanded(wiki.id) && wiki.sections.length > 0) {
               <div class="nav-sections">
                 @for (section of wiki.sections; track section.id) {
                   <div class="nav-section" [class.expanded]="isExpanded(section.id)">

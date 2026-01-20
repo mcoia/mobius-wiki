@@ -52,7 +52,7 @@ SELECT setval('wiki.users_id_seq', (SELECT MAX(id) FROM wiki.users));
 -- =============================================================================
 
 INSERT INTO wiki.wikis (id, title, slug, description, sort_order, created_at, updated_at, created_by, updated_by) VALUES
-(1, 'Folio', 'folio', 'Comprehensive documentation for FOLIO library services platform', 1, NOW(), NOW(), 1, 1),
+(1, 'MOBIUS Documentation', 'docs', 'Internal documentation for MOBIUS consortium staff', 1, NOW(), NOW(), 1, 1),
 (2, 'OpenRS', 'openrs', 'OpenRS resource sharing system documentation', 2, NOW(), NOW(), 1, 1);
 
 -- Reset sequence for wikis
@@ -75,24 +75,24 @@ SELECT setval('wiki.sections_id_seq', (SELECT MAX(id) FROM wiki.sections));
 -- =============================================================================
 
 INSERT INTO wiki.pages (id, section_id, title, slug, content, scripts, allow_scripts, status, sort_order, published_at, created_at, updated_at, created_by, updated_by) VALUES
-(1, 1, 'Welcome to Folio', 'welcome',
-'<h1>Welcome to Folio</h1>
-<p>This is your comprehensive guide to the FOLIO library services platform.</p>
-<h2>What is FOLIO?</h2>
-<p>FOLIO (Future of Libraries is Open) is an open-source library services platform that provides:</p>
+(1, 1, 'Welcome to MOBIUS Docs', 'welcome',
+'<h1>Welcome to MOBIUS Documentation</h1>
+<p>This is the internal documentation hub for MOBIUS consortium staff.</p>
+<h2>What is MOBIUS?</h2>
+<p>MOBIUS is a consortium of Missouri libraries providing shared resources and services including:</p>
 <ul>
-<li>Integrated library system (ILS) functionality</li>
-<li>Resource management</li>
-<li>Discovery and delivery services</li>
-<li>Extensible app architecture</li>
+<li>Resource sharing and catalog access</li>
+<li>Collaborative technology infrastructure</li>
+<li>Professional development and training</li>
+<li>Technical assistance and support</li>
 </ul>
 <h2>Getting Started</h2>
-<p>Follow these steps to begin using FOLIO:</p>
+<p>Use the navigation to explore documentation topics:</p>
 <ol>
 <li>Review system requirements</li>
-<li>Complete initial setup</li>
-<li>Configure your library settings</li>
-<li>Import your catalog data</li>
+<li>Complete initial setup procedures</li>
+<li>Configure library-specific settings</li>
+<li>Learn administrative procedures</li>
 </ol>
 <p>For detailed instructions, explore the sections in this wiki.</p>',
 NULL, false, 'published', 1, NOW(), NOW(), NOW(), 1, 1),
@@ -121,26 +121,26 @@ SELECT setval('wiki.pages_id_seq', (SELECT MAX(id) FROM wiki.pages));
 -- =============================================================================
 
 INSERT INTO wiki.page_versions (page_id, content, scripts, title, version_number, created_at, created_by) VALUES
-(1, '<h1>Welcome to Folio</h1>
-<p>This is your comprehensive guide to the FOLIO library services platform.</p>
-<h2>What is FOLIO?</h2>
-<p>FOLIO (Future of Libraries is Open) is an open-source library services platform that provides:</p>
+(1, '<h1>Welcome to MOBIUS Documentation</h1>
+<p>This is the internal documentation hub for MOBIUS consortium staff.</p>
+<h2>What is MOBIUS?</h2>
+<p>MOBIUS is a consortium of Missouri libraries providing shared resources and services including:</p>
 <ul>
-<li>Integrated library system (ILS) functionality</li>
-<li>Resource management</li>
-<li>Discovery and delivery services</li>
-<li>Extensible app architecture</li>
+<li>Resource sharing and catalog access</li>
+<li>Collaborative technology infrastructure</li>
+<li>Professional development and training</li>
+<li>Technical assistance and support</li>
 </ul>
 <h2>Getting Started</h2>
-<p>Follow these steps to begin using FOLIO:</p>
+<p>Use the navigation to explore documentation topics:</p>
 <ol>
 <li>Review system requirements</li>
-<li>Complete initial setup</li>
-<li>Configure your library settings</li>
-<li>Import your catalog data</li>
+<li>Complete initial setup procedures</li>
+<li>Configure library-specific settings</li>
+<li>Learn administrative procedures</li>
 </ol>
 <p>For detailed instructions, explore the sections in this wiki.</p>',
-NULL, 'Welcome to Folio', 1, NOW(), 1),
+NULL, 'Welcome to MOBIUS Docs', 1, NOW(), 1),
 
 (2, '<h1>System Requirements</h1>
 <h2>Hardware Requirements</h2>
@@ -202,9 +202,9 @@ INSERT INTO wiki.file_links (file_id, linkable_type, linkable_id, created_at, cr
 -- 11. ACCESS RULES
 -- =============================================================================
 
--- Make the Folio wiki public
+-- Make the MOBIUS Documentation wiki restricted to mobius_staff
 INSERT INTO wiki.access_rules (ruleable_type, ruleable_id, rule_type, rule_value, created_at, created_by) VALUES
-('wiki', 1, 'public', NULL, NOW(), 1);
+('wiki', 1, 'role', 'mobius_staff', NOW(), 1);
 
 -- Make OpenRS wiki available only to MOBIUS staff
 INSERT INTO wiki.access_rules (ruleable_type, ruleable_id, rule_type, rule_value, created_at, created_by) VALUES
@@ -226,8 +226,8 @@ INSERT INTO wiki.page_views (page_id, user_id, viewed_at, session_id, referrer) 
 -- 301 redirects for slug changes
 
 INSERT INTO wiki.redirects (old_path, new_path, created_at, created_by) VALUES
-('/old-folio-slug', '/folio', NOW() - INTERVAL '10 days', 1),
-('/folio/old-getting-started', '/folio/getting-started', NOW() - INTERVAL '5 days', 1);
+('/old-docs-slug', '/docs', NOW() - INTERVAL '10 days', 1),
+('/docs/old-getting-started', '/docs/getting-started', NOW() - INTERVAL '5 days', 1);
 
 -- =============================================================================
 -- 14. SESSIONS
@@ -300,7 +300,7 @@ VALUES (
 -- =============================================================================
 
 -- Home/Welcome Page
-INSERT INTO wiki.pages (section_id, title, slug, content, scripts, allow_scripts, created_by, updated_by, created_at, updated_at)
+INSERT INTO wiki.pages (section_id, title, slug, content, scripts, allow_scripts, status, sort_order, published_at, created_by, updated_by, created_at, updated_at)
 VALUES (
   (SELECT id FROM wiki.sections WHERE wiki_id = (SELECT id FROM wiki.wikis WHERE slug = 'site') AND slug = 'main'),
   'Welcome',
@@ -320,6 +320,9 @@ VALUES (
 <p>Explore the navigation to learn more about MOBIUS, review our terms of service, or get help and support.</p>',
   NULL,
   false,
+  'published',
+  1,
+  NOW(),
   1,
   1,
   NOW(),
@@ -327,7 +330,7 @@ VALUES (
 );
 
 -- About MOBIUS Page
-INSERT INTO wiki.pages (section_id, title, slug, content, scripts, allow_scripts, created_by, updated_by, created_at, updated_at)
+INSERT INTO wiki.pages (section_id, title, slug, content, scripts, allow_scripts, status, sort_order, published_at, created_by, updated_by, created_at, updated_at)
 VALUES (
   (SELECT id FROM wiki.sections WHERE wiki_id = (SELECT id FROM wiki.wikis WHERE slug = 'site') AND slug = 'main'),
   'About MOBIUS',
@@ -348,6 +351,9 @@ VALUES (
 </ul>',
   NULL,
   false,
+  'published',
+  2,
+  NOW(),
   1,
   1,
   NOW(),
@@ -355,7 +361,7 @@ VALUES (
 );
 
 -- Terms of Service Page
-INSERT INTO wiki.pages (section_id, title, slug, content, scripts, allow_scripts, created_by, updated_by, created_at, updated_at)
+INSERT INTO wiki.pages (section_id, title, slug, content, scripts, allow_scripts, status, sort_order, published_at, created_by, updated_by, created_at, updated_at)
 VALUES (
   (SELECT id FROM wiki.sections WHERE wiki_id = (SELECT id FROM wiki.wikis WHERE slug = 'site') AND slug = 'main'),
   'Terms of Service',
@@ -381,6 +387,9 @@ VALUES (
 <p>For questions about these terms, please contact MOBIUS support.</p>',
   NULL,
   false,
+  'published',
+  3,
+  NOW(),
   1,
   1,
   NOW(),
@@ -388,7 +397,7 @@ VALUES (
 );
 
 -- Help & Support Page
-INSERT INTO wiki.pages (section_id, title, slug, content, scripts, allow_scripts, created_by, updated_by, created_at, updated_at)
+INSERT INTO wiki.pages (section_id, title, slug, content, scripts, allow_scripts, status, sort_order, published_at, created_by, updated_by, created_at, updated_at)
 VALUES (
   (SELECT id FROM wiki.sections WHERE wiki_id = (SELECT id FROM wiki.wikis WHERE slug = 'site') AND slug = 'main'),
   'Help & Support',
@@ -422,6 +431,9 @@ VALUES (
 </ul>',
   NULL,
   false,
+  'published',
+  4,
+  NOW(),
   1,
   1,
   NOW(),
@@ -429,7 +441,7 @@ VALUES (
 );
 
 -- Contact Page
-INSERT INTO wiki.pages (section_id, title, slug, content, scripts, allow_scripts, created_by, updated_by, created_at, updated_at)
+INSERT INTO wiki.pages (section_id, title, slug, content, scripts, allow_scripts, status, sort_order, published_at, created_by, updated_by, created_at, updated_at)
 VALUES (
   (SELECT id FROM wiki.sections WHERE wiki_id = (SELECT id FROM wiki.wikis WHERE slug = 'site') AND slug = 'main'),
   'Contact',
@@ -450,6 +462,9 @@ VALUES (
 <p>MOBIUS<br>111 E. Broadway, Suite 220<br>Columbia, MO 65203</p>',
   NULL,
   false,
+  'published',
+  5,
+  NOW(),
   1,
   1,
   NOW(),
@@ -457,7 +472,7 @@ VALUES (
 );
 
 -- Privacy Policy Page
-INSERT INTO wiki.pages (section_id, title, slug, content, scripts, allow_scripts, created_by, updated_by, created_at, updated_at)
+INSERT INTO wiki.pages (section_id, title, slug, content, scripts, allow_scripts, status, sort_order, published_at, created_by, updated_by, created_at, updated_at)
 VALUES (
   (SELECT id FROM wiki.sections WHERE wiki_id = (SELECT id FROM wiki.wikis WHERE slug = 'site') AND slug = 'main'),
   'Privacy Policy',
@@ -484,6 +499,9 @@ VALUES (
 <p>Questions about this policy? Contact support@mobius.org</p>',
   NULL,
   false,
+  'published',
+  6,
+  NOW(),
   1,
   1,
   NOW(),

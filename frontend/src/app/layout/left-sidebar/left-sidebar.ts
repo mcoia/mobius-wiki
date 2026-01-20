@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { Observable, Subject } from 'rxjs';
-import { filter, takeUntil } from 'rxjs/operators';
+import { filter, take, takeUntil } from 'rxjs/operators';
 import { NavigationService } from '../../core/services/navigation.service';
 import { NavTree } from '../../core/models/wiki.model';
 import { LucideAngularModule, ChevronRight, ChevronDown } from 'lucide-angular';
@@ -19,6 +19,7 @@ export class LeftSidebar implements OnInit, OnDestroy {
   currentUrl = '';
   navTree$!: Observable<NavTree | null>;
   expandedSections$!: Observable<Set<number>>;
+  expandedWikis$!: Observable<Set<number>>;
 
   // Icons for template
   readonly ChevronRight = ChevronRight;
@@ -44,6 +45,7 @@ export class LeftSidebar implements OnInit, OnDestroy {
     // Get navigation tree observable
     this.navTree$ = this.navigationService.navTree$;
     this.expandedSections$ = this.navigationService.expandedSections$;
+    this.expandedWikis$ = this.navigationService.expandedWikis$;
 
     // Load navigation data
     this.navigationService.loadNavigation().subscribe();
@@ -58,15 +60,58 @@ export class LeftSidebar implements OnInit, OnDestroy {
   }
 
   /**
-   * Handle route changes - auto-expand section if on a page URL
+   * Handle route changes - auto-expand wiki and section if on a page URL
    */
   private handleRouteChange(url: string): void {
     // Parse URL pattern: /wiki/:wikiSlug/:sectionSlug/:pageSlug
-    const match = url.match(/^\/wiki\/([^\/]+)\/([^\/]+)\/([^\/]+)/);
-    if (match) {
-      const [, wikiSlug, sectionSlug] = match;
+    const pageMatch = url.match(/^\/wiki\/([^\/]+)\/([^\/]+)\/([^\/]+)/);
+    if (pageMatch) {
+      const [, wikiSlug, sectionSlug] = pageMatch;
       this.navigationService.autoExpandForPage(wikiSlug, sectionSlug);
+      return;
     }
+
+    // Parse URL pattern: /wiki/:wikiSlug/:sectionSlug (section page)
+    const sectionMatch = url.match(/^\/wiki\/([^\/]+)\/([^\/]+)/);
+    if (sectionMatch) {
+      const [, wikiSlug, sectionSlug] = sectionMatch;
+      this.navigationService.autoExpandForPage(wikiSlug, sectionSlug);
+      return;
+    }
+
+    // Parse URL pattern: /wiki/:wikiSlug (wiki page - expand wiki only)
+    const wikiMatch = url.match(/^\/wiki\/([^\/]+)$/);
+    if (wikiMatch) {
+      const [, wikiSlug] = wikiMatch;
+      // Find the wiki and expand it (one-time subscription)
+      this.navigationService.navTree$.pipe(
+        filter(navTree => navTree !== null),
+        take(1)
+      ).subscribe(navTree => {
+        if (navTree) {
+          const wiki = navTree.wikis.find(w => w.slug === wikiSlug);
+          if (wiki) {
+            this.navigationService.expandWiki(wiki.id);
+          }
+        }
+      });
+    }
+  }
+
+  /**
+   * Toggle wiki expand/collapse
+   */
+  toggleWiki(wikiId: number, event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.navigationService.toggleWiki(wikiId);
+  }
+
+  /**
+   * Check if a wiki is expanded
+   */
+  isWikiExpanded(wikiId: number): boolean {
+    return this.navigationService.isWikiExpanded(wikiId);
   }
 
   /**

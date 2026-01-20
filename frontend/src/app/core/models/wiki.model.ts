@@ -83,6 +83,7 @@ export interface NavPage {
   title: string;
   slug: string;
   status: string;
+  canEdit: boolean;
 }
 
 export interface NavSection {
