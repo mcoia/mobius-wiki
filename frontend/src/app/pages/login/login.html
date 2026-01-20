@@ -1,6 +1,10 @@
 <div class="login-container">
   <div class="login-box">
-    <h1>MOBIUS Wiki Login</h1>
+    <div class="logo-container">
+      <img src="images/MOBIUS-LINKING-HEADER-LOGO.png" alt="MOBIUS - Linking Libraries">
+    </div>
+
+    <p class="login-subtitle">Wiki Login</p>
 
     @if (errorMessage) {
       <div class="note-box danger">
@@ -11,41 +15,55 @@
     <form (ngSubmit)="onSubmit()">
       <div class="form-group">
         <label for="email">Email</label>
-        <input
-          type="email"
-          id="email"
-          name="email"
-          [(ngModel)]="email"
-          required
-          placeholder="admin@mobius.org"
-          autocomplete="email"
-        />
+        <div class="input-wrapper">
+          <input
+            type="email"
+            id="email"
+            name="email"
+            [(ngModel)]="email"
+            required
+            placeholder="you@example.com"
+            autocomplete="email"
+          />
+          <i class="fas fa-envelope"></i>
+        </div>
       </div>
 
       <div class="form-group">
         <label for="password">Password</label>
-        <input
-          type="password"
-          id="password"
-          name="password"
-          [(ngModel)]="password"
-          required
-          placeholder="Enter your password"
-          autocomplete="current-password"
-        />
+        <div class="input-wrapper">
+          <input
+            type="password"
+            id="password"
+            name="password"
+            [(ngModel)]="password"
+            required
+            placeholder="Enter your password"
+            autocomplete="current-password"
+          />
+          <i class="fas fa-lock"></i>
+        </div>
       </div>
 
       <button type="submit" class="btn-primary" [disabled]="isLoading">
         @if (isLoading) {
-          <i class="fas fa-spinner fa-spin"></i> Logging in...
+          <i class="fas fa-spinner fa-spin"></i> Signing in...
         } @else {
-          <i class="fas fa-sign-in-alt"></i> Login
+          <i class="fas fa-sign-in-alt"></i> Sign In
         }
       </button>
     </form>
 
-    <div class="login-help">
-      <p><small>Test Account: admin@mobius.org / admin123</small></p>
+    <div class="forgot-password">
+      <a href="#">Forgot your password?</a>
     </div>
+
+    <div class="divider">
+      <span>Need help?</span>
+    </div>
+
+    <p class="help-text">
+      Contact <a href="#">MOBIUS Support</a> for assistance
+    </p>
   </div>
 </div>
