@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { Observable } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
+import { ToastService } from '../../core/services/toast.service';
 import { User } from '../../core/models/user.model';
 
 @Component({
@@ -16,7 +17,8 @@ export class Header implements OnInit {
 
   constructor(
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private toastService: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -26,12 +28,13 @@ export class Header implements OnInit {
   logout(): void {
     this.authService.logout().subscribe({
       next: () => {
-        this.router.navigate(['/login']);
+        this.toastService.success('You have been logged out');
+        this.router.navigate(['/']);
       },
       error: (err) => {
         console.error('Logout error:', err);
-        // Navigate to login anyway
-        this.router.navigate(['/login']);
+        this.toastService.info('You have been logged out');
+        this.router.navigate(['/']);
       }
     });
   }
