@@ -6,7 +6,7 @@ The MOBIUS Wiki uses TinyMCE as its WYSIWYG editor, configured for wiki document
 
 | Feature | Description |
 |---------|-------------|
-| Editor | TinyMCE 6.x (self-hosted) |
+| Editor | TinyMCE 7.x (self-hosted) |
 | Location | `frontend/src/app/shared/components/tinymce-editor/` |
 | Selector | `<app-quill-editor>` (legacy name for compatibility) |
 | Fonts | 10 curated Google Fonts |
@@ -101,6 +101,39 @@ onEditorInit(event: any): void {
 
 The "Insert" button provides quick access to pre-styled templates:
 
+### Badge-Style Callouts
+
+These are the primary callout types with colored badges:
+
+| Type | Background | Badge Color | Use Case |
+|------|------------|-------------|----------|
+| Note | `#E0F7FA` (light teal) | `#0097A7` (teal) | General information |
+| Warning | `#FEF3C7` (light amber) | `#e67e22` (orange) | Important cautions |
+| Error | `#FEE2E2` (light red) | `#dc3545` (red) | Critical issues |
+| Tip | `#D1FAE5` (light green) | `#28a745` (green) | Helpful suggestions |
+| Info | `#DBEAFE` (light blue) | `#17a2b8` (blue) | Additional details |
+
+**Example: Note Box**
+```html
+<div class="callout-box note" style="background-color: #E0F7FA; padding: 16px 20px; margin: 24px 0; border-radius: 4px;">
+  <span class="badge" style="display: inline-block; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; background-color: #0097A7; color: white;">Note</span>
+  <p style="margin: 0; color: #555;">Enter your note text here.</p>
+</div>
+```
+
+### Table of Contents
+
+```html
+<div class="toc" style="background-color: #fafafa; border-left: 3px solid #0097A7; padding: 20px 24px; margin-bottom: 32px; border-radius: 0 4px 4px 0;">
+  <div class="toc-title" style="font-weight: 600; color: #555; margin-bottom: 12px; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Table of Contents</div>
+  <ul style="list-style-type: none; margin: 0; padding-left: 0;">
+    <li style="margin-bottom: 6px;"><a href="#section-1" style="color: #666; text-decoration: none; font-size: 14px;">Section 1</a></li>
+  </ul>
+</div>
+```
+
+### Legacy Templates
+
 | Item | Template | Description |
 |------|----------|-------------|
 | Callout Box | `.callout` | Teal-bordered highlight box |
@@ -112,7 +145,7 @@ The "Insert" button provides quick access to pre-styled templates:
 | Ordered List | `<ol>` | Numbered list with template items |
 | Divider | `<hr>` | Horizontal separator |
 
-### Template Examples
+### Legacy Template Examples
 
 **Callout Box**
 ```html
@@ -217,6 +250,47 @@ All formatting uses inline styles (not CSS classes) for portability:
 | Background | `style="background-color: ..."` |
 | Alignment | `style="text-align: ..."` |
 
+### CRITICAL: The `valid_styles` Whitelist
+
+TinyMCE **silently strips** any inline style not explicitly whitelisted. This is configured in `tinymce-config.ts`:
+
+```typescript
+valid_styles: {
+  '*': 'font-size,font-family,color,text-align,background,background-color,text-decoration,border,border-top,border-left,border-radius,padding,margin,margin-left,margin-right,margin-top,margin-bottom,width,height,display,float,line-height,letter-spacing,text-transform,vertical-align,white-space,list-style,list-style-type'
+},
+```
+
+**If you add new templates with inline styles, you MUST:**
+1. Check that ALL style properties are in the whitelist
+2. Add any missing properties to the whitelist
+3. Use `background-color` instead of `background` shorthand for reliability
+
+**Example of silent stripping:**
+```html
+<!-- Template has this -->
+<div style="background: #E0F7FA; border-radius: 4px;">
+
+<!-- If background and border-radius weren't whitelisted, TinyMCE would output -->
+<div>
+```
+
+No error, no warning - the styles just disappear.
+
+### Styling in Editor vs View Mode
+
+Callout templates use **both** inline styles AND CSS classes:
+
+1. **Inline styles** - Applied directly in templates, ensure immediate rendering in editor
+2. **CSS classes** - Defined in `frontend/src/styles/mobius-ui.css`, provide styling in view mode
+
+This dual approach ensures styles work:
+- In the TinyMCE editor iframe (inline styles)
+- When viewing saved pages (CSS classes as fallback)
+
+The CSS for callout boxes is defined in:
+- `tinymce-config.ts` → `content_style` (for editor preview)
+- `frontend/src/styles/mobius-ui.css` (for page viewing)
+
 ## Height & Resizing
 
 The editor automatically calculates available height:
@@ -303,6 +377,26 @@ valid_elements: '*[*]',
 **Cause**: Alignment uses inline styles that may conflict with external CSS.
 
 **Solution**: Image alignment uses `display: block` + `margin-left/right: auto`. Ensure no CSS overrides these properties.
+
+### Insert menu elements appear unstyled
+
+**Cause**: TinyMCE's `valid_styles` whitelist is stripping inline styles from templates.
+
+**Symptoms**:
+- Callout boxes have no background color
+- Badges have no styling
+- TOC has no border or background
+
+**Solution**: Check that ALL inline style properties used in templates are in the `valid_styles` whitelist in `tinymce-config.ts`. Common missing styles:
+- `border-radius`
+- `border-top`
+- `border-left`
+- `text-transform`
+- `list-style-type`
+
+Also ensure:
+1. Templates use `background-color` (not `background` shorthand)
+2. CSS classes exist in `frontend/src/styles/mobius-ui.css` for view mode
 
 ## Configuration Reference
 
