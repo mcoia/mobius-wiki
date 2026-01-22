@@ -1,0 +1,92 @@
+<div class="site-settings">
+  @if (settings$ | async; as settings) {
+    @if (settings.length > 0) {
+      <div class="settings-list">
+        @for (setting of settings; track setting.key) {
+          <div class="setting-item">
+            <div class="setting-info">
+              <h3 class="setting-name">{{ formatSettingName(setting.key) }}</h3>
+              <p class="setting-description">{{ setting.description }}</p>
+              <span class="setting-type">Type: {{ setting.valueType }}</span>
+            </div>
+            <div class="setting-value">
+              @if (setting.isEditing) {
+                <div class="edit-form">
+                  @switch (getInputType(setting.valueType)) {
+                    @case ('select') {
+                      <select [(ngModel)]="setting.editValue" [disabled]="setting.isSaving">
+                        <option value="true">true</option>
+                        <option value="false">false</option>
+                      </select>
+                    }
+                    @case ('textarea') {
+                      <textarea
+                        [(ngModel)]="setting.editValue"
+                        [disabled]="setting.isSaving"
+                        rows="4"></textarea>
+                    }
+                    @case ('number') {
+                      <input
+                        type="number"
+                        [(ngModel)]="setting.editValue"
+                        [disabled]="setting.isSaving">
+                    }
+                    @default {
+                      <input
+                        type="text"
+                        [(ngModel)]="setting.editValue"
+                        [disabled]="setting.isSaving">
+                    }
+                  }
+                  <div class="edit-actions">
+                    <button
+                      class="btn btn-primary btn-sm"
+                      (click)="saveSetting(setting)"
+                      [disabled]="setting.isSaving">
+                      @if (setting.isSaving) {
+                        <i class="fas fa-spinner fa-spin"></i>
+                      } @else {
+                        <i class="fas fa-check"></i>
+                      }
+                      Save
+                    </button>
+                    <button
+                      class="btn btn-secondary btn-sm"
+                      (click)="cancelEdit(setting)"
+                      [disabled]="setting.isSaving">
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              } @else {
+                <div class="value-display">
+                  @if (setting.valueType === 'json') {
+                    <code class="json-value">{{ setting.value }}</code>
+                  } @else if (setting.valueType === 'boolean') {
+                    <span class="boolean-value" [class.true]="setting.value === 'true'">
+                      {{ setting.value }}
+                    </span>
+                  } @else {
+                    <span class="text-value">{{ setting.value }}</span>
+                  }
+                  <button class="btn-edit" (click)="startEdit(setting)" title="Edit">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    } @else {
+      <div class="empty-state">
+        <i class="fas fa-cog"></i>
+        <p>No settings found</p>
+      </div>
+    }
+  } @else {
+    <div class="loading">
+      <i class="fas fa-spinner fa-spin"></i> Loading settings...
+    </div>
+  }
+</div>

@@ -4,10 +4,12 @@ import { WikiPageViewer } from './pages/wiki-page-viewer/wiki-page-viewer';
 import { WikiListComponent } from './pages/wiki-list/wiki-list';
 import { WikiCreateComponent } from './pages/wiki-create/wiki-create.component';
 import { WikiDetailComponent } from './pages/wiki-detail/wiki-detail.component';
+import { AdminComponent } from './pages/admin/admin.component';
 import { MainLayout } from './layout/main-layout/main-layout';
 import { Error404Component } from './pages/error-404/error-404.component';
 import { Error403Component } from './pages/error-403/error-403.component';
 import { authGuard } from './core/guards/auth.guard';
+import { adminGuard } from './core/guards/admin.guard';
 import { optionalAuthGuard } from './core/guards/optional-auth.guard';
 
 export const routes: Routes = [
@@ -30,6 +32,12 @@ export const routes: Routes = [
     component: MainLayout,
     canActivate: [optionalAuthGuard],  // Check auth but don't block guests
     children: [
+      // Admin panel (site_admin only)
+      {
+        path: 'admin',
+        component: AdminComponent,
+        canActivate: [authGuard, adminGuard]
+      },
       // Wiki routes - ORDER MATTERS!
       // Literal paths must come before dynamic paths
       {

@@ -1,0 +1,29 @@
+<div class="admin-page">
+  <div class="admin-header">
+    <h1>Admin Panel</h1>
+    <p class="admin-subtitle">Manage staff accounts and system settings</p>
+  </div>
+
+  <div class="admin-tabs">
+    <button
+      class="tab-btn"
+      [class.active]="activeTab === 'staff'"
+      (click)="setActiveTab('staff')">
+      <i class="fas fa-users"></i> Staff Accounts
+    </button>
+    <button
+      class="tab-btn"
+      [class.active]="activeTab === 'settings'"
+      (click)="setActiveTab('settings')">
+      <i class="fas fa-cog"></i> Site Settings
+    </button>
+  </div>
+
+  <div class="admin-content">
+    @if (activeTab === 'staff') {
+      <app-staff-accounts></app-staff-accounts>
+    } @else {
+      <app-site-settings></app-site-settings>
+    }
+  </div>
+</div>

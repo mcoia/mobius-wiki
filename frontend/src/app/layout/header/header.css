@@ -68,6 +68,25 @@
   gap: 12px;
 }
 
+/* Admin link */
+.admin-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.admin-link:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
 .user-name {
   display: flex;
   align-items: center;
