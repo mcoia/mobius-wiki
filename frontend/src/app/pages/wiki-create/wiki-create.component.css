@@ -1,4 +1,4 @@
-.container {
+.wiki-create-container {
   max-width: 600px;
   margin: 40px auto;
   padding: 0 20px;
@@ -141,7 +141,7 @@ form {
 }
 
 @media (max-width: 640px) {
-  .container {
+  .wiki-create-container {
     margin: 20px auto;
   }
 

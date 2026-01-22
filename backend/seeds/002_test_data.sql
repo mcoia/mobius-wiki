@@ -236,7 +236,7 @@ SELECT setval('wiki.sections_id_seq', (SELECT MAX(id) FROM wiki.sections));
 -- Tests: section_id FK (CASCADE), status CHECK, UNIQUE(section_id, slug), search_vector trigger, soft deletes
 
 -- Published pages (IDs 10-39) - distributed across sections, published_at set
-INSERT INTO wiki.pages (section_id, title, slug, content, status, sort_order, published_at, created_by, updated_by, created_at, updated_at)
+INSERT INTO wiki.pages (section_id, title, slug, content, status, sort_order, published_at, published_version_number, created_by, updated_by, created_at, updated_at)
 SELECT
     ((num % 30) + 1),  -- Distribute across sections 1-30
     'Page ' || num,
@@ -245,6 +245,7 @@ SELECT
     'published',
     num,
     NOW() - ((num / 2) || ' days')::INTERVAL,
+    1,  -- published_version_number
     ((num % 40) + 1),  -- Cycle through users 1-40
     ((num % 40) + 1),
     NOW() - (num || ' days')::INTERVAL,
@@ -269,7 +270,7 @@ FROM generate_series(40, 49) AS num;
 
 -- Pages that will be in soft-deleted sections (IDs 50-52)
 -- Note: Reference sections that exist, we'll test deletion cascades separately
-INSERT INTO wiki.pages (section_id, title, slug, content, status, sort_order, published_at, created_by, updated_by, created_at, updated_at)
+INSERT INTO wiki.pages (section_id, title, slug, content, status, sort_order, published_at, published_version_number, created_by, updated_by, created_at, updated_at)
 SELECT
     50 + (num % 5),  -- Use sections 50-54 which exist
     'Page For Delete Test ' || num,
@@ -278,6 +279,7 @@ SELECT
     'published',
     num,
     NOW() - '5 days'::INTERVAL,
+    1,  -- published_version_number
     1, 1,
     NOW() - (num || ' days')::INTERVAL,
     NOW()

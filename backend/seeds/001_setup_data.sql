@@ -74,7 +74,7 @@ SELECT setval('wiki.sections_id_seq', (SELECT MAX(id) FROM wiki.sections));
 -- 5. PAGES
 -- =============================================================================
 
-INSERT INTO wiki.pages (id, section_id, title, slug, content, scripts, allow_scripts, status, sort_order, published_at, created_at, updated_at, created_by, updated_by) VALUES
+INSERT INTO wiki.pages (id, section_id, title, slug, content, scripts, allow_scripts, status, sort_order, published_at, published_version_number, created_at, updated_at, created_by, updated_by) VALUES
 (1, 1, 'Welcome to MOBIUS Docs', 'welcome',
 '<h1>Welcome to MOBIUS Documentation</h1>
 <p>This is the internal documentation hub for MOBIUS consortium staff.</p>
@@ -95,7 +95,7 @@ INSERT INTO wiki.pages (id, section_id, title, slug, content, scripts, allow_scr
 <li>Learn administrative procedures</li>
 </ol>
 <p>For detailed instructions, explore the sections in this wiki.</p>',
-NULL, false, 'published', 1, NOW(), NOW(), NOW(), 1, 1),
+NULL, false, 'published', 1, NOW(), 1, NOW(), NOW(), 1, 1),
 
 (2, 1, 'System Requirements', 'system-requirements',
 '<h1>System Requirements</h1>
@@ -111,7 +111,7 @@ NULL, false, 'published', 1, NOW(), NOW(), NOW(), 1, 1),
 <li>Java 11 or higher</li>
 <li>Modern web browser (Chrome, Firefox, Safari, Edge)</li>
 </ul>',
-NULL, false, 'published', 2, NOW(), NOW(), NOW(), 1, 1);
+NULL, false, 'published', 2, NOW(), 1, NOW(), NOW(), 1, 1);
 
 -- Reset sequence for pages
 SELECT setval('wiki.pages_id_seq', (SELECT MAX(id) FROM wiki.pages));
@@ -300,7 +300,7 @@ VALUES (
 -- =============================================================================
 
 -- Home/Welcome Page
-INSERT INTO wiki.pages (section_id, title, slug, content, scripts, allow_scripts, status, sort_order, published_at, created_by, updated_by, created_at, updated_at)
+INSERT INTO wiki.pages (section_id, title, slug, content, scripts, allow_scripts, status, sort_order, published_at, published_version_number, created_by, updated_by, created_at, updated_at)
 VALUES (
   (SELECT id FROM wiki.sections WHERE wiki_id = (SELECT id FROM wiki.wikis WHERE slug = 'site') AND slug = 'main'),
   'Welcome',
@@ -325,12 +325,13 @@ VALUES (
   NOW(),
   1,
   1,
+  1,
   NOW(),
   NOW()
 );
 
 -- About MOBIUS Page
-INSERT INTO wiki.pages (section_id, title, slug, content, scripts, allow_scripts, status, sort_order, published_at, created_by, updated_by, created_at, updated_at)
+INSERT INTO wiki.pages (section_id, title, slug, content, scripts, allow_scripts, status, sort_order, published_at, published_version_number, created_by, updated_by, created_at, updated_at)
 VALUES (
   (SELECT id FROM wiki.sections WHERE wiki_id = (SELECT id FROM wiki.wikis WHERE slug = 'site') AND slug = 'main'),
   'About MOBIUS',
@@ -356,12 +357,13 @@ VALUES (
   NOW(),
   1,
   1,
+  1,
   NOW(),
   NOW()
 );
 
 -- Terms of Service Page
-INSERT INTO wiki.pages (section_id, title, slug, content, scripts, allow_scripts, status, sort_order, published_at, created_by, updated_by, created_at, updated_at)
+INSERT INTO wiki.pages (section_id, title, slug, content, scripts, allow_scripts, status, sort_order, published_at, published_version_number, created_by, updated_by, created_at, updated_at)
 VALUES (
   (SELECT id FROM wiki.sections WHERE wiki_id = (SELECT id FROM wiki.wikis WHERE slug = 'site') AND slug = 'main'),
   'Terms of Service',
@@ -392,12 +394,13 @@ VALUES (
   NOW(),
   1,
   1,
+  1,
   NOW(),
   NOW()
 );
 
 -- Help & Support Page
-INSERT INTO wiki.pages (section_id, title, slug, content, scripts, allow_scripts, status, sort_order, published_at, created_by, updated_by, created_at, updated_at)
+INSERT INTO wiki.pages (section_id, title, slug, content, scripts, allow_scripts, status, sort_order, published_at, published_version_number, created_by, updated_by, created_at, updated_at)
 VALUES (
   (SELECT id FROM wiki.sections WHERE wiki_id = (SELECT id FROM wiki.wikis WHERE slug = 'site') AND slug = 'main'),
   'Help & Support',
@@ -436,12 +439,13 @@ VALUES (
   NOW(),
   1,
   1,
+  1,
   NOW(),
   NOW()
 );
 
 -- Contact Page
-INSERT INTO wiki.pages (section_id, title, slug, content, scripts, allow_scripts, status, sort_order, published_at, created_by, updated_by, created_at, updated_at)
+INSERT INTO wiki.pages (section_id, title, slug, content, scripts, allow_scripts, status, sort_order, published_at, published_version_number, created_by, updated_by, created_at, updated_at)
 VALUES (
   (SELECT id FROM wiki.sections WHERE wiki_id = (SELECT id FROM wiki.wikis WHERE slug = 'site') AND slug = 'main'),
   'Contact',
@@ -467,12 +471,13 @@ VALUES (
   NOW(),
   1,
   1,
+  1,
   NOW(),
   NOW()
 );
 
 -- Privacy Policy Page
-INSERT INTO wiki.pages (section_id, title, slug, content, scripts, allow_scripts, status, sort_order, published_at, created_by, updated_by, created_at, updated_at)
+INSERT INTO wiki.pages (section_id, title, slug, content, scripts, allow_scripts, status, sort_order, published_at, published_version_number, created_by, updated_by, created_at, updated_at)
 VALUES (
   (SELECT id FROM wiki.sections WHERE wiki_id = (SELECT id FROM wiki.wikis WHERE slug = 'site') AND slug = 'main'),
   'Privacy Policy',
@@ -502,6 +507,7 @@ VALUES (
   'published',
   6,
   NOW(),
+  1,
   1,
   1,
   NOW(),
