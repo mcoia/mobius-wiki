@@ -13,6 +13,7 @@ import { SearchModule } from './search/search.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { NavigationModule } from './navigation/navigation.module';
 import { AdminModule } from './admin/admin.module';
+import { StaffModule } from './staff/staff.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { AdminModule } from './admin/admin.module';
     AnalyticsModule,
     NavigationModule,
     AdminModule,
+    StaffModule,
   ],
 })
 export class AppModule {}

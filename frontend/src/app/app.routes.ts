@@ -5,11 +5,13 @@ import { WikiListComponent } from './pages/wiki-list/wiki-list';
 import { WikiCreateComponent } from './pages/wiki-create/wiki-create.component';
 import { WikiDetailComponent } from './pages/wiki-detail/wiki-detail.component';
 import { AdminComponent } from './pages/admin/admin.component';
+import { StaffComponent } from './pages/staff/staff.component';
 import { MainLayout } from './layout/main-layout/main-layout';
 import { Error404Component } from './pages/error-404/error-404.component';
 import { Error403Component } from './pages/error-403/error-403.component';
 import { authGuard } from './core/guards/auth.guard';
 import { adminGuard } from './core/guards/admin.guard';
+import { staffGuard } from './core/guards/staff.guard';
 import { optionalAuthGuard } from './core/guards/optional-auth.guard';
 
 export const routes: Routes = [
@@ -37,6 +39,12 @@ export const routes: Routes = [
         path: 'admin',
         component: AdminComponent,
         canActivate: [authGuard, adminGuard]
+      },
+      // Staff panel (mobius_staff and site_admin)
+      {
+        path: 'staff',
+        component: StaffComponent,
+        canActivate: [authGuard, staffGuard]
       },
       // Wiki routes - ORDER MATTERS!
       // Literal paths must come before dynamic paths

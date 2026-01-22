@@ -1,0 +1,119 @@
+<div class="libraries">
+  <div class="section-header">
+    <button class="btn btn-primary" (click)="openCreateModal()">
+      <i class="fas fa-plus"></i> Add Library
+    </button>
+  </div>
+
+  @if (libraries$ | async; as libraries) {
+    @if (libraries.length > 0) {
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Slug</th>
+            <th>Staff Count</th>
+            <th>Created</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (library of libraries; track library.id) {
+            <tr>
+              <td>{{ library.name }}</td>
+              <td><code class="slug">{{ library.slug }}</code></td>
+              <td>
+                <span class="staff-count">{{ library.staffCount ?? 0 }}</span>
+              </td>
+              <td>{{ library.createdAt | date:'mediumDate' }}</td>
+              <td>
+                <div class="action-buttons">
+                  <button class="btn-icon" title="Edit" (click)="openEditModal(library)">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button class="btn-icon btn-danger" title="Delete" (click)="deleteLibrary(library)">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    } @else {
+      <div class="empty-state">
+        <i class="fas fa-building"></i>
+        <p>No libraries found</p>
+        <button class="btn btn-primary" (click)="openCreateModal()">Add First Library</button>
+      </div>
+    }
+  } @else {
+    <div class="loading">
+      <i class="fas fa-spinner fa-spin"></i> Loading libraries...
+    </div>
+  }
+</div>
+
+<!-- Create Modal -->
+@if (showCreateModal) {
+  <div class="modal-overlay" (click)="closeCreateModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Add Library</h3>
+        <button class="modal-close" (click)="closeCreateModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="create-name">Library Name</label>
+          <input
+            type="text"
+            id="create-name"
+            [(ngModel)]="createForm.name"
+            placeholder="e.g., Springfield Public Library">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeCreateModal()" [disabled]="isSubmitting">Cancel</button>
+        <button class="btn btn-primary" (click)="submitCreate()" [disabled]="isSubmitting">
+          @if (isSubmitting) {
+            <i class="fas fa-spinner fa-spin"></i> Creating...
+          } @else {
+            Create Library
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Edit Modal -->
+@if (showEditModal) {
+  <div class="modal-overlay" (click)="closeEditModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Edit Library</h3>
+        <button class="modal-close" (click)="closeEditModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="edit-name">Library Name</label>
+          <input type="text" id="edit-name" [(ngModel)]="editForm.name" placeholder="Library name">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeEditModal()" [disabled]="isSubmitting">Cancel</button>
+        <button class="btn btn-primary" (click)="submitEdit()" [disabled]="isSubmitting">
+          @if (isSubmitting) {
+            <i class="fas fa-spinner fa-spin"></i> Saving...
+          } @else {
+            Save Changes
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}

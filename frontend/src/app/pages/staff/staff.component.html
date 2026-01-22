@@ -1,0 +1,37 @@
+<div class="staff-page">
+  <div class="staff-header">
+    <h1>Staff Panel</h1>
+    <p class="staff-subtitle">Manage library staff accounts, libraries, and content access</p>
+  </div>
+
+  <div class="staff-tabs">
+    <button
+      class="tab-btn"
+      [class.active]="activeTab === 'library-staff'"
+      (click)="setActiveTab('library-staff')">
+      <i class="fas fa-user-tie"></i> Library Staff
+    </button>
+    <button
+      class="tab-btn"
+      [class.active]="activeTab === 'libraries'"
+      (click)="setActiveTab('libraries')">
+      <i class="fas fa-building"></i> Libraries
+    </button>
+    <button
+      class="tab-btn"
+      [class.active]="activeTab === 'content-access'"
+      (click)="setActiveTab('content-access')">
+      <i class="fas fa-lock"></i> Content Access
+    </button>
+  </div>
+
+  <div class="staff-content">
+    @if (activeTab === 'library-staff') {
+      <app-library-staff></app-library-staff>
+    } @else if (activeTab === 'libraries') {
+      <app-libraries></app-libraries>
+    } @else {
+      <app-content-access></app-content-access>
+    }
+  </div>
+</div>

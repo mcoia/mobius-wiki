@@ -1,0 +1,86 @@
+<div class="content-access">
+  <div class="section-header">
+    <div class="filters">
+      <div class="filter-group">
+        <label for="filter-type">Content Type</label>
+        <select id="filter-type" [(ngModel)]="filters.ruleableType" (ngModelChange)="applyFilters()">
+          @for (type of ruleableTypes; track type.value) {
+            <option [value]="type.value">{{ type.label }}</option>
+          }
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="filter-rule">Rule Type</label>
+        <select id="filter-rule" [(ngModel)]="filters.ruleType" (ngModelChange)="applyFilters()">
+          @for (type of ruleTypes; track type.value) {
+            <option [value]="type.value">{{ type.label }}</option>
+          }
+        </select>
+      </div>
+      @if (filters.ruleableType || filters.ruleType) {
+        <button class="btn btn-secondary btn-sm" (click)="clearFilters()">
+          <i class="fas fa-times"></i> Clear
+        </button>
+      }
+    </div>
+  </div>
+
+  @if (accessRules$ | async; as rules) {
+    @if (rules.length > 0) {
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Content</th>
+            <th>Content Type</th>
+            <th>Rule Type</th>
+            <th>Value</th>
+            <th>Created By</th>
+            <th>Created</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (rule of rules; track rule.id) {
+            <tr>
+              <td class="content-name">{{ rule.ruleableName || 'Unknown' }}</td>
+              <td>
+                <span class="badge" [ngClass]="getRuleableTypeBadgeClass(rule.ruleableType)">
+                  {{ rule.ruleableType }}
+                </span>
+              </td>
+              <td>
+                <span class="badge" [ngClass]="getRuleTypeBadgeClass(rule.ruleType)">
+                  {{ rule.ruleType }}
+                </span>
+              </td>
+              <td>{{ formatRuleValue(rule) }}</td>
+              <td>{{ rule.createdByName || 'System' }}</td>
+              <td>{{ rule.createdAt | date:'mediumDate' }}</td>
+              <td>
+                <div class="action-buttons">
+                  <button class="btn-icon btn-danger" title="Delete" (click)="deleteRule(rule)">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    } @else {
+      <div class="empty-state">
+        <i class="fas fa-lock"></i>
+        @if (filters.ruleableType || filters.ruleType) {
+          <p>No access rules match your filters</p>
+          <button class="btn btn-secondary" (click)="clearFilters()">Clear Filters</button>
+        } @else {
+          <p>No access rules found</p>
+        }
+      </div>
+    }
+  } @else {
+    <div class="loading">
+      <i class="fas fa-spinner fa-spin"></i> Loading access rules...
+    </div>
+  }
+</div>

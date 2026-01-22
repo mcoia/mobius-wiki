@@ -1,0 +1,205 @@
+<div class="library-staff">
+  <div class="section-header">
+    <button class="btn btn-primary" (click)="openCreateModal()">
+      <i class="fas fa-plus"></i> Add Library Staff
+    </button>
+  </div>
+
+  @if (users$ | async; as users) {
+    @if (users.length > 0) {
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Library</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (user of users; track user.id) {
+            <tr>
+              <td>{{ user.name }}</td>
+              <td>{{ user.email }}</td>
+              <td>
+                <span class="library-badge">{{ user.libraryName || 'Unassigned' }}</span>
+              </td>
+              <td>
+                <span class="status-badge" [class.active]="user.isActive" [class.inactive]="!user.isActive">
+                  {{ user.isActive ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+              <td>{{ user.createdAt | date:'mediumDate' }}</td>
+              <td>
+                <div class="action-buttons">
+                  <button class="btn-icon" title="Edit" (click)="openEditModal(user)">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button class="btn-icon" title="Reset Password" (click)="openResetPasswordModal(user)">
+                    <i class="fas fa-key"></i>
+                  </button>
+                  <button
+                    class="btn-icon"
+                    [title]="user.isActive ? 'Deactivate' : 'Activate'"
+                    (click)="toggleActive(user)">
+                    <i class="fas" [class.fa-toggle-on]="user.isActive" [class.fa-toggle-off]="!user.isActive"></i>
+                  </button>
+                  <button class="btn-icon btn-danger" title="Delete" (click)="deleteUser(user)">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    } @else {
+      <div class="empty-state">
+        <i class="fas fa-user-tie"></i>
+        <p>No library staff users found</p>
+        <button class="btn btn-primary" (click)="openCreateModal()">Add First Library Staff</button>
+      </div>
+    }
+  } @else {
+    <div class="loading">
+      <i class="fas fa-spinner fa-spin"></i> Loading users...
+    </div>
+  }
+</div>
+
+<!-- Create Modal -->
+@if (showCreateModal) {
+  <div class="modal-overlay" (click)="closeCreateModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Add Library Staff</h3>
+        <button class="modal-close" (click)="closeCreateModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="create-name">Name</label>
+          <input type="text" id="create-name" [(ngModel)]="createForm.name" placeholder="Full name">
+        </div>
+        <div class="form-group">
+          <label for="create-email">Email</label>
+          <input type="email" id="create-email" [(ngModel)]="createForm.email" placeholder="email@example.com">
+        </div>
+        <div class="form-group">
+          <label for="create-library">Library *</label>
+          @if (libraries$ | async; as libraries) {
+            <select id="create-library" [(ngModel)]="createForm.libraryId">
+              <option [value]="0" disabled>Select a library</option>
+              @for (library of libraries; track library.id) {
+                <option [value]="library.id">{{ library.name }}</option>
+              }
+            </select>
+          } @else {
+            <select disabled>
+              <option>Loading libraries...</option>
+            </select>
+          }
+        </div>
+        <div class="form-group">
+          <label for="create-password">Password</label>
+          <input type="password" id="create-password" [(ngModel)]="createForm.password" placeholder="Minimum 12 characters">
+          <small class="form-hint">Must be at least 12 characters with uppercase, lowercase, and numbers</small>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeCreateModal()" [disabled]="isSubmitting">Cancel</button>
+        <button class="btn btn-primary" (click)="submitCreate()" [disabled]="isSubmitting">
+          @if (isSubmitting) {
+            <i class="fas fa-spinner fa-spin"></i> Creating...
+          } @else {
+            Create User
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Edit Modal -->
+@if (showEditModal) {
+  <div class="modal-overlay" (click)="closeEditModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Edit User</h3>
+        <button class="modal-close" (click)="closeEditModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="edit-name">Name</label>
+          <input type="text" id="edit-name" [(ngModel)]="editForm.name" placeholder="Full name">
+        </div>
+        <div class="form-group">
+          <label for="edit-email">Email</label>
+          <input type="email" id="edit-email" [(ngModel)]="editForm.email" placeholder="email@example.com">
+        </div>
+        <div class="form-group">
+          <label for="edit-library">Library *</label>
+          @if (libraries$ | async; as libraries) {
+            <select id="edit-library" [(ngModel)]="editForm.libraryId">
+              <option [value]="0" disabled>Select a library</option>
+              @for (library of libraries; track library.id) {
+                <option [value]="library.id">{{ library.name }}</option>
+              }
+            </select>
+          } @else {
+            <select disabled>
+              <option>Loading libraries...</option>
+            </select>
+          }
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeEditModal()" [disabled]="isSubmitting">Cancel</button>
+        <button class="btn btn-primary" (click)="submitEdit()" [disabled]="isSubmitting">
+          @if (isSubmitting) {
+            <i class="fas fa-spinner fa-spin"></i> Saving...
+          } @else {
+            Save Changes
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Reset Password Modal -->
+@if (showResetPasswordModal) {
+  <div class="modal-overlay" (click)="closeResetPasswordModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Reset Password</h3>
+        <button class="modal-close" (click)="closeResetPasswordModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="reset-info">Set a new password for <strong>{{ resetPasswordForm.name }}</strong></p>
+        <div class="form-group">
+          <label for="reset-password">New Password</label>
+          <input type="password" id="reset-password" [(ngModel)]="resetPasswordForm.password" placeholder="Minimum 12 characters">
+          <small class="form-hint">Must be at least 12 characters with uppercase, lowercase, and numbers</small>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeResetPasswordModal()" [disabled]="isSubmitting">Cancel</button>
+        <button class="btn btn-primary" (click)="submitResetPassword()" [disabled]="isSubmitting">
+          @if (isSubmitting) {
+            <i class="fas fa-spinner fa-spin"></i> Resetting...
+          } @else {
+            Reset Password
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}
