@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, ParseIntPipe, SetMetadata } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, UseInterceptors, ParseIntPipe, SetMetadata } from '@nestjs/common';
 import { WikisService } from './wikis.service';
 import { PagesService } from '../pages/pages.service';
 import { CreateWikiDto } from './dto/create-wiki.dto';
@@ -6,6 +6,7 @@ import { UpdateWikiDto } from './dto/update-wiki.dto';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { AccessControlGuard } from '../access-control/access-control.guard';
 import { User } from '../common/decorators/user.decorator';
+import { PageViewInterceptor } from '../analytics/interceptors/page-view.interceptor';
 
 @Controller('wikis')
 export class WikisController {
@@ -31,6 +32,7 @@ export class WikisController {
   }
 
   @Get('slug/:wikiSlug/sections/slug/:sectionSlug/pages/slug/:pageSlug')
+  @UseInterceptors(PageViewInterceptor)
   async findPageBySlug(
     @Param('wikiSlug') wikiSlug: string,
     @Param('sectionSlug') sectionSlug: string,

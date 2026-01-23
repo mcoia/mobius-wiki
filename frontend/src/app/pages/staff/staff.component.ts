@@ -4,18 +4,19 @@ import { RouterModule } from '@angular/router';
 import { LibraryStaffComponent } from './library-staff/library-staff.component';
 import { LibrariesComponent } from './libraries/libraries.component';
 import { ContentAccessComponent } from './content-access/content-access.component';
+import { AnalyticsComponent } from './analytics/analytics.component';
 
 @Component({
   selector: 'app-staff',
   standalone: true,
-  imports: [CommonModule, RouterModule, LibraryStaffComponent, LibrariesComponent, ContentAccessComponent],
+  imports: [CommonModule, RouterModule, LibraryStaffComponent, LibrariesComponent, ContentAccessComponent, AnalyticsComponent],
   templateUrl: './staff.component.html',
   styleUrl: './staff.component.css',
 })
 export class StaffComponent {
-  activeTab: 'library-staff' | 'libraries' | 'content-access' = 'library-staff';
+  activeTab: 'library-staff' | 'libraries' | 'content-access' | 'analytics' = 'library-staff';
 
-  setActiveTab(tab: 'library-staff' | 'libraries' | 'content-access'): void {
+  setActiveTab(tab: 'library-staff' | 'libraries' | 'content-access' | 'analytics'): void {
     this.activeTab = tab;
   }
 }

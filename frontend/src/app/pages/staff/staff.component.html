@@ -23,6 +23,12 @@
       (click)="setActiveTab('content-access')">
       <i class="fas fa-lock"></i> Content Access
     </button>
+    <button
+      class="tab-btn"
+      [class.active]="activeTab === 'analytics'"
+      (click)="setActiveTab('analytics')">
+      <i class="fas fa-chart-bar"></i> Analytics
+    </button>
   </div>
 
   <div class="staff-content">
@@ -30,8 +36,10 @@
       <app-library-staff></app-library-staff>
     } @else if (activeTab === 'libraries') {
       <app-libraries></app-libraries>
-    } @else {
+    } @else if (activeTab === 'content-access') {
       <app-content-access></app-content-access>
+    } @else if (activeTab === 'analytics') {
+      <app-analytics></app-analytics>
     }
   </div>
 </div>

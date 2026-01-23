@@ -18,10 +18,15 @@ export class PageViewInterceptor implements NestInterceptor {
 
     // Only track successful GET requests to page endpoints
     return next.handle().pipe(
-      tap(() => {
+      tap((responseBody) => {
         if (request.method === 'GET' && response.statusCode === 200) {
           // Check if this is a page view endpoint
-          const pageId = this.extractPageId(request);
+          let pageId = this.extractPageId(request);
+
+          // Extract from response body if not in params (for slug-based endpoints)
+          if (!pageId && responseBody?.data?.id) {
+            pageId = responseBody.data.id;
+          }
 
           if (pageId) {
             // Extract user info

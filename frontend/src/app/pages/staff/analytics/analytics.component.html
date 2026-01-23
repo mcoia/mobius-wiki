@@ -1,0 +1,140 @@
+<div class="analytics">
+  <!-- Period Selector -->
+  <div class="period-selector">
+    <div class="period-buttons">
+      <button
+        class="period-btn"
+        [class.active]="selectedPeriod === undefined"
+        (click)="setPeriod(undefined)">
+        All Time
+      </button>
+      <button
+        class="period-btn"
+        [class.active]="selectedPeriod === 30"
+        (click)="setPeriod(30)">
+        Last 30 Days
+      </button>
+      <button
+        class="period-btn"
+        [class.active]="selectedPeriod === 7"
+        (click)="setPeriod(7)">
+        Last 7 Days
+      </button>
+    </div>
+    <button class="btn btn-secondary" (click)="refresh()">
+      <i class="fas fa-sync-alt"></i> Refresh
+    </button>
+  </div>
+
+  @if (stats$ | async; as stats) {
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-number">{{ stats.views.total | number }}</div>
+        <div class="stat-label">Total Views</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">{{ stats.views.uniqueUsers | number }}</div>
+        <div class="stat-label">Unique Users</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">{{ stats.views.pagesViewed | number }}</div>
+        <div class="stat-label">Pages Viewed</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">{{ stats.content.wikis + stats.content.sections + stats.content.pages | number }}</div>
+        <div class="stat-label">Total Content</div>
+      </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="charts-row">
+      <!-- Content Breakdown Chart -->
+      <div class="chart-card">
+        <h3>Content Breakdown</h3>
+        <div class="chart-container doughnut-container">
+          @if (doughnutChartData$ | async; as chartData) {
+            <canvas baseChart
+              [data]="chartData"
+              [options]="doughnutChartOptions"
+              type="doughnut">
+            </canvas>
+          } @else {
+            <div class="chart-empty">
+              <i class="fas fa-chart-pie"></i>
+              <p>No content data available</p>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Views Over Time Chart -->
+      <div class="chart-card">
+        <h3>Views Over Time</h3>
+        <div class="chart-container line-container">
+          @if (lineChartData$ | async; as chartData) {
+            <canvas baseChart
+              [data]="chartData"
+              [options]="lineChartOptions"
+              type="line">
+            </canvas>
+          } @else {
+            <div class="chart-empty">
+              <i class="fas fa-chart-line"></i>
+              <p>No view data available</p>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Popular Pages Table -->
+    <div class="popular-pages">
+      <h3>Top 10 Popular Pages</h3>
+      @if (popularPages$ | async; as pages) {
+        @if (pages.length > 0) {
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Page</th>
+                <th>Wiki</th>
+                <th class="text-right">Views</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (page of pages; track page.page.id) {
+                <tr>
+                  <td>
+                    <a [routerLink]="getPageUrl(page)" class="page-link">
+                      {{ page.page.title }}
+                    </a>
+                    <div class="page-section">{{ page.section.title }}</div>
+                  </td>
+                  <td>
+                    <span class="wiki-badge">{{ page.wiki.title }}</span>
+                  </td>
+                  <td class="text-right">
+                    <span class="view-count">{{ page.viewCount | number }}</span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        } @else {
+          <div class="empty-state">
+            <i class="fas fa-chart-line"></i>
+            <p>No page views recorded yet</p>
+          </div>
+        }
+      } @else {
+        <div class="loading">
+          <i class="fas fa-spinner fa-spin"></i> Loading popular pages...
+        </div>
+      }
+    </div>
+  } @else {
+    <div class="loading">
+      <i class="fas fa-spinner fa-spin"></i> Loading analytics data...
+    </div>
+  }
+</div>

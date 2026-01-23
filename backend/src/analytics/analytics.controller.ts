@@ -37,4 +37,9 @@ export class AnalyticsController {
   async getOverallStats(@Query() dto: AnalyticsQueryDto) {
     return this.analyticsService.getOverallStats(dto.days);
   }
+
+  @Get('daily-views')
+  async getDailyViews(@Query() dto: AnalyticsQueryDto) {
+    return this.analyticsService.getDailyViews(dto.days || 30);
+  }
 }

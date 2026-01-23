@@ -172,6 +172,33 @@ export class AnalyticsService {
   }
 
   /**
+   * Get daily views across the platform
+   */
+  async getDailyViews(days: number = 30) {
+    const { rows } = await this.pool.query(
+      `SELECT
+        DATE(viewed_at) as date,
+        COUNT(*) as views,
+        COUNT(DISTINCT session_id) FILTER (WHERE session_id IS NOT NULL) as unique_sessions
+       FROM wiki.page_views
+       WHERE viewed_at >= NOW() - INTERVAL '${days} days'
+       GROUP BY DATE(viewed_at)
+       ORDER BY date ASC`,
+    );
+
+    return {
+      data: rows.map(row => ({
+        date: row.date.toISOString().split('T')[0],
+        views: parseInt(row.views, 10),
+        uniqueSessions: parseInt(row.unique_sessions, 10),
+      })),
+      meta: {
+        period: `last_${days}_days`,
+      },
+    };
+  }
+
+  /**
    * Get overall platform statistics
    */
   async getOverallStats(days?: number) {
