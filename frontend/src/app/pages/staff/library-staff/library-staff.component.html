@@ -92,9 +92,9 @@
           <label for="create-library">Library *</label>
           @if (libraries$ | async; as libraries) {
             <select id="create-library" [(ngModel)]="createForm.libraryId">
-              <option [value]="0" disabled>Select a library</option>
+              <option [ngValue]="0" disabled>Select a library</option>
               @for (library of libraries; track library.id) {
-                <option [value]="library.id">{{ library.name }}</option>
+                <option [ngValue]="library.id">{{ library.name }}</option>
               }
             </select>
           } @else {
@@ -146,9 +146,9 @@
           <label for="edit-library">Library *</label>
           @if (libraries$ | async; as libraries) {
             <select id="edit-library" [(ngModel)]="editForm.libraryId">
-              <option [value]="0" disabled>Select a library</option>
+              <option [ngValue]="0" disabled>Select a library</option>
               @for (library of libraries; track library.id) {
-                <option [value]="library.id">{{ library.name }}</option>
+                <option [ngValue]="library.id">{{ library.name }}</option>
               }
             </select>
           } @else {

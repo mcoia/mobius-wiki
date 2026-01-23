@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { DatabaseModule } from './database/database.module';
+import { MailerModule } from './mailer/mailer.module';
 import { AuthModule } from './auth/auth.module';
 import { HealthModule } from './health/health.module';
 import { AccessControlModule } from './access-control/access-control.module';
@@ -22,6 +23,7 @@ import { StaffModule } from './staff/staff.module';
       envFilePath: '.env',
     }),
     DatabaseModule,
+    MailerModule,
     AuthModule,
     AccessControlModule,
     AccessRulesModule,

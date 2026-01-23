@@ -79,4 +79,12 @@ export class AuthService {
       newPassword
     });
   }
+
+  forgotPassword(email: string): Observable<any> {
+    return this.api.post<any>('/auth/forgot-password', { email });
+  }
+
+  resetPassword(token: string, password: string): Observable<any> {
+    return this.api.post<any>('/auth/reset-password', { token, password });
+  }
 }

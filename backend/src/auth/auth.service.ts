@@ -1,11 +1,24 @@
-import { Injectable, Inject, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { Injectable, Inject, UnauthorizedException, BadRequestException, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Pool } from 'pg';
+import { randomBytes } from 'crypto';
+
 import { verifyPassword, hashPassword } from './utils/password.util';
 import { UpdateProfileDto, ChangePasswordDto } from './dto/update-profile.dto';
+import { MailerService } from '../mailer/mailer.service';
+import { generatePasswordResetEmail, generatePasswordResetText } from '../mailer/templates/password-reset';
+
+const TOKEN_EXPIRY_HOURS = 1;
 
 @Injectable()
 export class AuthService {
-  constructor(@Inject('DATABASE_POOL') private pool: Pool) {}
+  private readonly logger = new Logger(AuthService.name);
+
+  constructor(
+    @Inject('DATABASE_POOL') private pool: Pool,
+    private mailerService: MailerService,
+    private configService: ConfigService,
+  ) {}
 
   async validateUser(email: string, password: string) {
     const { rows } = await this.pool.query(
@@ -143,5 +156,115 @@ export class AuthService {
     );
 
     return { success: true, message: 'Password changed successfully' };
+  }
+
+  async forgotPassword(email: string): Promise<{ success: boolean; message: string }> {
+    // Always return success to prevent email enumeration attacks
+    const successResponse = {
+      success: true,
+      message: 'If an account with that email exists, a password reset link has been sent.',
+    };
+
+    // Find user by email
+    const { rows } = await this.pool.query(
+      `SELECT id, email, name FROM wiki.users WHERE email = $1 AND is_active = true AND deleted_at IS NULL`,
+      [email],
+    );
+
+    if (rows.length === 0) {
+      // Return same response to prevent timing attacks
+      this.logger.log(`Password reset requested for non-existent email: ${email}`);
+      return successResponse;
+    }
+
+    const user = rows[0];
+
+    // Generate secure token
+    const token = this.generateResetToken();
+    const expiresAt = new Date(Date.now() + TOKEN_EXPIRY_HOURS * 60 * 60 * 1000);
+
+    // Store token in database
+    await this.pool.query(
+      `UPDATE wiki.users SET password_reset_token = $1, password_reset_expires_at = $2, updated_at = NOW() WHERE id = $3`,
+      [token, expiresAt, user.id],
+    );
+
+    // Build reset URL
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'http://localhost:4200');
+    const resetUrl = `${frontendUrl}/reset-password?token=${encodeURIComponent(token)}`;
+
+    // Send email
+    const emailHtml = generatePasswordResetEmail({
+      userName: user.name || user.email,
+      resetUrl,
+      expiresInHours: TOKEN_EXPIRY_HOURS,
+    });
+
+    const emailText = generatePasswordResetText({
+      userName: user.name || user.email,
+      resetUrl,
+      expiresInHours: TOKEN_EXPIRY_HOURS,
+    });
+
+    const emailSent = await this.mailerService.sendMail({
+      to: user.email,
+      subject: 'Password Reset - MOBIUS Wiki',
+      html: emailHtml,
+      text: emailText,
+    });
+
+    if (!emailSent) {
+      this.logger.warn(`Failed to send password reset email to ${user.email}`);
+    } else {
+      this.logger.log(`Password reset email sent to ${user.email}`);
+    }
+
+    return successResponse;
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<{ success: boolean; message: string }> {
+    // Find user by token
+    const { rows } = await this.pool.query(
+      `SELECT id, email, password_reset_expires_at
+       FROM wiki.users
+       WHERE password_reset_token = $1 AND is_active = true AND deleted_at IS NULL`,
+      [token],
+    );
+
+    if (rows.length === 0) {
+      throw new BadRequestException('Invalid or expired reset token');
+    }
+
+    const user = rows[0];
+
+    // Check if token has expired
+    if (!user.password_reset_expires_at || new Date() > new Date(user.password_reset_expires_at)) {
+      // Clear the expired token
+      await this.pool.query(
+        `UPDATE wiki.users SET password_reset_token = NULL, password_reset_expires_at = NULL WHERE id = $1`,
+        [user.id],
+      );
+      throw new BadRequestException('Reset token has expired. Please request a new password reset.');
+    }
+
+    // Hash new password
+    const passwordHash = await hashPassword(newPassword);
+
+    // Update password and clear reset token (single use)
+    await this.pool.query(
+      `UPDATE wiki.users
+       SET password_hash = $1, password_reset_token = NULL, password_reset_expires_at = NULL, updated_at = NOW()
+       WHERE id = $2`,
+      [passwordHash, user.id],
+    );
+
+    this.logger.log(`Password reset completed for user ${user.email}`);
+
+    return { success: true, message: 'Password has been reset successfully. You can now log in with your new password.' };
+  }
+
+  private generateResetToken(): string {
+    // Generate 32 random bytes and encode as base64url
+    return randomBytes(32).toString('base64url');
   }
 }
