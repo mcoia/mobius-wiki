@@ -50,10 +50,9 @@
 .stat-card {
   background: var(--secondary-bg, #f8fafc);
   border: 1px solid var(--border-color);
-  border-top: 3px solid var(--primary-color);
   padding: 1.5rem;
   text-align: center;
-  border-radius: 0 0 8px 8px;
+  border-radius: 8px;
 }
 
 .stat-number {

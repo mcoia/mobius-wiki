@@ -346,13 +346,13 @@ export class AnalyticsService {
    */
   async getUserContributions(days?: number, limit: number = 10): Promise<UserContribution[]> {
     const { rows } = await this.pool.query(
-      `SELECT u.id, u.display_name,
+      `SELECT u.id, u.name,
               COUNT(pv.id) AS edit_count,
               COUNT(DISTINCT pv.page_id) AS pages_edited
        FROM wiki.users u
        JOIN wiki.page_versions pv ON pv.created_by = u.id
        WHERE $1::int IS NULL OR pv.created_at >= NOW() - INTERVAL '1 day' * $1
-       GROUP BY u.id, u.display_name
+       GROUP BY u.id, u.name
        ORDER BY edit_count DESC
        LIMIT $2`,
       [days || null, limit],
@@ -360,7 +360,7 @@ export class AnalyticsService {
 
     return rows.map(row => ({
       userId: row.id,
-      userName: row.display_name,
+      userName: row.name,
       editCount: parseInt(row.edit_count, 10),
       pagesEdited: parseInt(row.pages_edited, 10),
     }));
@@ -444,15 +444,12 @@ export class AnalyticsService {
        LIMIT 50`,
     );
 
-    // Never published - pages created but never had a published version
+    // Never published - pages that have never been published (published_at is null)
     const { rows: neverPublishedRows } = await this.pool.query(
       `SELECT p.id, p.title, p.created_at
        FROM wiki.pages p
        WHERE p.deleted_at IS NULL
-         AND NOT EXISTS (
-           SELECT 1 FROM wiki.page_versions pv
-           WHERE pv.page_id = p.id AND pv.status = 'published'
-         )
+         AND p.published_at IS NULL
        ORDER BY p.created_at DESC
        LIMIT 50`,
     );
