@@ -87,4 +87,12 @@ export class AuthService {
   resetPassword(token: string, password: string): Observable<any> {
     return this.api.post<any>('/auth/reset-password', { token, password });
   }
+
+  validateInvitationToken(token: string): Observable<any> {
+    return this.api.get<any>(`/auth/invitation/${encodeURIComponent(token)}`);
+  }
+
+  acceptInvitation(token: string, password: string): Observable<any> {
+    return this.api.post<any>('/auth/accept-invitation', { token, password });
+  }
 }

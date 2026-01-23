@@ -4,10 +4,14 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto, ResetPasswordDto } from './dto/update-user.dto';
 import { hashPassword, validatePassword } from '../../auth/utils/password.util';
 import { wrapData, wrapCollection } from '../../common/utils/response.util';
+import { AuthService } from '../../auth/auth.service';
 
 @Injectable()
 export class StaffUsersService {
-  constructor(@Inject('DATABASE_POOL') private pool: Pool) {}
+  constructor(
+    @Inject('DATABASE_POOL') private pool: Pool,
+    private authService: AuthService,
+  ) {}
 
   async findAll() {
     const { rows } = await this.pool.query(
@@ -42,12 +46,6 @@ export class StaffUsersService {
   }
 
   async create(dto: CreateUserDto, staffUserId: number) {
-    // Validate password meets policy
-    const validation = validatePassword(dto.password);
-    if (!validation.valid) {
-      throw new BadRequestException(validation.error);
-    }
-
     // Check if email already exists
     const { rows: existing } = await this.pool.query(
       'SELECT id FROM wiki.users WHERE email = $1 AND deleted_at IS NULL',
@@ -68,18 +66,23 @@ export class StaffUsersService {
       throw new BadRequestException(`Library with ID ${dto.libraryId} not found`);
     }
 
-    const passwordHash = await hashPassword(dto.password);
-
+    // Create user with is_active: false and no password (invitation flow)
     const { rows } = await this.pool.query(
-      `INSERT INTO wiki.users (email, password_hash, name, role, library_id, is_active, created_by, updated_by)
-       VALUES ($1, $2, $3, 'library_staff', $4, true, $5, $5)
+      `INSERT INTO wiki.users (email, name, role, library_id, is_active, created_by, updated_by)
+       VALUES ($1, $2, 'library_staff', $3, false, $4, $4)
        RETURNING id, email, name, role, is_active, library_id, created_at, updated_at`,
-      [dto.email, passwordHash, dto.name, dto.libraryId, staffUserId]
+      [dto.email, dto.name, dto.libraryId, staffUserId]
     );
 
+    const user = rows[0];
+
+    // Generate and send invitation token
+    await this.authService.generateInvitationToken(user.id);
+
     return wrapData({
-      ...this.mapUser(rows[0]),
+      ...this.mapUser(user),
       libraryName: libraryRows[0].name,
+      invitationSent: true,
     });
   }
 
@@ -225,6 +228,37 @@ export class StaffUsersService {
     );
 
     return { success: true };
+  }
+
+  async resendInvitation(id: number) {
+    // Verify user exists and is library_staff
+    await this.findOne(id);
+
+    // Check if user has a pending invitation (is_active: false or no password)
+    const { rows } = await this.pool.query(
+      `SELECT is_active, password_hash FROM wiki.users WHERE id = $1 AND deleted_at IS NULL`,
+      [id]
+    );
+
+    if (rows.length === 0) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+
+    if (rows[0].is_active && rows[0].password_hash) {
+      throw new BadRequestException('User account is already active. Cannot resend invitation.');
+    }
+
+    // Resend invitation
+    await this.authService.resendInvitation(id);
+
+    return { success: true, message: 'Invitation has been resent successfully.' };
+  }
+
+  async sendPasswordResetEmail(id: number): Promise<{ success: boolean; message: string }> {
+    // Verify user exists and is library_staff first
+    await this.findOne(id);
+
+    return this.authService.sendPasswordResetEmailByUserId(id);
   }
 
   private mapUser(row: any) {

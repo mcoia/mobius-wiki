@@ -1,14 +1,16 @@
-import { Injectable, Inject, UnauthorizedException, BadRequestException, Logger } from '@nestjs/common';
+import { Injectable, Inject, UnauthorizedException, BadRequestException, NotFoundException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Pool } from 'pg';
 import { randomBytes } from 'crypto';
 
-import { verifyPassword, hashPassword } from './utils/password.util';
+import { verifyPassword, hashPassword, validatePassword } from './utils/password.util';
 import { UpdateProfileDto, ChangePasswordDto } from './dto/update-profile.dto';
 import { MailerService } from '../mailer/mailer.service';
 import { generatePasswordResetEmail, generatePasswordResetText } from '../mailer/templates/password-reset';
+import { generateAccountInvitationEmail, generateAccountInvitationText } from '../mailer/templates/account-invitation';
 
 const TOKEN_EXPIRY_HOURS = 1;
+const DEFAULT_INVITATION_EXPIRY_DAYS = 7;
 
 @Injectable()
 export class AuthService {
@@ -206,18 +208,21 @@ export class AuthService {
       expiresInHours: TOKEN_EXPIRY_HOURS,
     });
 
-    const emailSent = await this.mailerService.sendMail({
+    // Fire-and-forget: don't block the response waiting for email
+    this.mailerService.sendMail({
       to: user.email,
       subject: 'Password Reset - MOBIUS Wiki',
       html: emailHtml,
       text: emailText,
+    }).then(sent => {
+      if (sent) {
+        this.logger.log(`Password reset email sent to ${user.email}`);
+      } else {
+        this.logger.warn(`Failed to send password reset email to ${user.email}`);
+      }
+    }).catch(err => {
+      this.logger.error(`Error sending password reset email to ${user.email}: ${err.message}`);
     });
-
-    if (!emailSent) {
-      this.logger.warn(`Failed to send password reset email to ${user.email}`);
-    } else {
-      this.logger.log(`Password reset email sent to ${user.email}`);
-    }
 
     return successResponse;
   }
@@ -263,8 +268,262 @@ export class AuthService {
     return { success: true, message: 'Password has been reset successfully. You can now log in with your new password.' };
   }
 
+  /**
+   * Send password reset email to a user by their ID (for admin-initiated resets)
+   */
+  async sendPasswordResetEmailByUserId(userId: number): Promise<{ success: boolean; message: string }> {
+    // Find user by ID (must be active)
+    const { rows } = await this.pool.query(
+      `SELECT id, email, name FROM wiki.users
+       WHERE id = $1 AND is_active = true AND deleted_at IS NULL`,
+      [userId],
+    );
+
+    if (rows.length === 0) {
+      throw new NotFoundException('User not found or inactive');
+    }
+
+    const user = rows[0];
+
+    // Generate secure token
+    const token = this.generateResetToken();
+    const expiresAt = new Date(Date.now() + TOKEN_EXPIRY_HOURS * 60 * 60 * 1000);
+
+    // Store token in database
+    await this.pool.query(
+      `UPDATE wiki.users SET password_reset_token = $1, password_reset_expires_at = $2, updated_at = NOW() WHERE id = $3`,
+      [token, expiresAt, user.id],
+    );
+
+    // Build reset URL
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'http://localhost:4200');
+    const resetUrl = `${frontendUrl}/reset-password?token=${encodeURIComponent(token)}`;
+
+    // Send email
+    const emailHtml = generatePasswordResetEmail({
+      userName: user.name || user.email,
+      resetUrl,
+      expiresInHours: TOKEN_EXPIRY_HOURS,
+    });
+
+    const emailText = generatePasswordResetText({
+      userName: user.name || user.email,
+      resetUrl,
+      expiresInHours: TOKEN_EXPIRY_HOURS,
+    });
+
+    // Fire-and-forget: don't block the response waiting for email
+    this.mailerService.sendMail({
+      to: user.email,
+      subject: 'Password Reset - MOBIUS Wiki',
+      html: emailHtml,
+      text: emailText,
+    }).then(sent => {
+      if (sent) {
+        this.logger.log(`Password reset email sent to ${user.email} (admin-initiated)`);
+      } else {
+        this.logger.warn(`Failed to send password reset email to ${user.email}`);
+      }
+    }).catch(err => {
+      this.logger.error(`Error sending password reset email to ${user.email}: ${err.message}`);
+    });
+
+    return { success: true, message: 'Password reset email has been sent.' };
+  }
+
   private generateResetToken(): string {
     // Generate 32 random bytes and encode as base64url
     return randomBytes(32).toString('base64url');
+  }
+
+  /**
+   * Get the invitation expiry days from settings or use default
+   */
+  private async getInvitationExpiryDays(): Promise<number> {
+    try {
+      const { rows } = await this.pool.query(
+        `SELECT value FROM wiki.settings WHERE key = 'invitation_expiry_days'`
+      );
+      if (rows.length > 0) {
+        const days = parseInt(rows[0].value, 10);
+        if (!isNaN(days) && days > 0) {
+          return days;
+        }
+      }
+    } catch (error) {
+      this.logger.warn(`Failed to get invitation_expiry_days setting: ${error.message}`);
+    }
+    return DEFAULT_INVITATION_EXPIRY_DAYS;
+  }
+
+  /**
+   * Generate an invitation token for a user and send the invitation email
+   */
+  async generateInvitationToken(userId: number): Promise<{ token: string; expiresAt: Date }> {
+    // Get user details
+    const { rows } = await this.pool.query(
+      `SELECT id, email, name FROM wiki.users WHERE id = $1 AND deleted_at IS NULL`,
+      [userId]
+    );
+
+    if (rows.length === 0) {
+      throw new BadRequestException('User not found');
+    }
+
+    const user = rows[0];
+
+    // Generate secure token
+    const token = this.generateResetToken();
+    const expiryDays = await this.getInvitationExpiryDays();
+    const expiresAt = new Date(Date.now() + expiryDays * 24 * 60 * 60 * 1000);
+
+    // Store token in database
+    await this.pool.query(
+      `UPDATE wiki.users SET invitation_token = $1, invitation_expires_at = $2, updated_at = NOW() WHERE id = $3`,
+      [token, expiresAt, userId]
+    );
+
+    // Build invitation URL
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'http://localhost:4200');
+    const invitationUrl = `${frontendUrl}/set-password?token=${encodeURIComponent(token)}`;
+
+    // Send invitation email
+    const emailHtml = generateAccountInvitationEmail({
+      userName: user.name || user.email,
+      invitationUrl,
+      expiresInDays: expiryDays,
+    });
+
+    const emailText = generateAccountInvitationText({
+      userName: user.name || user.email,
+      invitationUrl,
+      expiresInDays: expiryDays,
+    });
+
+    // Fire-and-forget: don't block the response waiting for email
+    this.mailerService.sendMail({
+      to: user.email,
+      subject: "You're Invited to MOBIUS Wiki",
+      html: emailHtml,
+      text: emailText,
+    }).then(sent => {
+      if (sent) {
+        this.logger.log(`Invitation email sent to ${user.email}`);
+      } else {
+        this.logger.warn(`Failed to send invitation email to ${user.email}`);
+      }
+    }).catch(err => {
+      this.logger.error(`Error sending invitation email to ${user.email}: ${err.message}`);
+    });
+
+    return { token, expiresAt };
+  }
+
+  /**
+   * Validate an invitation token without consuming it
+   */
+  async validateInvitationToken(token: string): Promise<{ valid: boolean; email?: string; name?: string }> {
+    const { rows } = await this.pool.query(
+      `SELECT id, email, name, invitation_expires_at
+       FROM wiki.users
+       WHERE invitation_token = $1 AND deleted_at IS NULL`,
+      [token]
+    );
+
+    if (rows.length === 0) {
+      return { valid: false };
+    }
+
+    const user = rows[0];
+
+    // Check if token has expired
+    if (!user.invitation_expires_at || new Date() > new Date(user.invitation_expires_at)) {
+      return { valid: false };
+    }
+
+    return { valid: true, email: user.email, name: user.name };
+  }
+
+  /**
+   * Accept an invitation and set the user's password
+   */
+  async acceptInvitation(token: string, newPassword: string): Promise<{ success: boolean; message: string }> {
+    // Find user by invitation token
+    const { rows } = await this.pool.query(
+      `SELECT id, email, invitation_expires_at
+       FROM wiki.users
+       WHERE invitation_token = $1 AND deleted_at IS NULL`,
+      [token]
+    );
+
+    if (rows.length === 0) {
+      throw new BadRequestException('Invalid or expired invitation token');
+    }
+
+    const user = rows[0];
+
+    // Check if token has expired
+    if (!user.invitation_expires_at || new Date() > new Date(user.invitation_expires_at)) {
+      // Clear the expired token
+      await this.pool.query(
+        `UPDATE wiki.users SET invitation_token = NULL, invitation_expires_at = NULL WHERE id = $1`,
+        [user.id]
+      );
+      throw new BadRequestException('Invitation has expired. Please contact your administrator to request a new invitation.');
+    }
+
+    // Validate password meets policy
+    const validation = validatePassword(newPassword);
+    if (!validation.valid) {
+      throw new BadRequestException(validation.error);
+    }
+
+    // Hash new password
+    const passwordHash = await hashPassword(newPassword);
+
+    // Update user: set password, activate account, clear invitation token
+    await this.pool.query(
+      `UPDATE wiki.users
+       SET password_hash = $1,
+           is_active = true,
+           invitation_token = NULL,
+           invitation_expires_at = NULL,
+           updated_at = NOW()
+       WHERE id = $2`,
+      [passwordHash, user.id]
+    );
+
+    this.logger.log(`Invitation accepted for user ${user.email}`);
+
+    return { success: true, message: 'Your password has been set successfully. You can now log in.' };
+  }
+
+  /**
+   * Resend an invitation to a user with a pending invitation
+   */
+  async resendInvitation(userId: number): Promise<{ success: boolean; message: string }> {
+    // Verify user exists and has a pending invitation (is_active: false, no password)
+    const { rows } = await this.pool.query(
+      `SELECT id, email, name, is_active, password_hash
+       FROM wiki.users
+       WHERE id = $1 AND deleted_at IS NULL`,
+      [userId]
+    );
+
+    if (rows.length === 0) {
+      throw new BadRequestException('User not found');
+    }
+
+    const user = rows[0];
+
+    // User should be inactive or have no password set to receive a new invitation
+    if (user.is_active && user.password_hash) {
+      throw new BadRequestException('User account is already active. Cannot resend invitation.');
+    }
+
+    // Generate new invitation token and send email
+    await this.generateInvitationToken(userId);
+
+    return { success: true, message: 'Invitation has been resent successfully.' };
   }
 }

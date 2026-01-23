@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { LoginComponent } from './pages/login/login';
 import { ForgotPasswordComponent } from './pages/forgot-password/forgot-password.component';
 import { ResetPasswordComponent } from './pages/reset-password/reset-password.component';
+import { SetPasswordComponent } from './pages/set-password/set-password.component';
 import { WikiPageViewer } from './pages/wiki-page-viewer/wiki-page-viewer';
 import { WikiListComponent } from './pages/wiki-list/wiki-list';
 import { WikiCreateComponent } from './pages/wiki-create/wiki-create.component';
@@ -39,6 +40,10 @@ export const routes: Routes = [
   {
     path: 'reset-password',
     component: ResetPasswordComponent
+  },
+  {
+    path: 'set-password',
+    component: SetPasswordComponent
   },
 
   // Main app with layout (public by default)

@@ -28,10 +28,11 @@ export class LibraryStaffComponent implements OnInit {
   // Form data
   createForm = { email: '', name: '', password: '', libraryId: 0 };
   editForm = { id: 0, email: '', name: '', libraryId: 0 };
-  resetPasswordForm = { id: 0, name: '', password: '' };
+  resetPasswordForm = { id: 0, name: '', email: '', password: '' };
 
   // Loading states
   isSubmitting = false;
+  isSendingResetEmail = false;
 
   constructor(
     private staffService: StaffService,
@@ -189,7 +190,7 @@ export class LibraryStaffComponent implements OnInit {
 
   // Reset password
   openResetPasswordModal(user: LibraryStaffUser): void {
-    this.resetPasswordForm = { id: user.id, name: user.name, password: '' };
+    this.resetPasswordForm = { id: user.id, name: user.name, email: user.email, password: '' };
     this.showResetPasswordModal = true;
   }
 
@@ -214,6 +215,22 @@ export class LibraryStaffComponent implements OnInit {
         console.error('Failed to reset password:', error);
         this.toastService.error(error.error?.message || 'Failed to reset password');
         this.isSubmitting = false;
+      }
+    });
+  }
+
+  sendPasswordResetEmail(): void {
+    this.isSendingResetEmail = true;
+    this.staffService.sendPasswordResetEmail(this.resetPasswordForm.id).subscribe({
+      next: () => {
+        this.toastService.success('Password reset email has been sent');
+        this.closeResetPasswordModal();
+        this.isSendingResetEmail = false;
+      },
+      error: (error) => {
+        console.error('Failed to send password reset email:', error);
+        this.toastService.error(error.error?.message || 'Failed to send password reset email');
+        this.isSendingResetEmail = false;
       }
     });
   }

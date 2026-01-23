@@ -48,6 +48,21 @@ export class MailerService {
   }
 
   private initializeTransporter(): void {
+    const transport = this.configService.get<string>('MAIL_TRANSPORT', 'smtp');
+
+    if (transport === 'sendmail') {
+      // Use local sendmail binary (for servers with sendmail/postfix configured)
+      const sendmailPath = this.configService.get<string>('SENDMAIL_PATH', '/usr/sbin/sendmail');
+      this.transporter = nodemailer.createTransport({
+        sendmail: true,
+        path: sendmailPath,
+        newline: 'unix',
+      });
+      this.logger.log(`Using sendmail transport: ${sendmailPath}`);
+      return;
+    }
+
+    // SMTP transport (default)
     const host = this.configService.get<string>('SMTP_HOST');
     const port = this.configService.get<number>('SMTP_PORT', 587);
     const secure = this.configService.get<string>('SMTP_SECURE', 'false') === 'true';
@@ -87,7 +102,7 @@ export class MailerService {
 
   async sendMail(options: SendMailOptions): Promise<boolean> {
     if (!this.transporter) {
-      this.logger.warn('Email not sent: SMTP not configured');
+      this.logger.warn('Email not sent: Mail transport not configured');
       return false;
     }
 

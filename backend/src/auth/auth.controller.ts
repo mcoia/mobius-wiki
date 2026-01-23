@@ -1,10 +1,11 @@
-import { Controller, Post, Get, Patch, Body, Req, HttpCode, UseGuards } from '@nestjs/common';
+import { Controller, Post, Get, Patch, Body, Req, Param, HttpCode, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthGuard } from './guards/auth.guard';
 import { LoginDto } from './dto/login.dto';
 import { UpdateProfileDto, ChangePasswordDto } from './dto/update-profile.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { AcceptInvitationDto } from './dto/accept-invitation.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -85,5 +86,17 @@ export class AuthController {
   @HttpCode(200)
   async resetPassword(@Body() dto: ResetPasswordDto) {
     return this.authService.resetPassword(dto.token, dto.password);
+  }
+
+  @Get('invitation/:token')
+  @HttpCode(200)
+  async validateInvitation(@Param('token') token: string) {
+    return this.authService.validateInvitationToken(token);
+  }
+
+  @Post('accept-invitation')
+  @HttpCode(200)
+  async acceptInvitation(@Body() dto: AcceptInvitationDto) {
+    return this.authService.acceptInvitation(dto.token, dto.password);
   }
 }

@@ -50,6 +50,10 @@ export class StaffService {
     return this.api.post(`/staff/users/${id}/reset-password`, { password });
   }
 
+  sendPasswordResetEmail(id: number): Observable<{ success: boolean; message: string }> {
+    return this.api.post(`/staff/users/${id}/send-password-reset`, {});
+  }
+
   // Libraries
   getLibraries(): Observable<{ data: Library[]; meta: { total: number } }> {
     return this.api.get('/staff/libraries');

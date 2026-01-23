@@ -59,4 +59,9 @@ export class AdminUsersController {
   ) {
     return this.usersService.resetPassword(id, dto, user.id);
   }
+
+  @Post(':id/resend-invitation')
+  async resendInvitation(@Param('id', ParseIntPipe) id: number) {
+    return this.usersService.resendInvitation(id);
+  }
 }

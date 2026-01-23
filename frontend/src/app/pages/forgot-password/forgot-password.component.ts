@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectorRef } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
@@ -16,7 +16,10 @@ export class ForgotPasswordComponent {
   successMessage = '';
   submitted = false;
 
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   onSubmit(): void {
     if (!this.email) {
@@ -33,11 +36,13 @@ export class ForgotPasswordComponent {
         this.submitted = true;
         this.successMessage = response.message || 'If an account with that email exists, a password reset link has been sent.';
         this.isLoading = false;
+        this.cdr.markForCheck();
       },
       error: (error) => {
         console.error('Forgot password error:', error);
         this.errorMessage = error.error?.message || 'An error occurred. Please try again.';
         this.isLoading = false;
+        this.cdr.markForCheck();
       }
     });
   }

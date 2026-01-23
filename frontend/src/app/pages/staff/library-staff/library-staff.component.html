@@ -175,7 +175,7 @@
 <!-- Reset Password Modal -->
 @if (showResetPasswordModal) {
   <div class="modal-overlay" (click)="closeResetPasswordModal()">
-    <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal modal-wide" (click)="$event.stopPropagation()">
       <div class="modal-header">
         <h3>Reset Password</h3>
         <button class="modal-close" (click)="closeResetPasswordModal()">
@@ -183,22 +183,49 @@
         </button>
       </div>
       <div class="modal-body">
-        <p class="reset-info">Set a new password for <strong>{{ resetPasswordForm.name }}</strong></p>
-        <div class="form-group">
-          <label for="reset-password">New Password</label>
-          <input type="password" id="reset-password" [(ngModel)]="resetPasswordForm.password" placeholder="Minimum 12 characters">
-          <small class="form-hint">Must be at least 12 characters with uppercase, lowercase, and numbers</small>
+        <p class="reset-info">Reset password for <strong>{{ resetPasswordForm.name }}</strong> ({{ resetPasswordForm.email }})</p>
+
+        <!-- Option 1: Send Email -->
+        <div class="reset-option">
+          <div class="reset-option-header">
+            <i class="fas fa-envelope"></i>
+            <span>Send Password Reset Email</span>
+            <span class="recommended-badge">Recommended</span>
+          </div>
+          <p class="reset-option-desc">User will receive an email with a secure link to set their own password.</p>
+          <button class="btn btn-primary" (click)="sendPasswordResetEmail()" [disabled]="isSendingResetEmail || isSubmitting">
+            @if (isSendingResetEmail) {
+              <i class="fas fa-spinner fa-spin"></i> Sending...
+            } @else {
+              <i class="fas fa-paper-plane"></i> Send Reset Email
+            }
+          </button>
+        </div>
+
+        <div class="divider"><span>OR</span></div>
+
+        <!-- Option 2: Set Manually -->
+        <div class="reset-option">
+          <div class="reset-option-header">
+            <i class="fas fa-key"></i>
+            <span>Set Password Manually</span>
+          </div>
+          <p class="reset-option-desc">Enter a password directly. You'll need to communicate it to the user.</p>
+          <div class="form-group">
+            <input type="password" id="reset-password" [(ngModel)]="resetPasswordForm.password" placeholder="Minimum 12 characters">
+            <small class="form-hint">Must be at least 12 characters with uppercase, lowercase, and numbers</small>
+          </div>
+          <button class="btn btn-secondary" (click)="submitResetPassword()" [disabled]="isSubmitting || isSendingResetEmail">
+            @if (isSubmitting) {
+              <i class="fas fa-spinner fa-spin"></i> Setting...
+            } @else {
+              Set Password
+            }
+          </button>
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-secondary" (click)="closeResetPasswordModal()" [disabled]="isSubmitting">Cancel</button>
-        <button class="btn btn-primary" (click)="submitResetPassword()" [disabled]="isSubmitting">
-          @if (isSubmitting) {
-            <i class="fas fa-spinner fa-spin"></i> Resetting...
-          } @else {
-            Reset Password
-          }
-        </button>
+        <button class="btn btn-secondary" (click)="closeResetPasswordModal()" [disabled]="isSubmitting || isSendingResetEmail">Cancel</button>
       </div>
     </div>
   </div>
