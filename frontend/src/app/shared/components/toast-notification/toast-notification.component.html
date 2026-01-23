@@ -2,7 +2,7 @@
   @for (toast of toasts$ | async; track toast.id) {
     <div class="toast" [class]="'toast-' + toast.type">
       <div class="toast-content">
-        <span class="toast-icon">{{ getIcon(toast.type) }}</span>
+        <i class="toast-icon" [ngClass]="getIconClass(toast.type)"></i>
         <span class="toast-message">{{ toast.message }}</span>
       </div>
       <button
@@ -10,7 +10,7 @@
         class="toast-close"
         (click)="dismiss(toast.id)"
         aria-label="Dismiss">
-        ×
+        <i class="fa-solid fa-xmark"></i>
       </button>
     </div>
   }

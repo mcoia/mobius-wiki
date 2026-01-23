@@ -1,7 +1,8 @@
-import { Controller, Post, Get, Body, Req, HttpCode, UseGuards } from '@nestjs/common';
+import { Controller, Post, Get, Patch, Body, Req, HttpCode, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthGuard } from './guards/auth.guard';
 import { LoginDto } from './dto/login.dto';
+import { UpdateProfileDto, ChangePasswordDto } from './dto/update-profile.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -56,5 +57,19 @@ export class AuthController {
         libraryId: req.session.libraryId,
       },
     };
+  }
+
+  @Patch('profile')
+  @HttpCode(200)
+  @UseGuards(AuthGuard)
+  async updateProfile(@Req() req: any, @Body() dto: UpdateProfileDto) {
+    return this.authService.updateProfile(req.session.userId, dto, req);
+  }
+
+  @Post('profile/change-password')
+  @HttpCode(200)
+  @UseGuards(AuthGuard)
+  async changePassword(@Req() req: any, @Body() dto: ChangePasswordDto) {
+    return this.authService.changePassword(req.session.userId, dto);
   }
 }

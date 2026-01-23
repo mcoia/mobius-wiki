@@ -6,6 +6,7 @@ import { WikiCreateComponent } from './pages/wiki-create/wiki-create.component';
 import { WikiDetailComponent } from './pages/wiki-detail/wiki-detail.component';
 import { AdminComponent } from './pages/admin/admin.component';
 import { StaffComponent } from './pages/staff/staff.component';
+import { ProfileComponent } from './pages/profile/profile.component';
 import { MainLayout } from './layout/main-layout/main-layout';
 import { Error404Component } from './pages/error-404/error-404.component';
 import { Error403Component } from './pages/error-403/error-403.component';
@@ -45,6 +46,12 @@ export const routes: Routes = [
         path: 'staff',
         component: StaffComponent,
         canActivate: [authGuard, staffGuard]
+      },
+      // User profile (any authenticated user)
+      {
+        path: 'profile',
+        component: ProfileComponent,
+        canActivate: [authGuard]
       },
       // Wiki routes - ORDER MATTERS!
       // Literal paths must come before dynamic paths

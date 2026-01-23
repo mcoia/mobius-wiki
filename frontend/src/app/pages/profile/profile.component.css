@@ -1,0 +1,350 @@
+.profile-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 32px 24px;
+}
+
+.profile-header {
+  margin-bottom: 32px;
+}
+
+.profile-header h1 {
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--mobius-navy, #003057);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.profile-header h1 i {
+  color: var(--gray-500, #666);
+}
+
+.profile-content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.profile-card {
+  background: var(--card-bg, white);
+  border: 1px solid var(--border-color, #e0e0e0);
+  border-radius: 4px;
+  box-shadow: none;
+  padding: 24px;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.profile-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-color: #d8d8d8;
+}
+
+.profile-card h2 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--mobius-navy, #003057);
+  margin: 0 0 20px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  /* Override global h2 styles from mobius-ui.css */
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.profile-card h2 i {
+  color: var(--gray-500, #666);
+}
+
+.profile-card h3 {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--gray-700, #333);
+  margin: 24px 0 16px 0;
+  padding-top: 20px;
+  border-top: 1px solid var(--gray-200, #eee);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.profile-card h3 i {
+  color: var(--gray-500, #666);
+  font-size: 14px;
+}
+
+/* Info section for read-only fields */
+.info-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--bg-light, #f8f9fa);
+  padding: 16px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+.info-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.info-row label {
+  font-weight: 500;
+  color: var(--gray-600, #666);
+  min-width: 100px;
+  font-size: 14px;
+}
+
+.info-row span {
+  color: var(--gray-700, #333);
+  font-size: 14px;
+}
+
+/* Role badges */
+.role-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.role-badge.role-site_admin {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.role-badge.role-mobius_staff {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.role-badge.role-library_staff {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+.role-badge.role-guest {
+  background: #f5f5f5;
+  color: #616161;
+}
+
+/* Form styles */
+.profile-form,
+.password-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  font-weight: 500;
+  color: var(--gray-700, #333);
+  font-size: 14px;
+}
+
+.input-wrapper {
+  position: relative;
+}
+
+.input-wrapper i {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--gray-500, #999);
+  font-size: 14px;
+  pointer-events: none;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 12px 14px 12px 42px;
+  border: 1px solid var(--gray-300, #ddd);
+  border-radius: 4px;
+  font-size: 15px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: var(--mobius-teal, #0097A7);
+  box-shadow: 0 0 0 3px rgba(0, 151, 167, 0.12);
+}
+
+.form-group input:focus + i,
+.form-group input:focus ~ i {
+  color: var(--mobius-teal, #0097A7);
+}
+
+.form-group input::placeholder {
+  color: #aaa;
+}
+
+.hint {
+  font-size: 12px;
+  color: var(--gray-500, #999);
+}
+
+/* Note box for errors */
+.note-box {
+  padding: 14px 16px;
+  font-size: 14px;
+  border-radius: 4px;
+}
+
+.note-box.danger {
+  background: var(--color-danger-bg, #f8d7da);
+  border-left: 4px solid var(--color-danger, #dc3545);
+  color: #721c24;
+}
+
+/* Buttons */
+.btn-primary {
+  padding: 12px 20px;
+  background: linear-gradient(135deg, var(--mobius-teal, #0097A7) 0%, var(--mobius-teal-hover, #007d8a) 100%);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: fit-content;
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 151, 167, 0.35);
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(0, 151, 167, 0.3);
+}
+
+.btn-primary:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-secondary {
+  padding: 12px 20px;
+  background: var(--gray-100, #f5f5f5);
+  color: var(--gray-700, #333);
+  border: 1px solid var(--gray-300, #ddd);
+  border-radius: 4px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-secondary:hover {
+  background: var(--gray-200, #eee);
+}
+
+.button-group {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+/* Password section within card */
+.password-section {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--gray-200, #eee);
+}
+
+/* Collapsible section header */
+.card-header-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  padding: 4px 0;
+}
+
+.card-header-toggle h3 {
+  margin: 0;
+  border-top: none;
+  padding-top: 0;
+}
+
+.card-header-toggle i.fa-chevron-down,
+.card-header-toggle i.fa-chevron-up {
+  color: var(--gray-500, #999);
+  transition: transform 0.2s;
+}
+
+.password-form {
+  margin-top: 16px;
+}
+
+/* Loading state */
+.loading {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--gray-600, #666);
+  font-size: 16px;
+}
+
+.loading i {
+  margin-right: 8px;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .profile-container {
+    padding: 20px 16px;
+  }
+
+  .profile-card {
+    padding: 20px 16px;
+  }
+
+  .profile-header h1 {
+    font-size: 24px;
+  }
+
+  .info-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .info-row label {
+    min-width: auto;
+  }
+
+  .button-group {
+    flex-direction: column;
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    width: 100%;
+  }
+}

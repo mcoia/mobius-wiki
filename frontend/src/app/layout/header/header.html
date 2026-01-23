@@ -18,10 +18,14 @@
           <a routerLink="/admin" class="admin-link" title="Admin Panel">
             <i class="fas fa-cog"></i>
           </a>
+        } @else if (user.role === 'mobius_staff') {
+          <a routerLink="/staff" class="admin-link" title="Staff Panel">
+            <i class="fas fa-cog"></i>
+          </a>
         }
-        <span class="user-name">
+        <a routerLink="/profile" class="profile-link" title="My Profile">
           <i class="fas fa-user"></i> {{ user.name }}
-        </span>
+        </a>
         <button class="logout-btn" (click)="logout()" type="button">
           Logout
         </button>

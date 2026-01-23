@@ -17,14 +17,14 @@ export class ToastNotificationComponent {
     this.toasts$ = this.toastService.toasts$;
   }
 
-  getIcon(type: string): string {
+  getIconClass(type: string): string {
     const icons: { [key: string]: string } = {
-      success: '✅',
-      error: '❌',
-      warning: '⚠️',
-      info: 'ℹ️'
+      success: 'fa-solid fa-circle-check',
+      error: 'fa-solid fa-circle-xmark',
+      warning: 'fa-solid fa-triangle-exclamation',
+      info: 'fa-solid fa-circle-info'
     };
-    return icons[type] || 'ℹ️';
+    return icons[type] || 'fa-solid fa-circle-info';
   }
 
   dismiss(id: number) {

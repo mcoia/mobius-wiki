@@ -58,4 +58,25 @@ export class AuthService {
   get isAuthenticated(): boolean {
     return this.currentUserValue !== null;
   }
+
+  updateProfile(name?: string, email?: string): Observable<any> {
+    const payload: { name?: string; email?: string } = {};
+    if (name !== undefined) payload.name = name;
+    if (email !== undefined) payload.email = email;
+
+    return this.api.patch<any>('/auth/profile', payload).pipe(
+      tap(response => {
+        if (response.user) {
+          this.currentUserSubject.next(response.user);
+        }
+      })
+    );
+  }
+
+  changePassword(currentPassword: string, newPassword: string): Observable<any> {
+    return this.api.post<any>('/auth/profile/change-password', {
+      currentPassword,
+      newPassword
+    });
+  }
 }
