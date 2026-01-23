@@ -98,6 +98,27 @@
     --warning-bg: #fef3c7;
     --danger-color: var(--color-danger);
     --danger-bg: var(--color-danger-bg);
+
+    /* Status Card Gradient Colors */
+    --status-success-from: #D1FAE5;
+    --status-success-to: #A7F3D0;
+    --status-success-border: #10B981;
+
+    --status-warning-from: #FEF3C7;
+    --status-warning-to: #FDE68A;
+    --status-warning-border: #F59E0B;
+
+    --status-danger-from: #FEE2E2;
+    --status-danger-to: #FECACA;
+    --status-danger-border: #EF4444;
+
+    --status-info-from: #DBEAFE;
+    --status-info-to: #BFDBFE;
+    --status-info-border: #3B82F6;
+
+    --status-neutral-from: #F1F5F9;
+    --status-neutral-to: #E2E8F0;
+    --status-neutral-border: #94A3B8;
 }
 
 /* ===== RESET & BASE ===== */
@@ -894,6 +915,44 @@ table tr:hover {
 .p-md { padding: var(--space-md); }
 .p-lg { padding: var(--space-lg); }
 .p-xl { padding: var(--space-xl); }
+
+/* ===== STATUS CARD UTILITIES ===== */
+.status-card {
+    padding: var(--space-lg);
+    border-radius: var(--border-radius-lg);
+    border-left: 4px solid;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.status-card.success {
+    background: linear-gradient(135deg, var(--status-success-from), var(--status-success-to));
+    border-left-color: var(--status-success-border);
+}
+
+.status-card.warning {
+    background: linear-gradient(135deg, var(--status-warning-from), var(--status-warning-to));
+    border-left-color: var(--status-warning-border);
+}
+
+.status-card.danger {
+    background: linear-gradient(135deg, var(--status-danger-from), var(--status-danger-to));
+    border-left-color: var(--status-danger-border);
+}
+
+.status-card.info {
+    background: linear-gradient(135deg, var(--status-info-from), var(--status-info-to));
+    border-left-color: var(--status-info-border);
+}
+
+.status-card.neutral {
+    background: linear-gradient(135deg, var(--status-neutral-from), var(--status-neutral-to));
+    border-left-color: var(--status-neutral-border);
+}
+
+.status-card.interactive:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
 
 /* ===== RESPONSIVE DESIGN ===== */
 @media (max-width: 1200px) {

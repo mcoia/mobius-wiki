@@ -59,46 +59,46 @@
   color: var(--text-primary);
 }
 
-/* Type-specific colors - complementing MOBIUS navy/teal palette */
+/* Type-specific colors - gradient theme matching status cards */
 
-/* Success: Uses brand teal */
+/* Success: Green gradient */
 .toast-success {
-  background: var(--mobius-teal-light);
-  border-left: 4px solid var(--mobius-teal);
+  background: linear-gradient(135deg, var(--status-success-from), var(--status-success-to));
+  border-left: 4px solid var(--status-success-border);
 }
 
 .toast-success .toast-icon {
-  color: var(--mobius-teal);
+  color: var(--status-success-border);
 }
 
-/* Error: Muted coral that pairs with teal */
+/* Error: Red gradient */
 .toast-error {
-  background: #fdf2f2;
-  border-left: 4px solid #b85450;
+  background: linear-gradient(135deg, var(--status-danger-from), var(--status-danger-to));
+  border-left: 4px solid var(--status-danger-border);
 }
 
 .toast-error .toast-icon {
-  color: #b85450;
+  color: var(--status-danger-border);
 }
 
-/* Warning: Warm amber that complements the palette */
+/* Warning: Amber gradient */
 .toast-warning {
-  background: #fdf8e8;
-  border-left: 4px solid #c68a19;
+  background: linear-gradient(135deg, var(--status-warning-from), var(--status-warning-to));
+  border-left: 4px solid var(--status-warning-border);
 }
 
 .toast-warning .toast-icon {
-  color: #c68a19;
+  color: var(--status-warning-border);
 }
 
-/* Info: Uses brand navy */
+/* Info: Blue gradient */
 .toast-info {
-  background: #eef3f7;
-  border-left: 4px solid var(--mobius-navy);
+  background: linear-gradient(135deg, var(--status-info-from), var(--status-info-to));
+  border-left: 4px solid var(--status-info-border);
 }
 
 .toast-info .toast-icon {
-  color: var(--mobius-navy);
+  color: var(--status-info-border);
 }
 
 /* Animation */

@@ -20,7 +20,7 @@
   border-radius: 4px;
   padding: 4px 8px;
   margin-top: 24px;
-  margin-bottom: 16px;
+  margin-bottom: 16px !important;
   max-width: 550px;
   margin: 0 auto;
 }
