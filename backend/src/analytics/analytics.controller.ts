@@ -42,4 +42,62 @@ export class AnalyticsController {
   async getDailyViews(@Query() dto: AnalyticsQueryDto) {
     return this.analyticsService.getDailyViews(dto.days || 30);
   }
+
+  @Get('wikis')
+  async getWikiStats(@Query() dto: AnalyticsQueryDto) {
+    return {
+      data: await this.analyticsService.getWikiStats(dto.days),
+      meta: {
+        period: dto.days ? `last_${dto.days}_days` : 'all_time',
+      },
+    };
+  }
+
+  @Get('sections')
+  async getSectionStats(@Query() dto: AnalyticsQueryDto) {
+    return {
+      data: await this.analyticsService.getSectionStats(dto.days, dto.limit || 10),
+      meta: {
+        limit: dto.limit || 10,
+        period: dto.days ? `last_${dto.days}_days` : 'all_time',
+      },
+    };
+  }
+
+  @Get('contributors')
+  async getUserContributions(@Query() dto: AnalyticsQueryDto) {
+    return {
+      data: await this.analyticsService.getUserContributions(dto.days, dto.limit || 10),
+      meta: {
+        limit: dto.limit || 10,
+        period: dto.days ? `last_${dto.days}_days` : 'all_time',
+      },
+    };
+  }
+
+  @Get('content-trends')
+  async getContentCreationTrends(@Query() dto: AnalyticsQueryDto) {
+    return {
+      data: await this.analyticsService.getContentCreationTrends(dto.days || 30),
+      meta: {
+        period: `last_${dto.days || 30}_days`,
+      },
+    };
+  }
+
+  @Get('content-health')
+  async getContentHealth() {
+    return this.analyticsService.getContentHealth();
+  }
+
+  @Get('referrers')
+  async getReferrerStats(@Query() dto: AnalyticsQueryDto) {
+    return {
+      data: await this.analyticsService.getReferrerStats(dto.days, dto.limit || 10),
+      meta: {
+        limit: dto.limit || 10,
+        period: dto.days ? `last_${dto.days}_days` : 'all_time',
+      },
+    };
+  }
 }

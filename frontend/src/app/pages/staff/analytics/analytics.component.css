@@ -78,6 +78,10 @@
   margin-bottom: 2rem;
 }
 
+.charts-row.equal-columns {
+  grid-template-columns: 1fr 1fr;
+}
+
 .chart-card {
   background: var(--card-bg, white);
   border: 1px solid var(--border-color);
@@ -104,12 +108,17 @@
   height: 280px;
 }
 
+.bar-container {
+  height: 250px;
+}
+
 .chart-empty {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   height: 100%;
+  min-height: 200px;
   color: var(--text-secondary);
   text-align: center;
 }
@@ -125,19 +134,272 @@
   font-size: 0.875rem;
 }
 
-/* Popular Pages */
-.popular-pages {
+/* Contributors List */
+.contributors-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.contributor-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem;
+  background: var(--secondary-bg, #f8fafc);
+  border-radius: 8px;
+  transition: background 0.2s ease;
+}
+
+.contributor-row:hover {
+  background: var(--hover-bg, #f1f5f9);
+}
+
+.contributor-rank {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary-color);
+  color: white;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.contributor-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.contributor-name {
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 0.125rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.contributor-stats {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.contributor-badge i {
+  font-size: 1.25rem;
+}
+
+.contributor-badge .gold {
+  color: #F59E0B;
+}
+
+.contributor-badge .silver {
+  color: #94A3B8;
+}
+
+.contributor-badge .bronze {
+  color: #B45309;
+}
+
+/* Content Health Section */
+.content-health-section {
   background: var(--card-bg, white);
   border: 1px solid var(--border-color);
   border-radius: 8px;
   padding: 1.5rem;
+  margin-bottom: 2rem;
 }
 
-.popular-pages h3 {
+.content-health-section h3 {
   margin: 0 0 1rem 0;
   font-size: 1rem;
   font-weight: 600;
   color: var(--text-primary);
+}
+
+.health-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+
+.health-card {
+  position: relative;
+  padding: 1.25rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.health-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.health-card.warning {
+  background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+  border: 1px solid #F59E0B;
+}
+
+.health-card.danger {
+  background: linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%);
+  border: 1px solid #EF4444;
+}
+
+.health-card.info {
+  background: linear-gradient(135deg, #DBEAFE 0%, #BFDBFE 100%);
+  border: 1px solid #3B82F6;
+}
+
+.health-card.neutral {
+  background: linear-gradient(135deg, #F1F5F9 0%, #E2E8F0 100%);
+  border: 1px solid #94A3B8;
+  cursor: default;
+}
+
+.health-card.neutral:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.health-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+}
+
+.health-icon {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 8px;
+}
+
+.health-icon i {
+  font-size: 1rem;
+  color: var(--text-primary);
+}
+
+.health-count {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.health-label {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.health-desc {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.expand-icon {
+  position: absolute;
+  bottom: 0.75rem;
+  right: 0.75rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  transition: transform 0.2s ease;
+}
+
+.expand-icon.expanded {
+  transform: rotate(180deg);
+}
+
+/* Health Detail List */
+.health-detail-list {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.health-detail-list h4 {
+  margin: 0 0 1rem 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.detail-items {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.5rem;
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: var(--secondary-bg, #f8fafc);
+  border-radius: 6px;
+  text-decoration: none;
+  transition: background 0.2s ease;
+}
+
+.detail-item:hover {
+  background: var(--hover-bg, #f1f5f9);
+}
+
+.detail-title {
+  font-size: 0.875rem;
+  color: var(--primary-color);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 60%;
+}
+
+.detail-meta {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* Referrer Details */
+.referrer-details {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.referrer-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+}
+
+.referrer-row:not(:last-child) {
+  border-bottom: 1px solid var(--border-color);
+}
+
+.referrer-domain {
+  font-size: 0.875rem;
+  color: var(--text-primary);
+}
+
+.referrer-percent {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+/* Popular Pages Card */
+.popular-pages-card {
+  overflow: auto;
 }
 
 /* Data Table */
@@ -254,10 +516,21 @@
   color: var(--text-secondary);
 }
 
+.loading-small {
+  text-align: center;
+  padding: 1.5rem;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
 /* Responsive */
 @media (max-width: 1200px) {
   .charts-row {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .health-cards {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
@@ -266,7 +539,8 @@
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .charts-row {
+  .charts-row,
+  .charts-row.equal-columns {
     grid-template-columns: 1fr;
   }
 
@@ -276,6 +550,20 @@
 
   .line-container {
     height: 250px;
+  }
+
+  .bar-container {
+    height: 220px;
+  }
+}
+
+@media (max-width: 768px) {
+  .health-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-items {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -295,7 +583,8 @@
   }
 
   .doughnut-container,
-  .line-container {
+  .line-container,
+  .bar-container {
     height: 220px;
   }
 }

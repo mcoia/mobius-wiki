@@ -8,7 +8,17 @@ import { Chart, ChartConfiguration, ChartData, registerables } from 'chart.js';
 
 import { AnalyticsService } from '../../../core/services/analytics.service';
 import { ToastService } from '../../../core/services/toast.service';
-import { OverallStats, PopularPage, DailyViewsResponse } from '../../../core/models/analytics.model';
+import {
+  OverallStats,
+  PopularPage,
+  DailyViewsResponse,
+  WikiStats,
+  SectionStats,
+  UserContribution,
+  CreationTrend,
+  ContentHealth,
+  ReferrerStats,
+} from '../../../core/models/analytics.model';
 
 // Register Chart.js components
 Chart.register(...registerables);
@@ -21,16 +31,34 @@ Chart.register(...registerables);
   styleUrl: './analytics.component.css',
 })
 export class AnalyticsComponent implements OnInit {
+  // Existing observables
   stats$!: Observable<OverallStats | null>;
   popularPages$!: Observable<PopularPage[]>;
   dailyViews$!: Observable<DailyViewsResponse | null>;
 
+  // New observables
+  wikiStats$!: Observable<WikiStats[]>;
+  sectionStats$!: Observable<SectionStats[]>;
+  userContributions$!: Observable<UserContribution[]>;
+  contentTrends$!: Observable<CreationTrend[]>;
+  contentHealth$!: Observable<ContentHealth | null>;
+  referrerStats$!: Observable<ReferrerStats[]>;
+
   // Chart data observables
   doughnutChartData$!: Observable<ChartData<'doughnut'> | null>;
   lineChartData$!: Observable<ChartData<'line'> | null>;
+  wikiBarChartData$!: Observable<ChartData<'bar'> | null>;
+  sectionBarChartData$!: Observable<ChartData<'bar'> | null>;
+  contentTrendsChartData$!: Observable<ChartData<'line'> | null>;
+  referrerChartData$!: Observable<ChartData<'bar'> | null>;
 
   selectedPeriod: number | undefined = 30;
   private refreshTrigger$ = new BehaviorSubject<void>(undefined);
+
+  // Content health expanded states
+  showOrphaned = false;
+  showStale = false;
+  showDrafts = false;
 
   // Chart configurations
   doughnutChartOptions: ChartConfiguration<'doughnut'>['options'] = {
@@ -96,6 +124,72 @@ export class AnalyticsComponent implements OnInit {
     },
   };
 
+  horizontalBarChartOptions: ChartConfiguration<'bar'>['options'] = {
+    responsive: true,
+    maintainAspectRatio: false,
+    indexAxis: 'y',
+    plugins: {
+      legend: {
+        display: false,
+      },
+      tooltip: {
+        callbacks: {
+          label: (context) => `${context.parsed.x} views`,
+        },
+      },
+    },
+    scales: {
+      x: {
+        beginAtZero: true,
+        grid: {
+          color: 'rgba(0, 0, 0, 0.05)',
+        },
+      },
+      y: {
+        grid: {
+          display: false,
+        },
+      },
+    },
+  };
+
+  contentTrendsChartOptions: ChartConfiguration<'line'>['options'] = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: {
+          usePointStyle: true,
+          padding: 16,
+        },
+      },
+      tooltip: {
+        mode: 'index',
+        intersect: false,
+      },
+    },
+    scales: {
+      x: {
+        grid: {
+          display: false,
+        },
+        ticks: {
+          maxTicksLimit: 7,
+        },
+      },
+      y: {
+        beginAtZero: true,
+        grid: {
+          color: 'rgba(0, 0, 0, 0.05)',
+        },
+        ticks: {
+          stepSize: 1,
+        },
+      },
+    },
+  };
+
   constructor(
     private analyticsService: AnalyticsService,
     private toastService: ToastService
@@ -106,6 +200,7 @@ export class AnalyticsComponent implements OnInit {
   }
 
   private loadData(): void {
+    // Overall stats
     this.stats$ = this.refreshTrigger$.pipe(
       switchMap(() => this.analyticsService.getOverallStats(this.selectedPeriod)),
       catchError(error => {
@@ -116,6 +211,7 @@ export class AnalyticsComponent implements OnInit {
       shareReplay(1)
     );
 
+    // Popular pages
     this.popularPages$ = this.refreshTrigger$.pipe(
       switchMap(() => this.analyticsService.getPopularPages(10, this.selectedPeriod)),
       catchError(error => {
@@ -125,11 +221,72 @@ export class AnalyticsComponent implements OnInit {
       shareReplay(1)
     );
 
+    // Daily views
     this.dailyViews$ = this.refreshTrigger$.pipe(
       switchMap(() => this.analyticsService.getDailyViews(this.selectedPeriod || 30)),
       catchError(error => {
         console.error('Failed to load daily views:', error);
         return of(null);
+      }),
+      shareReplay(1)
+    );
+
+    // Wiki stats
+    this.wikiStats$ = this.refreshTrigger$.pipe(
+      switchMap(() => this.analyticsService.getWikiStats(this.selectedPeriod)),
+      catchError(error => {
+        console.error('Failed to load wiki stats:', error);
+        return of([]);
+      }),
+      shareReplay(1)
+    );
+
+    // Section stats
+    this.sectionStats$ = this.refreshTrigger$.pipe(
+      switchMap(() => this.analyticsService.getSectionStats(this.selectedPeriod, 10)),
+      catchError(error => {
+        console.error('Failed to load section stats:', error);
+        return of([]);
+      }),
+      shareReplay(1)
+    );
+
+    // User contributions
+    this.userContributions$ = this.refreshTrigger$.pipe(
+      switchMap(() => this.analyticsService.getUserContributions(this.selectedPeriod, 10)),
+      catchError(error => {
+        console.error('Failed to load user contributions:', error);
+        return of([]);
+      }),
+      shareReplay(1)
+    );
+
+    // Content trends
+    this.contentTrends$ = this.refreshTrigger$.pipe(
+      switchMap(() => this.analyticsService.getContentTrends(this.selectedPeriod || 30)),
+      catchError(error => {
+        console.error('Failed to load content trends:', error);
+        return of([]);
+      }),
+      shareReplay(1)
+    );
+
+    // Content health
+    this.contentHealth$ = this.refreshTrigger$.pipe(
+      switchMap(() => this.analyticsService.getContentHealth()),
+      catchError(error => {
+        console.error('Failed to load content health:', error);
+        return of(null);
+      }),
+      shareReplay(1)
+    );
+
+    // Referrer stats
+    this.referrerStats$ = this.refreshTrigger$.pipe(
+      switchMap(() => this.analyticsService.getReferrerStats(this.selectedPeriod, 10)),
+      catchError(error => {
+        console.error('Failed to load referrer stats:', error);
+        return of([]);
       }),
       shareReplay(1)
     );
@@ -179,6 +336,86 @@ export class AnalyticsComponent implements OnInit {
         };
       })
     );
+
+    // Wiki performance bar chart
+    this.wikiBarChartData$ = this.wikiStats$.pipe(
+      map(stats => {
+        if (!stats || stats.length === 0) return null;
+        return {
+          labels: stats.map(s => s.wikiTitle),
+          datasets: [{
+            data: stats.map(s => s.viewCount),
+            backgroundColor: '#0891B2',
+            borderRadius: 4,
+            barThickness: 20,
+          }],
+        };
+      })
+    );
+
+    // Section performance bar chart
+    this.sectionBarChartData$ = this.sectionStats$.pipe(
+      map(stats => {
+        if (!stats || stats.length === 0) return null;
+        return {
+          labels: stats.map(s => s.sectionTitle),
+          datasets: [{
+            data: stats.map(s => s.viewCount),
+            backgroundColor: '#14B8A6',
+            borderRadius: 4,
+            barThickness: 20,
+          }],
+        };
+      })
+    );
+
+    // Content trends line chart
+    this.contentTrendsChartData$ = this.contentTrends$.pipe(
+      map(trends => {
+        if (!trends || trends.length === 0) return null;
+        return {
+          labels: trends.map(t => this.formatDate(t.date)),
+          datasets: [
+            {
+              label: 'Pages Created',
+              data: trends.map(t => t.pagesCreated),
+              borderColor: '#0891B2',
+              backgroundColor: 'rgba(8, 145, 178, 0.1)',
+              fill: false,
+              tension: 0.4,
+              pointRadius: 2,
+              pointHoverRadius: 6,
+            },
+            {
+              label: 'Edits Made',
+              data: trends.map(t => t.versionsCreated),
+              borderColor: '#14B8A6',
+              backgroundColor: 'rgba(20, 184, 166, 0.1)',
+              fill: false,
+              tension: 0.4,
+              pointRadius: 2,
+              pointHoverRadius: 6,
+            },
+          ],
+        };
+      })
+    );
+
+    // Referrer bar chart
+    this.referrerChartData$ = this.referrerStats$.pipe(
+      map(stats => {
+        if (!stats || stats.length === 0) return null;
+        return {
+          labels: stats.map(s => s.domain),
+          datasets: [{
+            data: stats.map(s => s.viewCount),
+            backgroundColor: '#6366F1',
+            borderRadius: 4,
+            barThickness: 20,
+          }],
+        };
+      })
+    );
   }
 
   private formatDate(dateStr: string): string {
@@ -198,5 +435,17 @@ export class AnalyticsComponent implements OnInit {
 
   getPageUrl(page: PopularPage): string {
     return `/wiki/${page.wiki.slug}/${page.section.slug}/${page.page.slug}`;
+  }
+
+  toggleOrphaned(): void {
+    this.showOrphaned = !this.showOrphaned;
+  }
+
+  toggleStale(): void {
+    this.showStale = !this.showStale;
+  }
+
+  toggleDrafts(): void {
+    this.showDrafts = !this.showDrafts;
   }
 }

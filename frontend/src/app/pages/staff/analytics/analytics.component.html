@@ -47,7 +47,7 @@
       </div>
     </div>
 
-    <!-- Charts Row -->
+    <!-- Charts Row 1: Content & Views -->
     <div class="charts-row">
       <!-- Content Breakdown Chart -->
       <div class="chart-card">
@@ -88,49 +88,292 @@
       </div>
     </div>
 
-    <!-- Popular Pages Table -->
-    <div class="popular-pages">
-      <h3>Top 10 Popular Pages</h3>
-      @if (popularPages$ | async; as pages) {
-        @if (pages.length > 0) {
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Page</th>
-                <th>Wiki</th>
-                <th class="text-right">Views</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (page of pages; track page.page.id) {
-                <tr>
-                  <td>
-                    <a [routerLink]="getPageUrl(page)" class="page-link">
-                      {{ page.page.title }}
-                    </a>
-                    <div class="page-section">{{ page.section.title }}</div>
-                  </td>
-                  <td>
-                    <span class="wiki-badge">{{ page.wiki.title }}</span>
-                  </td>
-                  <td class="text-right">
-                    <span class="view-count">{{ page.viewCount | number }}</span>
-                  </td>
-                </tr>
+    <!-- Charts Row 2: Wiki & Section Performance -->
+    <div class="charts-row equal-columns">
+      <!-- Wiki Performance -->
+      <div class="chart-card">
+        <h3>Wiki Performance</h3>
+        <div class="chart-container bar-container">
+          @if (wikiBarChartData$ | async; as chartData) {
+            <canvas baseChart
+              [data]="chartData"
+              [options]="horizontalBarChartOptions"
+              type="bar">
+            </canvas>
+          } @else {
+            <div class="chart-empty">
+              <i class="fas fa-book"></i>
+              <p>No wiki data available</p>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Section Performance -->
+      <div class="chart-card">
+        <h3>Top 10 Sections</h3>
+        <div class="chart-container bar-container">
+          @if (sectionBarChartData$ | async; as chartData) {
+            <canvas baseChart
+              [data]="chartData"
+              [options]="horizontalBarChartOptions"
+              type="bar">
+            </canvas>
+          } @else {
+            <div class="chart-empty">
+              <i class="fas fa-folder"></i>
+              <p>No section data available</p>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts Row 3: Contributors & Content Trends -->
+    <div class="charts-row equal-columns">
+      <!-- Top Contributors -->
+      <div class="chart-card">
+        <h3>Top Contributors</h3>
+        @if (userContributions$ | async; as contributors) {
+          @if (contributors.length > 0) {
+            <div class="contributors-list">
+              @for (contributor of contributors; track contributor.userId; let i = $index) {
+                <div class="contributor-row">
+                  <div class="contributor-rank">{{ i + 1 }}</div>
+                  <div class="contributor-info">
+                    <div class="contributor-name">{{ contributor.userName }}</div>
+                    <div class="contributor-stats">
+                      {{ contributor.editCount }} edits across {{ contributor.pagesEdited }} pages
+                    </div>
+                  </div>
+                  <div class="contributor-badge">
+                    @if (i === 0) {
+                      <i class="fas fa-trophy gold"></i>
+                    } @else if (i === 1) {
+                      <i class="fas fa-medal silver"></i>
+                    } @else if (i === 2) {
+                      <i class="fas fa-medal bronze"></i>
+                    }
+                  </div>
+                </div>
               }
-            </tbody>
-          </table>
+            </div>
+          } @else {
+            <div class="chart-empty">
+              <i class="fas fa-users"></i>
+              <p>No contribution data available</p>
+            </div>
+          }
         } @else {
-          <div class="empty-state">
-            <i class="fas fa-chart-line"></i>
-            <p>No page views recorded yet</p>
+          <div class="loading-small">
+            <i class="fas fa-spinner fa-spin"></i> Loading...
+          </div>
+        }
+      </div>
+
+      <!-- Content Creation Trends -->
+      <div class="chart-card">
+        <h3>Content Creation Trends</h3>
+        <div class="chart-container line-container">
+          @if (contentTrendsChartData$ | async; as chartData) {
+            <canvas baseChart
+              [data]="chartData"
+              [options]="contentTrendsChartOptions"
+              type="line">
+            </canvas>
+          } @else {
+            <div class="chart-empty">
+              <i class="fas fa-chart-area"></i>
+              <p>No trend data available</p>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Content Health Section -->
+    <div class="content-health-section">
+      <h3>Content Health</h3>
+      @if (contentHealth$ | async; as health) {
+        <div class="health-cards">
+          <!-- Orphaned Pages -->
+          <div class="health-card warning" (click)="toggleOrphaned()">
+            <div class="health-header">
+              <div class="health-icon">
+                <i class="fas fa-eye-slash"></i>
+              </div>
+              <div class="health-count">{{ health.orphanedPages.length }}</div>
+            </div>
+            <div class="health-label">Orphaned Pages</div>
+            <div class="health-desc">Pages with zero views</div>
+            <i class="fas fa-chevron-down expand-icon" [class.expanded]="showOrphaned"></i>
+          </div>
+
+          <!-- Stale Pages -->
+          <div class="health-card danger" (click)="toggleStale()">
+            <div class="health-header">
+              <div class="health-icon">
+                <i class="fas fa-clock"></i>
+              </div>
+              <div class="health-count">{{ health.stalePages.length }}</div>
+            </div>
+            <div class="health-label">Stale Pages</div>
+            <div class="health-desc">Not updated in 90+ days</div>
+            <i class="fas fa-chevron-down expand-icon" [class.expanded]="showStale"></i>
+          </div>
+
+          <!-- Draft Backlog -->
+          <div class="health-card info" (click)="toggleDrafts()">
+            <div class="health-header">
+              <div class="health-icon">
+                <i class="fas fa-edit"></i>
+              </div>
+              <div class="health-count">{{ health.draftBacklog.length }}</div>
+            </div>
+            <div class="health-label">Draft Backlog</div>
+            <div class="health-desc">Unpublished drafts</div>
+            <i class="fas fa-chevron-down expand-icon" [class.expanded]="showDrafts"></i>
+          </div>
+
+          <!-- Never Published -->
+          <div class="health-card neutral">
+            <div class="health-header">
+              <div class="health-icon">
+                <i class="fas fa-file-alt"></i>
+              </div>
+              <div class="health-count">{{ health.neverPublished.length }}</div>
+            </div>
+            <div class="health-label">Never Published</div>
+            <div class="health-desc">No published versions</div>
+          </div>
+        </div>
+
+        <!-- Expanded Lists -->
+        @if (showOrphaned && health.orphanedPages.length > 0) {
+          <div class="health-detail-list">
+            <h4>Orphaned Pages (No Views)</h4>
+            <div class="detail-items">
+              @for (page of health.orphanedPages; track page.id) {
+                <a [routerLink]="['/wiki']" class="detail-item">
+                  <span class="detail-title">{{ page.title }}</span>
+                  <span class="detail-meta">Created {{ page.createdAt | date:'mediumDate' }}</span>
+                </a>
+              }
+            </div>
+          </div>
+        }
+
+        @if (showStale && health.stalePages.length > 0) {
+          <div class="health-detail-list">
+            <h4>Stale Pages (90+ Days Old)</h4>
+            <div class="detail-items">
+              @for (page of health.stalePages; track page.id) {
+                <a [routerLink]="['/wiki']" class="detail-item">
+                  <span class="detail-title">{{ page.title }}</span>
+                  <span class="detail-meta">{{ page.daysSinceUpdate }} days since update</span>
+                </a>
+              }
+            </div>
+          </div>
+        }
+
+        @if (showDrafts && health.draftBacklog.length > 0) {
+          <div class="health-detail-list">
+            <h4>Draft Backlog</h4>
+            <div class="detail-items">
+              @for (page of health.draftBacklog; track page.id) {
+                <a [routerLink]="['/wiki']" class="detail-item">
+                  <span class="detail-title">{{ page.title }}</span>
+                  <span class="detail-meta">Created {{ page.createdAt | date:'mediumDate' }}</span>
+                </a>
+              }
+            </div>
           </div>
         }
       } @else {
-        <div class="loading">
-          <i class="fas fa-spinner fa-spin"></i> Loading popular pages...
+        <div class="loading-small">
+          <i class="fas fa-spinner fa-spin"></i> Loading content health data...
         </div>
       }
+    </div>
+
+    <!-- Traffic Sources & Popular Pages Row -->
+    <div class="charts-row equal-columns">
+      <!-- Traffic Sources -->
+      <div class="chart-card">
+        <h3>Traffic Sources</h3>
+        <div class="chart-container bar-container">
+          @if (referrerChartData$ | async; as chartData) {
+            <canvas baseChart
+              [data]="chartData"
+              [options]="horizontalBarChartOptions"
+              type="bar">
+            </canvas>
+          } @else {
+            <div class="chart-empty">
+              <i class="fas fa-globe"></i>
+              <p>No referrer data available</p>
+            </div>
+          }
+        </div>
+        @if (referrerStats$ | async; as referrers) {
+          @if (referrers.length > 0) {
+            <div class="referrer-details">
+              @for (ref of referrers; track ref.domain) {
+                <div class="referrer-row">
+                  <span class="referrer-domain">{{ ref.domain }}</span>
+                  <span class="referrer-percent">{{ ref.percentage }}%</span>
+                </div>
+              }
+            </div>
+          }
+        }
+      </div>
+
+      <!-- Popular Pages Table -->
+      <div class="chart-card popular-pages-card">
+        <h3>Top 10 Popular Pages</h3>
+        @if (popularPages$ | async; as pages) {
+          @if (pages.length > 0) {
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Page</th>
+                  <th>Wiki</th>
+                  <th class="text-right">Views</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (page of pages; track page.page.id) {
+                  <tr>
+                    <td>
+                      <a [routerLink]="getPageUrl(page)" class="page-link">
+                        {{ page.page.title }}
+                      </a>
+                      <div class="page-section">{{ page.section.title }}</div>
+                    </td>
+                    <td>
+                      <span class="wiki-badge">{{ page.wiki.title }}</span>
+                    </td>
+                    <td class="text-right">
+                      <span class="view-count">{{ page.viewCount | number }}</span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          } @else {
+            <div class="chart-empty">
+              <i class="fas fa-chart-line"></i>
+              <p>No page views recorded yet</p>
+            </div>
+          }
+        } @else {
+          <div class="loading-small">
+            <i class="fas fa-spinner fa-spin"></i> Loading popular pages...
+          </div>
+        }
+      </div>
     </div>
   } @else {
     <div class="loading">
