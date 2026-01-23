@@ -15,6 +15,7 @@ import { AnalyticsModule } from './analytics/analytics.module';
 import { NavigationModule } from './navigation/navigation.module';
 import { AdminModule } from './admin/admin.module';
 import { StaffModule } from './staff/staff.module';
+import { PublicSettingsModule } from './settings/public-settings.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { StaffModule } from './staff/staff.module';
     NavigationModule,
     AdminModule,
     StaffModule,
+    PublicSettingsModule,
   ],
 })
 export class AppModule {}

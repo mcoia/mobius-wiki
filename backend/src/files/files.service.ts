@@ -12,6 +12,18 @@ export class FilesService {
     this.ensureUploadDir();
   }
 
+  /**
+   * Get the configured max upload size in bytes from database settings.
+   * Defaults to 50 MB if not configured.
+   */
+  async getMaxUploadSizeBytes(): Promise<number> {
+    const { rows } = await this.pool.query(
+      `SELECT value FROM wiki.settings WHERE key = 'max_upload_size_mb'`,
+    );
+    const maxMb = rows.length > 0 ? parseInt(rows[0].value, 10) : 50;
+    return maxMb * 1024 * 1024;
+  }
+
   private async ensureUploadDir() {
     try {
       await fs.access(this.uploadDir);
@@ -25,6 +37,16 @@ export class FilesService {
     userId: number,
     description?: string,
   ) {
+    // Validate file size against configured limit
+    const maxSizeBytes = await this.getMaxUploadSizeBytes();
+    if (file.size > maxSizeBytes) {
+      const maxMb = maxSizeBytes / (1024 * 1024);
+      const fileMb = (file.size / (1024 * 1024)).toFixed(2);
+      throw new BadRequestException(
+        `File size (${fileMb} MB) exceeds maximum allowed size (${maxMb} MB)`,
+      );
+    }
+
     // Generate unique filename
     const fileHash = crypto.randomBytes(16).toString('hex');
     const ext = path.extname(file.originalname);

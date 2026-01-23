@@ -120,7 +120,13 @@
                 Drag files here or click to upload
               }
             </span>
-            <span class="upload-hint">Maximum file size: 10 MB</span>
+            <span class="upload-hint">
+              @if (uploadLimit$ | async; as uploadLimit) {
+                Maximum file size: {{ uploadLimit.maxUploadSizeMb }} MB
+              } @else {
+                Maximum file size: 50 MB
+              }
+            </span>
           </label>
         </div>
       }

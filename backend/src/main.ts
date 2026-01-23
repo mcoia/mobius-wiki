@@ -9,10 +9,10 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Configure body parser limits for large page content
-  // Wiki pages can contain extensive HTML, images (base64), and formatting
-  app.use(json({ limit: '10mb' }));
-  app.use(urlencoded({ limit: '10mb', extended: true }));
+  // Configure body parser limits for file uploads and large page content
+  // Set high limit here - actual enforcement happens in FilesService based on DB setting
+  app.use(json({ limit: '100mb' }));
+  app.use(urlencoded({ limit: '100mb', extended: true }));
 
   // Global validation pipe
   app.useGlobalPipes(

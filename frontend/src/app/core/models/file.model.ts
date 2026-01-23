@@ -43,11 +43,6 @@ export interface UploadProgress {
 }
 
 /**
- * File size limit in bytes (10 MB)
- */
-export const MAX_FILE_SIZE = 10 * 1024 * 1024;
-
-/**
  * Format file size for display
  */
 export function formatFileSize(bytes: number): string {
@@ -82,12 +77,14 @@ export function getFileCategory(mimeType: string): 'image' | 'document' | 'archi
 
 /**
  * Validate file before upload
+ * @param file - File to validate
+ * @param maxSizeBytes - Maximum allowed file size in bytes
  */
-export function validateFile(file: File): { valid: boolean; error?: string } {
-  if (file.size > MAX_FILE_SIZE) {
+export function validateFile(file: File, maxSizeBytes: number): { valid: boolean; error?: string } {
+  if (file.size > maxSizeBytes) {
     return {
       valid: false,
-      error: `File size (${formatFileSize(file.size)}) exceeds maximum of ${formatFileSize(MAX_FILE_SIZE)}`
+      error: `File size (${formatFileSize(file.size)}) exceeds maximum of ${formatFileSize(maxSizeBytes)}`
     };
   }
   return { valid: true };

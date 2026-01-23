@@ -71,6 +71,15 @@
   color: var(--status-success-border);
 }
 
+.toast-success .toast-close {
+  color: var(--status-success-border);
+}
+
+.toast-success .toast-close:hover {
+  color: var(--status-success-border);
+  filter: brightness(0.8);
+}
+
 /* Error: Red gradient */
 .toast-error {
   background: linear-gradient(135deg, var(--status-danger-from), var(--status-danger-to));
@@ -79,6 +88,15 @@
 
 .toast-error .toast-icon {
   color: var(--status-danger-border);
+}
+
+.toast-error .toast-close {
+  color: var(--status-danger-border);
+}
+
+.toast-error .toast-close:hover {
+  color: var(--status-danger-border);
+  filter: brightness(0.8);
 }
 
 /* Warning: Amber gradient */
@@ -91,6 +109,15 @@
   color: var(--status-warning-border);
 }
 
+.toast-warning .toast-close {
+  color: var(--status-warning-border);
+}
+
+.toast-warning .toast-close:hover {
+  color: var(--status-warning-border);
+  filter: brightness(0.8);
+}
+
 /* Info: Blue gradient */
 .toast-info {
   background: linear-gradient(135deg, var(--status-info-from), var(--status-info-to));
@@ -99,6 +126,15 @@
 
 .toast-info .toast-icon {
   color: var(--status-info-border);
+}
+
+.toast-info .toast-close {
+  color: var(--status-info-border);
+}
+
+.toast-info .toast-close:hover {
+  color: var(--status-info-border);
+  filter: brightness(0.8);
 }
 
 /* Animation */

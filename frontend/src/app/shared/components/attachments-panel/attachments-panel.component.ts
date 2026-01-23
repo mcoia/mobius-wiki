@@ -21,6 +21,7 @@ import {
 import { FileService } from '../../../core/services/file.service';
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { SettingsService, UploadLimitConfig } from '../../../core/services/settings.service';
 import {
   FileAttachment,
   UploadProgress,
@@ -69,6 +70,7 @@ export class AttachmentsPanelComponent implements OnInit, OnChanges {
 
   // State
   attachments$!: Observable<FileAttachment[]>;
+  uploadLimit$!: Observable<UploadLimitConfig>;
   isCollapsed = false;
   isDragOver = false;
   uploadProgress: UploadProgress[] = [];
@@ -77,11 +79,13 @@ export class AttachmentsPanelComponent implements OnInit, OnChanges {
   constructor(
     private fileService: FileService,
     private confirmDialog: ConfirmDialogService,
-    private toast: ToastService
+    private toast: ToastService,
+    private settingsService: SettingsService
   ) {}
 
   ngOnInit(): void {
     this.loadAttachments();
+    this.uploadLimit$ = this.settingsService.getUploadLimit();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -165,9 +169,13 @@ export class AttachmentsPanelComponent implements OnInit, OnChanges {
   uploadFiles(files: File[]): void {
     this.error = null;
 
+    // Get upload limit from cached settings (default to 50 MB if not yet loaded)
+    const uploadLimit = this.settingsService.currentUploadLimit;
+    const maxSizeBytes = uploadLimit?.maxUploadSizeBytes ?? (50 * 1024 * 1024);
+
     for (const file of files) {
-      // Validate file size
-      const validation = validateFile(file);
+      // Validate file size against configured limit
+      const validation = validateFile(file, maxSizeBytes);
       if (!validation.valid) {
         this.toast.error(validation.error!);
         continue;
