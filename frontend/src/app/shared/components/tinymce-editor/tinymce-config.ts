@@ -74,7 +74,7 @@ export const TINYMCE_BASE_CONFIG = {
   // TinyMCE Configuration
   base_url: '/tinymce',                  // Self-hosted TinyMCE
   suffix: '.min',
-  plugins: 'link image lists code paste table',  // Core plugins
+  plugins: 'link image lists code table',  // Core plugins
   menubar: false,                        // Disable menu bar
   statusbar: false,                      // Disable status bar
   branding: false,                       // Remove "Powered by Tiny" branding
@@ -282,11 +282,6 @@ export const TINYMCE_BASE_CONFIG = {
   max_height: 800,
   resize: true,
 
-  // Paste settings (preserve formatting)
-  paste_as_text: false,
-  paste_data_images: true,
-  paste_merge_formats: true,
-  smart_paste: false,
 };
 
 // Element templates (reused from Quill)
