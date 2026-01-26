@@ -2,10 +2,9 @@ export const TINYMCE_BASE_CONFIG = {
   // ⚠️ CRITICAL: HTML Preservation Settings
   // These settings prevent TinyMCE from normalizing or reformatting HTML
   verify_html: false,                    // Don't validate/fix HTML structure
-  cleanup: false,                        // Don't clean up markup
   convert_urls: false,                   // Don't convert URLs
   remove_trailing_brs: false,            // Keep trailing <br> tags
-  entity_encoding: 'raw',                // Don't encode entities
+  entity_encoding: 'raw',               // Don't encode entities
 
   // Allow ALL elements and attributes
   valid_elements: '*[*]',                // Allow all elements with all attributes
@@ -15,23 +14,19 @@ export const TINYMCE_BASE_CONFIG = {
   // Explicitly allow inline styles (MUST be object format, not string!)
   // Reference: https://www.tiny.cloud/docs/tinymce/latest/content-filtering/
   valid_styles: {
-    '*': 'font-size,font-family,color,text-align,background-color,text-decoration,border,padding,margin,margin-left,margin-right,margin-top,margin-bottom,width,height,display,float,line-height,letter-spacing,vertical-align,white-space'
+    '*': 'font-size,font-family,font-weight,color,text-align,background,background-color,text-decoration,border,border-top,border-bottom,border-left,border-right,border-radius,padding,margin,margin-left,margin-right,margin-top,margin-bottom,width,height,display,float,line-height,letter-spacing,text-transform,vertical-align,white-space,list-style,list-style-type'
   },
 
   // Whitespace preservation
   allow_html_in_named_anchor: true,
-  remove_linebreaks: false,
-  apply_source_formatting: false,        // Don't reformat on save
 
   // Content formatting
   indent: false,                         // Don't auto-indent
   element_format: 'html',                // Use HTML format (not XHTML)
 
-  // Additional preservation settings
-  custom_elements: '~*',                 // Allow custom elements anywhere
-  fix_list_elements: false,              // Don't fix list structure
-
   // Protect custom elements from modification
+  // Note: Non-greedy regex can't handle nested <div>s perfectly.
+  // stats-grid protection is partial but sufficient — valid_elements: '*[*]' prevents element stripping.
   protect: [
     /<div class="callout">[\s\S]*?<\/div>/g,
     /<div class="note-box">[\s\S]*?<\/div>/g,
