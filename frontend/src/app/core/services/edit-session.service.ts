@@ -1,6 +1,6 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { Observable, Subject, Subscription, interval, of } from 'rxjs';
-import { catchError, map, switchMap, takeUntil } from 'rxjs/operators';
+import { catchError, map, startWith, switchMap, takeUntil } from 'rxjs/operators';
 import { ApiService } from './api.service';
 
 export interface ActiveEditor {
@@ -100,6 +100,7 @@ export class EditSessionService implements OnDestroy {
 
     // Create an observable that polls every POLL_INTERVAL_MS
     return interval(this.POLL_INTERVAL_MS).pipe(
+      startWith(0),  // Emit immediately, then every 30s
       takeUntil(this.destroy$),
       switchMap(() => this.getActiveEditors(pageId)),
       catchError(err => {

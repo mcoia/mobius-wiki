@@ -224,7 +224,6 @@ TinyMCE is configured to preserve HTML exactly as authored:
 
 ```typescript
 verify_html: false,            // Don't validate/fix HTML
-cleanup: false,                // Don't clean up markup
 convert_urls: false,           // Don't convert URLs
 remove_trailing_brs: false,    // Keep trailing <br> tags
 entity_encoding: 'raw',        // Don't encode entities
@@ -256,7 +255,7 @@ TinyMCE **silently strips** any inline style not explicitly whitelisted. This is
 
 ```typescript
 valid_styles: {
-  '*': 'font-size,font-family,color,text-align,background,background-color,text-decoration,border,border-top,border-left,border-radius,padding,margin,margin-left,margin-right,margin-top,margin-bottom,width,height,display,float,line-height,letter-spacing,text-transform,vertical-align,white-space,list-style,list-style-type'
+  '*': 'font-size,font-family,font-weight,color,text-align,background,background-color,text-decoration,border,border-top,border-bottom,border-left,border-right,border-radius,padding,margin,margin-left,margin-right,margin-top,margin-bottom,width,height,display,float,line-height,letter-spacing,text-transform,vertical-align,white-space,list-style,list-style-type'
 },
 ```
 
@@ -362,7 +361,6 @@ onContentChange(html: string): void {
 **Solution**: Verify these settings in `tinymce-config.ts`:
 ```typescript
 verify_html: false,
-cleanup: false,
 valid_elements: '*[*]',
 ```
 
