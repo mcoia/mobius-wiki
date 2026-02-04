@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { DatabaseModule } from './database/database.module';
 import { MailerModule } from './mailer/mailer.module';
 import { AuthModule } from './auth/auth.module';
@@ -23,6 +25,12 @@ import { PublicSettingsModule } from './settings/public-settings.module';
       isGlobal: true,
       envFilePath: '.env',
     }),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000, // 1 minute window
+        limit: 100, // 100 requests per minute (general)
+      },
+    ]),
     DatabaseModule,
     MailerModule,
     AuthModule,
@@ -39,6 +47,12 @@ import { PublicSettingsModule } from './settings/public-settings.module';
     AdminModule,
     StaffModule,
     PublicSettingsModule,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
   ],
 })
 export class AppModule {}

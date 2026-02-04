@@ -8,8 +8,68 @@ import * as crypto from 'crypto';
 export class FilesService {
   private readonly uploadDir = path.join(process.cwd(), 'uploads');
 
+  // Allowed MIME types for file uploads
+  private readonly ALLOWED_MIME_TYPES = [
+    // Documents
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-powerpoint',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'text/plain',
+    'text/csv',
+    // Images
+    'image/jpeg',
+    'image/png',
+    'image/gif',
+    'image/webp',
+    'image/svg+xml',
+    // Archives
+    'application/zip',
+    'application/x-zip-compressed',
+  ];
+
+  // Blocked executable extensions
+  private readonly BLOCKED_EXTENSIONS = [
+    '.exe',
+    '.bat',
+    '.cmd',
+    '.sh',
+    '.ps1',
+    '.vbs',
+    '.js',
+    '.jar',
+    '.msi',
+    '.dll',
+    '.scr',
+    '.com',
+    '.pif',
+    '.application',
+  ];
+
   constructor(@Inject('DATABASE_POOL') private pool: Pool) {
     this.ensureUploadDir();
+  }
+
+  /**
+   * Validate file type against allowed MIME types and blocked extensions.
+   */
+  private validateFileType(file: Express.Multer.File): void {
+    const ext = path.extname(file.originalname).toLowerCase();
+
+    // Check blocked extensions
+    if (this.BLOCKED_EXTENSIONS.includes(ext)) {
+      throw new BadRequestException(`File type '${ext}' is not allowed`);
+    }
+
+    // Check MIME type
+    if (!this.ALLOWED_MIME_TYPES.includes(file.mimetype)) {
+      throw new BadRequestException(
+        `File type '${file.mimetype}' is not allowed. Allowed types: documents, images, archives.`,
+      );
+    }
   }
 
   /**
@@ -37,6 +97,9 @@ export class FilesService {
     userId: number,
     description?: string,
   ) {
+    // Validate file type first (security check)
+    this.validateFileType(file);
+
     // Validate file size against configured limit
     const maxSizeBytes = await this.getMaxUploadSizeBytes();
     if (file.size > maxSizeBytes) {

@@ -41,7 +41,11 @@ export class LoginComponent {
       },
       error: (error) => {
         console.error('Login error:', error);
-        this.errorMessage = error.error?.message || 'Login failed. Please check your credentials.';
+        if (error.status === 429) {
+          this.errorMessage = 'Too many login attempts. Please wait a minute before trying again.';
+        } else {
+          this.errorMessage = error.error?.message || 'Login failed. Please check your credentials.';
+        }
         this.isLoading = false;
       },
       complete: () => {
