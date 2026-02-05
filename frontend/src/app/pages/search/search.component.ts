@@ -1,63 +1,129 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { RouterModule, ActivatedRoute, Router } from '@angular/router';
-import { Subject, BehaviorSubject } from 'rxjs';
-import { takeUntil, debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { RouterModule, ActivatedRoute } from '@angular/router';
+import { BehaviorSubject, Observable, Subject, of, merge } from 'rxjs';
+import { map, distinctUntilChanged, debounceTime, switchMap, tap, catchError, shareReplay, scan, filter } from 'rxjs/operators';
 import { SearchService, SearchResult } from '../../core/services/search.service';
+
+interface SearchState {
+  results: SearchResult[];
+  total: number;
+  hasMore: boolean;
+  error: string | null;
+}
+
+interface SearchTrigger {
+  query: string;
+  offset: number;
+  append: boolean;
+}
 
 @Component({
   selector: 'app-search',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, RouterModule],
   templateUrl: './search.component.html',
   styleUrl: './search.component.css',
 })
 export class SearchComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
-  private searchTermSubject = new BehaviorSubject<string>('');
+  private loadMore$ = new Subject<void>();
 
-  searchQuery = '';
-  results: SearchResult[] = [];
-  isLoading = false;
-  error: string | null = null;
-  totalResults = 0;
-  hasMore = false;
-  currentOffset = 0;
+  // Observable streams for async pipe
+  searchQuery$!: Observable<string>;
+  isLoading$ = new BehaviorSubject<boolean>(false);
+  searchState$!: Observable<SearchState>;
+
+  // Track current offset for load more
+  private currentOffset = 0;
+  private currentQuery = '';
+
+  // For template access
   readonly pageSize = 20;
 
   constructor(
     private searchService: SearchService,
-    private route: ActivatedRoute,
-    private router: Router
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
-    // Get initial query from URL
-    this.route.queryParams.pipe(
-      takeUntil(this.destroy$)
-    ).subscribe(params => {
-      const query = params['q'] || '';
-      if (query !== this.searchQuery) {
-        this.searchQuery = query;
-        this.resetAndSearch();
-      }
-    });
-
-    // Set up debounced search from input
-    this.searchTermSubject.pipe(
-      debounceTime(300),
+    // Extract and deduplicate query from URL params
+    this.searchQuery$ = this.route.queryParams.pipe(
+      map(params => params['q'] || ''),
       distinctUntilChanged(),
-      takeUntil(this.destroy$)
-    ).subscribe(term => {
-      if (term && term !== this.route.snapshot.queryParams['q']) {
-        this.router.navigate([], {
-          relativeTo: this.route,
-          queryParams: { q: term },
-          queryParamsHandling: 'merge'
-        });
-      }
-    });
+      debounceTime(50),
+      shareReplay(1)
+    );
+
+    // Create triggers: new search (from query change) and load more
+    const newSearch$: Observable<SearchTrigger> = this.searchQuery$.pipe(
+      tap(query => {
+        this.currentQuery = query;
+        this.currentOffset = 0;
+      }),
+      map(query => ({ query, offset: 0, append: false }))
+    );
+
+    const loadMoreSearch$: Observable<SearchTrigger> = this.loadMore$.pipe(
+      filter(() => this.currentQuery.trim().length > 0),
+      map(() => {
+        this.currentOffset += this.pageSize;
+        return { query: this.currentQuery, offset: this.currentOffset, append: true };
+      })
+    );
+
+    // Combine both trigger streams
+    this.searchState$ = merge(newSearch$, loadMoreSearch$).pipe(
+      tap(() => this.isLoading$.next(true)),
+      switchMap(trigger => {
+        if (!trigger.query.trim()) {
+          return of({ results: [], total: 0, hasMore: false, error: null, append: false });
+        }
+
+        return this.searchService.search({
+          q: trigger.query,
+          limit: this.pageSize,
+          offset: trigger.offset
+        }).pipe(
+          map(response => ({
+            results: response.data,
+            total: response.meta.total,
+            hasMore: response.meta.hasMore,
+            error: null,
+            append: trigger.append
+          })),
+          catchError(err => {
+            console.error('Search error:', err);
+            return of({
+              results: [] as SearchResult[],
+              total: 0,
+              hasMore: false,
+              error: 'Failed to search. Please try again.',
+              append: trigger.append
+            });
+          })
+        );
+      }),
+      scan((acc, curr) => {
+        // If append mode, combine results; otherwise replace
+        if (curr.append && !curr.error) {
+          return {
+            results: [...acc.results, ...curr.results],
+            total: curr.total,
+            hasMore: curr.hasMore,
+            error: null
+          };
+        }
+        return {
+          results: curr.results,
+          total: curr.total,
+          hasMore: curr.hasMore,
+          error: curr.error
+        };
+      }, { results: [], total: 0, hasMore: false, error: null } as SearchState),
+      tap(() => this.isLoading$.next(false)),
+      shareReplay(1)
+    );
   }
 
   ngOnDestroy(): void {
@@ -66,88 +132,10 @@ export class SearchComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Reset results and perform search
-   */
-  private resetAndSearch(): void {
-    this.results = [];
-    this.currentOffset = 0;
-    this.hasMore = false;
-    this.error = null;
-
-    if (this.searchQuery.trim()) {
-      this.performSearch();
-    }
-  }
-
-  /**
-   * Perform the search
-   */
-  private performSearch(): void {
-    this.isLoading = true;
-    this.error = null;
-
-    this.searchService.search({
-      q: this.searchQuery,
-      limit: this.pageSize,
-      offset: this.currentOffset
-    }).pipe(
-      takeUntil(this.destroy$)
-    ).subscribe({
-      next: (response) => {
-        if (this.currentOffset === 0) {
-          this.results = response.data;
-        } else {
-          this.results = [...this.results, ...response.data];
-        }
-        this.totalResults = response.meta.total;
-        this.hasMore = response.meta.hasMore;
-        this.isLoading = false;
-      },
-      error: (err) => {
-        console.error('Search error:', err);
-        this.error = 'Failed to search. Please try again.';
-        this.isLoading = false;
-      }
-    });
-  }
-
-  /**
-   * Handle search form submission
-   */
-  onSearchSubmit(): void {
-    if (this.searchQuery.trim()) {
-      this.router.navigate([], {
-        relativeTo: this.route,
-        queryParams: { q: this.searchQuery.trim() },
-        queryParamsHandling: 'merge'
-      });
-    }
-  }
-
-  /**
-   * Handle search input keydown
-   */
-  onSearchKeydown(event: KeyboardEvent): void {
-    if (event.key === 'Enter') {
-      this.onSearchSubmit();
-    }
-  }
-
-  /**
-   * Handle input changes (for debounced search)
-   */
-  onSearchInput(): void {
-    this.searchTermSubject.next(this.searchQuery);
-  }
-
-  /**
-   * Load more results
+   * Load more results (triggers load more stream)
    */
   loadMore(): void {
-    if (!this.isLoading && this.hasMore) {
-      this.currentOffset += this.pageSize;
-      this.performSearch();
-    }
+    this.loadMore$.next();
   }
 
   /**

@@ -1,52 +1,46 @@
 <div class="search-page">
-  <div class="search-header">
-    <h1>Search</h1>
+  @let query = (searchQuery$ | async) ?? '';
+  @let isLoading = (isLoading$ | async) ?? false;
+  @let state = searchState$ | async;
 
-    <!-- Search Input -->
-    <div class="search-input-wrapper">
-      <i class="fas fa-search search-icon"></i>
-      <input type="text"
-             class="search-input"
-             placeholder="Search documentation..."
-             [(ngModel)]="searchQuery"
-             (keydown)="onSearchKeydown($event)"
-             (input)="onSearchInput()">
-      <button class="search-btn" (click)="onSearchSubmit()" type="button">
-        Search
-      </button>
-    </div>
+  <div class="search-header">
+    @if (query.trim()) {
+      <h1>Search Results for "{{ query }}"</h1>
+    } @else {
+      <h1>Search</h1>
+    }
   </div>
 
   <!-- Results Section -->
   <div class="search-results">
-    @if (isLoading && results.length === 0) {
+    @if (isLoading && (!state || state.results.length === 0)) {
       <div class="search-loading">
         <i class="fas fa-spinner fa-spin"></i>
         Searching...
       </div>
-    } @else if (error) {
+    } @else if (state && state.error) {
       <div class="search-error">
         <i class="fas fa-exclamation-circle"></i>
-        {{ error }}
+        {{ state.error }}
       </div>
-    } @else if (!searchQuery.trim()) {
+    } @else if (!query.trim()) {
       <div class="search-empty">
         <i class="fas fa-search"></i>
-        <p>Enter a search term to find pages</p>
+        <p>Use the search box in the header to find pages</p>
       </div>
-    } @else if (results.length === 0) {
+    } @else if (state && state.results.length === 0) {
       <div class="search-no-results">
         <i class="fas fa-search"></i>
-        <p>No results found for "{{ searchQuery }}"</p>
+        <p>No results found for "{{ query }}"</p>
         <p class="search-hint">Try different keywords or check your spelling</p>
       </div>
-    } @else {
+    } @else if (state) {
       <div class="results-header">
-        <span class="results-count">{{ totalResults }} result{{ totalResults !== 1 ? 's' : '' }} found</span>
+        <span class="results-count">{{ state.total }} result{{ state.total !== 1 ? 's' : '' }} found</span>
       </div>
 
       <div class="results-list">
-        @for (result of results; track result.id) {
+        @for (result of state.results; track result.id) {
           <a class="result-item" [routerLink]="getPageUrl(result)">
             <div class="result-header">
               <h3 class="result-title">{{ result.title }}</h3>
@@ -78,7 +72,7 @@
         }
       </div>
 
-      @if (hasMore) {
+      @if (state.hasMore) {
         <div class="load-more-wrapper">
           <button class="load-more-btn"
                   (click)="loadMore()"
