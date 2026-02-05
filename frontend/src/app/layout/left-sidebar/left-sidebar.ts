@@ -1,15 +1,16 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { RouterModule, Router, NavigationEnd } from '@angular/router';
-import { Observable, Subject } from 'rxjs';
-import { filter, take, takeUntil } from 'rxjs/operators';
+import { Observable, Subject, combineLatest } from 'rxjs';
+import { filter, take, takeUntil, map } from 'rxjs/operators';
 import { NavigationService } from '../../core/services/navigation.service';
 import { NavTree } from '../../core/models/wiki.model';
 import { LucideAngularModule, ChevronRight, ChevronDown } from 'lucide-angular';
 
 @Component({
   selector: 'app-left-sidebar',
-  imports: [CommonModule, RouterModule, LucideAngularModule],
+  imports: [CommonModule, FormsModule, RouterModule, LucideAngularModule],
   templateUrl: './left-sidebar.html',
   styleUrl: './left-sidebar.css',
 })
@@ -17,9 +18,10 @@ export class LeftSidebar implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
 
   currentUrl = '';
-  navTree$!: Observable<NavTree | null>;
-  expandedSections$!: Observable<Set<number>>;
-  expandedWikis$!: Observable<Set<number>>;
+  filteredNavTree$!: Observable<NavTree | null>;
+  combinedExpandedSections$!: Observable<Set<number>>;
+  combinedExpandedWikis$!: Observable<Set<number>>;
+  filterTerm = '';
 
   // Icons for template
   readonly ChevronRight = ChevronRight;
@@ -42,10 +44,31 @@ export class LeftSidebar implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    // Get navigation tree observable
-    this.navTree$ = this.navigationService.navTree$;
-    this.expandedSections$ = this.navigationService.expandedSections$;
-    this.expandedWikis$ = this.navigationService.expandedWikis$;
+    // Get filtered navigation tree observable
+    this.filteredNavTree$ = this.navigationService.filteredNavTree$;
+
+    // Combine user-expanded state with filter-expanded state
+    this.combinedExpandedSections$ = combineLatest([
+      this.navigationService.expandedSections$,
+      this.navigationService.filterExpandedSections$
+    ]).pipe(
+      map(([userExpanded, filterExpanded]) => {
+        const combined = new Set(userExpanded);
+        filterExpanded.forEach(id => combined.add(id));
+        return combined;
+      })
+    );
+
+    this.combinedExpandedWikis$ = combineLatest([
+      this.navigationService.expandedWikis$,
+      this.navigationService.filterExpandedWikis$
+    ]).pipe(
+      map(([userExpanded, filterExpanded]) => {
+        const combined = new Set(userExpanded);
+        filterExpanded.forEach(id => combined.add(id));
+        return combined;
+      })
+    );
 
     // Load navigation data
     this.navigationService.loadNavigation().subscribe();
@@ -149,5 +172,33 @@ export class LeftSidebar implements OnInit, OnDestroy {
    */
   isPageActive(wikiSlug: string, sectionSlug: string, pageSlug: string): boolean {
     return this.currentUrl === `/wiki/${wikiSlug}/${sectionSlug}/${pageSlug}`;
+  }
+
+  // ============ Filter Methods ============
+
+  /**
+   * Handle filter input changes
+   */
+  onFilterInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.filterTerm = input.value;
+    this.navigationService.setFilterTerm(this.filterTerm);
+  }
+
+  /**
+   * Handle keydown events on filter input
+   */
+  onFilterKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Escape') {
+      this.clearFilter();
+    }
+  }
+
+  /**
+   * Clear the filter
+   */
+  clearFilter(): void {
+    this.filterTerm = '';
+    this.navigationService.clearFilter();
   }
 }

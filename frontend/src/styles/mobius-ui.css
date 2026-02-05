@@ -605,6 +605,73 @@ pre code {
     text-align: center;
 }
 
+/* Sidebar Filter */
+.sidebar-filter {
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.filter-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.filter-input {
+    width: 100%;
+    padding: 8px 32px 8px 32px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: var(--border-radius-md);
+    color: white;
+    font-size: 13px;
+    outline: none;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.filter-input::placeholder {
+    color: var(--gray-400);
+}
+
+.filter-input:focus {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.filter-icon {
+    position: absolute;
+    left: 10px;
+    color: var(--gray-400);
+    font-size: 12px;
+    pointer-events: none;
+}
+
+.filter-clear {
+    position: absolute;
+    right: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    background: none;
+    border: none;
+    color: var(--gray-400);
+    cursor: pointer;
+    border-radius: var(--border-radius-sm);
+    transition: color 0.2s, background 0.2s;
+}
+
+.filter-clear:hover {
+    color: white;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.filter-clear i {
+    font-size: 10px;
+}
+
 /* Breadcrumb */
 .breadcrumb {
     display: flex;

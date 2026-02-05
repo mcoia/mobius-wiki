@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, of } from 'rxjs';
+import { BehaviorSubject, Observable, of, combineLatest } from 'rxjs';
 import { catchError, map, shareReplay, tap } from 'rxjs/operators';
 import { ApiService } from './api.service';
-import { NavTree, NavWiki, NavSection } from '../models/wiki.model';
+import { NavTree, NavWiki, NavSection, NavPage } from '../models/wiki.model';
 
 @Injectable({
   providedIn: 'root'
@@ -12,17 +12,50 @@ export class NavigationService {
   private expandedSectionsSubject = new BehaviorSubject<Set<number>>(new Set());
   private expandedWikisSubject = new BehaviorSubject<Set<number>>(new Set());
   private isLoadingSubject = new BehaviorSubject<boolean>(false);
+  private filterTermSubject = new BehaviorSubject<string>('');
 
   // Public observables
   navTree$ = this.navTreeSubject.asObservable();
   expandedSections$ = this.expandedSectionsSubject.asObservable();
   expandedWikis$ = this.expandedWikisSubject.asObservable();
   isLoading$ = this.isLoadingSubject.asObservable();
+  filterTerm$ = this.filterTermSubject.asObservable();
+
+  // Filtered navigation tree and auto-expand sets for filter matches
+  filteredNavTree$: Observable<NavTree | null>;
+  filterExpandedSections$: Observable<Set<number>>;
+  filterExpandedWikis$: Observable<Set<number>>;
 
   constructor(private api: ApiService) {
     // Load expanded state from localStorage
     this.loadExpandedSections();
     this.loadExpandedWikis();
+
+    // Create filtered nav tree observable
+    this.filteredNavTree$ = combineLatest([
+      this.navTree$,
+      this.filterTerm$
+    ]).pipe(
+      map(([tree, term]) => this.filterNavTree(tree, term)),
+      shareReplay(1)
+    );
+
+    // Create auto-expand observables for filter matches
+    this.filterExpandedSections$ = combineLatest([
+      this.navTree$,
+      this.filterTerm$
+    ]).pipe(
+      map(([tree, term]) => this.getFilterExpandedSections(tree, term)),
+      shareReplay(1)
+    );
+
+    this.filterExpandedWikis$ = combineLatest([
+      this.navTree$,
+      this.filterTerm$
+    ]).pipe(
+      map(([tree, term]) => this.getFilterExpandedWikis(tree, term)),
+      shareReplay(1)
+    );
   }
 
   /**
@@ -216,5 +249,154 @@ export class NavigationService {
     } catch {
       // Ignore localStorage errors
     }
+  }
+
+  // ============ Filter Methods ============
+
+  /**
+   * Set the filter term for sidebar filtering
+   */
+  setFilterTerm(term: string): void {
+    this.filterTermSubject.next(term);
+  }
+
+  /**
+   * Clear the filter
+   */
+  clearFilter(): void {
+    this.filterTermSubject.next('');
+  }
+
+  /**
+   * Get current filter term
+   */
+  getFilterTerm(): string {
+    return this.filterTermSubject.value;
+  }
+
+  /**
+   * Filter the navigation tree based on search term
+   */
+  private filterNavTree(tree: NavTree | null, term: string): NavTree | null {
+    if (!tree || !term.trim()) {
+      return tree;
+    }
+
+    const lowerTerm = term.toLowerCase().trim();
+    const filteredWikis: NavWiki[] = [];
+
+    for (const wiki of tree.wikis) {
+      const filteredWiki = this.filterWiki(wiki, lowerTerm);
+      if (filteredWiki) {
+        filteredWikis.push(filteredWiki);
+      }
+    }
+
+    return { wikis: filteredWikis };
+  }
+
+  /**
+   * Filter a single wiki and its sections
+   */
+  private filterWiki(wiki: NavWiki, term: string): NavWiki | null {
+    // Check if wiki title matches
+    const wikiMatches = wiki.title.toLowerCase().includes(term);
+
+    const filteredSections: NavSection[] = [];
+
+    for (const section of wiki.sections) {
+      const filteredSection = this.filterSection(section, term);
+      if (filteredSection) {
+        filteredSections.push(filteredSection);
+      }
+    }
+
+    // Include wiki if it matches or has matching sections
+    if (wikiMatches || filteredSections.length > 0) {
+      return {
+        ...wiki,
+        sections: wikiMatches ? wiki.sections : filteredSections
+      };
+    }
+
+    return null;
+  }
+
+  /**
+   * Filter a single section and its pages
+   */
+  private filterSection(section: NavSection, term: string): NavSection | null {
+    // Check if section title matches
+    const sectionMatches = section.title.toLowerCase().includes(term);
+
+    // Filter pages by title
+    const filteredPages = section.pages.filter(page =>
+      page.title.toLowerCase().includes(term)
+    );
+
+    // Include section if it matches or has matching pages
+    if (sectionMatches || filteredPages.length > 0) {
+      return {
+        ...section,
+        pages: sectionMatches ? section.pages : filteredPages
+      };
+    }
+
+    return null;
+  }
+
+  /**
+   * Get sections that should be auto-expanded due to filter matches
+   */
+  private getFilterExpandedSections(tree: NavTree | null, term: string): Set<number> {
+    const expanded = new Set<number>();
+
+    if (!tree || !term.trim()) {
+      return expanded;
+    }
+
+    const lowerTerm = term.toLowerCase().trim();
+
+    for (const wiki of tree.wikis) {
+      for (const section of wiki.sections) {
+        // Expand section if any page matches
+        const hasMatchingPage = section.pages.some(page =>
+          page.title.toLowerCase().includes(lowerTerm)
+        );
+
+        if (hasMatchingPage) {
+          expanded.add(section.id);
+        }
+      }
+    }
+
+    return expanded;
+  }
+
+  /**
+   * Get wikis that should be auto-expanded due to filter matches
+   */
+  private getFilterExpandedWikis(tree: NavTree | null, term: string): Set<number> {
+    const expanded = new Set<number>();
+
+    if (!tree || !term.trim()) {
+      return expanded;
+    }
+
+    const lowerTerm = term.toLowerCase().trim();
+
+    for (const wiki of tree.wikis) {
+      // Expand wiki if any section or page matches
+      const hasMatch = wiki.sections.some(section =>
+        section.title.toLowerCase().includes(lowerTerm) ||
+        section.pages.some(page => page.title.toLowerCase().includes(lowerTerm))
+      );
+
+      if (hasMatch) {
+        expanded.add(wiki.id);
+      }
+    }
+
+    return expanded;
   }
 }

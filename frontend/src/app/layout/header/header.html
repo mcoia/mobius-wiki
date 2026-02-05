@@ -6,7 +6,10 @@
   <!-- Search box - centered in header -->
   <div class="search-box">
     <i class="fas fa-search"></i>
-    <input type="text" placeholder="Search documentation...">
+    <input type="text"
+           placeholder="Search documentation..."
+           [(ngModel)]="searchQuery"
+           (keydown)="onSearchKeydown($event)">
   </div>
 
   <!-- User menu -->

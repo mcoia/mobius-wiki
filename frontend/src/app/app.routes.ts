@@ -10,6 +10,7 @@ import { WikiDetailComponent } from './pages/wiki-detail/wiki-detail.component';
 import { AdminComponent } from './pages/admin/admin.component';
 import { StaffComponent } from './pages/staff/staff.component';
 import { ProfileComponent } from './pages/profile/profile.component';
+import { SearchComponent } from './pages/search/search.component';
 import { MainLayout } from './layout/main-layout/main-layout';
 import { Error404Component } from './pages/error-404/error-404.component';
 import { Error403Component } from './pages/error-403/error-403.component';
@@ -69,6 +70,11 @@ export const routes: Routes = [
         path: 'profile',
         component: ProfileComponent,
         canActivate: [authGuard]
+      },
+      // Search results page (public)
+      {
+        path: 'search',
+        component: SearchComponent
       },
       // Wiki routes - ORDER MATTERS!
       // Literal paths must come before dynamic paths
