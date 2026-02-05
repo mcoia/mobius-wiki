@@ -52,6 +52,9 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
   private lastTocPageId: number | null = null;
   private tocObserver?: IntersectionObserver;
 
+  // Copy button tracking (prevents re-injection on view check)
+  private lastCopyButtonsPageId: number | null = null;
+
   // Editing state
   isEditing = false;
   isSaving = false;
@@ -118,6 +121,7 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
         this.error = null;
         this.cleanupScripts();
         this.lastExecutedPageId = null; // Reset on navigation
+        this.lastCopyButtonsPageId = null; // Reset copy buttons on navigation
         this.currentPage = null;
 
         // Track which version we're viewing (null = current)
@@ -317,6 +321,16 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
       this.extractHeadings();
       this.lastTocPageId = this.currentPage.id;
     }
+
+    // Add copy buttons to code blocks once per page (not while editing)
+    if (
+      this.currentPage &&
+      !this.isEditing &&
+      this.lastCopyButtonsPageId !== this.currentPage.id
+    ) {
+      this.addCopyButtons();
+      this.lastCopyButtonsPageId = this.currentPage.id;
+    }
   }
 
   ngOnDestroy(): void {
@@ -479,6 +493,63 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
     this.cleanupTocObserver();
     this.tocService.clearHeadings();
     this.lastTocPageId = null;
+  }
+
+  /**
+   * Add copy buttons to code blocks in page content
+   */
+  private addCopyButtons(): void {
+    const pageContent = document.querySelector('.page-content');
+    if (!pageContent) return;
+
+    // Find all pre elements and .listingblock elements (AsciiDoc-style)
+    const codeBlocks = pageContent.querySelectorAll('pre, .listingblock');
+
+    codeBlocks.forEach((block) => {
+      // Skip if already wrapped with copy button
+      if (block.closest('.code-block-wrapper')) return;
+
+      // For listingblock, find the pre inside; for pre, use it directly
+      const preElement = block.tagName === 'PRE' ? block : block.querySelector('pre');
+      if (!preElement) return;
+
+      // Create wrapper for positioning
+      const wrapper = document.createElement('div');
+      wrapper.className = 'code-block-wrapper';
+      block.parentNode?.insertBefore(wrapper, block);
+      wrapper.appendChild(block);
+
+      // Create copy button with SVG icon
+      const btn = document.createElement('button');
+      btn.className = 'copy-btn';
+      btn.title = 'Copy to clipboard';
+      btn.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
+          <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
+        </svg>
+      `;
+
+      btn.addEventListener('click', () => this.copyToClipboard(preElement, btn));
+      wrapper.appendChild(btn);
+    });
+  }
+
+  /**
+   * Copy code block content to clipboard
+   */
+  private copyToClipboard(element: Element, button: HTMLButtonElement): void {
+    const text = element.textContent || '';
+    navigator.clipboard.writeText(text).then(() => {
+      // Show success feedback
+      this.toast.success('Copied to clipboard');
+
+      // Visual feedback on button
+      button.classList.add('copied');
+      setTimeout(() => button.classList.remove('copied'), 2000);
+    }).catch(() => {
+      this.toast.error('Failed to copy to clipboard');
+    });
   }
 
   /**
