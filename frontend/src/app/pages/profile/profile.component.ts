@@ -21,6 +21,11 @@ export class ProfileComponent implements OnInit {
   isAvatarLoading = false;
   avatarError = '';
 
+  // Preset avatars
+  readonly presetAvatars = [1, 2, 3, 4, 5, 6, 7, 8];
+  selectedPreset: string | null = null;
+  isPresetLoading = false;
+
   // Profile form
   profileName = '';
   profileEmail = '';
@@ -52,6 +57,7 @@ export class ProfileComponent implements OnInit {
       if (user) {
         this.profileName = user.name;
         this.profileEmail = user.email;
+        this.selectedPreset = user.avatarPreset;
       }
     });
   }
@@ -156,6 +162,39 @@ export class ProfileComponent implements OnInit {
         this.isAvatarLoading = false;
       }
     });
+  }
+
+  /**
+   * Select a preset avatar
+   */
+  selectPreset(presetNumber: number): void {
+    const preset = `avatar-${presetNumber}`;
+
+    // If clicking on already selected preset, deselect it
+    const newPreset = this.selectedPreset === preset ? null : preset;
+
+    this.isPresetLoading = true;
+    this.avatarError = '';
+
+    this.authService.setAvatarPreset(newPreset).subscribe({
+      next: () => {
+        this.selectedPreset = newPreset;
+        this.toastService.success(newPreset ? 'Avatar updated' : 'Avatar cleared');
+        this.isPresetLoading = false;
+      },
+      error: (err) => {
+        this.avatarError = err.error?.message || 'Failed to update avatar';
+        this.toastService.error(this.avatarError);
+        this.isPresetLoading = false;
+      }
+    });
+  }
+
+  /**
+   * Check if a preset is currently selected
+   */
+  isPresetSelected(presetNumber: number): boolean {
+    return this.selectedPreset === `avatar-${presetNumber}`;
   }
 
   onProfileSubmit(): void {

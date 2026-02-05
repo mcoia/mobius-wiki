@@ -37,7 +37,7 @@ export class AuthService {
 
   async validateUser(email: string, password: string) {
     const { rows } = await this.pool.query(
-      `SELECT u.id, u.email, u.password_hash, u.name, u.role, u.library_id, u.avatar_file_id,
+      `SELECT u.id, u.email, u.password_hash, u.name, u.role, u.library_id, u.avatar_file_id, u.avatar_preset,
               f.storage_path as avatar_storage_path
        FROM wiki.users u
        LEFT JOIN wiki.files f ON u.avatar_file_id = f.id AND f.deleted_at IS NULL
@@ -57,9 +57,18 @@ export class AuthService {
     }
 
     const { password_hash, avatar_storage_path, ...result } = user;
+
+    // Avatar priority: preset > uploaded file > null (frontend handles default)
+    let avatarUrl: string | null = null;
+    if (result.avatar_preset) {
+      avatarUrl = `/assets/avatars/${result.avatar_preset}.png`;
+    } else if (avatar_storage_path) {
+      avatarUrl = `/api/v1/files/${result.avatar_file_id}/download`;
+    }
+
     return {
       ...result,
-      avatarUrl: avatar_storage_path ? `/api/v1/files/${result.avatar_file_id}/download` : null,
+      avatarUrl,
     };
   }
 
@@ -70,6 +79,7 @@ export class AuthService {
     req.session.role = user.role;
     req.session.libraryId = user.library_id;
     req.session.avatarUrl = user.avatarUrl;
+    req.session.avatarPreset = user.avatar_preset;
     req.session.loginAt = new Date().toISOString();
   }
 
@@ -548,21 +558,31 @@ export class AuthService {
 
   /**
    * Get avatar URL for a user by ID
+   * Priority: preset > uploaded file > null (frontend handles default)
    */
   async getAvatarUrl(userId: number): Promise<string | null> {
     const { rows } = await this.pool.query(
-      `SELECT u.avatar_file_id, f.storage_path
+      `SELECT u.avatar_file_id, u.avatar_preset, f.storage_path
        FROM wiki.users u
        LEFT JOIN wiki.files f ON u.avatar_file_id = f.id AND f.deleted_at IS NULL
        WHERE u.id = $1 AND u.deleted_at IS NULL`,
       [userId]
     );
 
-    if (rows.length === 0 || !rows[0].avatar_file_id) {
+    if (rows.length === 0) {
       return null;
     }
 
-    return `/api/v1/files/${rows[0].avatar_file_id}/download`;
+    const user = rows[0];
+
+    // Avatar priority: preset > uploaded file > null
+    if (user.avatar_preset) {
+      return `/assets/avatars/${user.avatar_preset}.png`;
+    }
+    if (user.avatar_file_id) {
+      return `/api/v1/files/${user.avatar_file_id}/download`;
+    }
+    return null;
   }
 
   /**
@@ -628,10 +648,10 @@ export class AuthService {
 
     const newFileId = fileRows[0].id;
 
-    // Update user's avatar_file_id
+    // Update user's avatar_file_id and clear avatar_preset (uploaded photo takes priority)
     const { rows: updatedRows } = await this.pool.query(
       `UPDATE wiki.users
-       SET avatar_file_id = $1, updated_at = NOW()
+       SET avatar_file_id = $1, avatar_preset = NULL, updated_at = NOW()
        WHERE id = $2 AND deleted_at IS NULL
        RETURNING id, email, name, role, library_id, avatar_file_id`,
       [newFileId, userId]
@@ -660,6 +680,7 @@ export class AuthService {
         role: user.role,
         libraryId: user.library_id,
         avatarUrl,
+        avatarPreset: null, // Cleared when uploading a photo
       },
     };
   }
@@ -670,7 +691,7 @@ export class AuthService {
   async removeAvatar(userId: number, req: any): Promise<{ success: boolean; user: any }> {
     // Get current user's avatar
     const { rows: userRows } = await this.pool.query(
-      `SELECT avatar_file_id FROM wiki.users WHERE id = $1 AND deleted_at IS NULL`,
+      `SELECT avatar_file_id, avatar_preset FROM wiki.users WHERE id = $1 AND deleted_at IS NULL`,
       [userId]
     );
 
@@ -679,17 +700,19 @@ export class AuthService {
     }
 
     const avatarFileId = userRows[0].avatar_file_id;
+    const avatarPreset = userRows[0].avatar_preset;
 
+    // If no uploaded avatar, check if there's a preset to fall back to
     if (!avatarFileId) {
-      throw new BadRequestException('No avatar to remove');
+      throw new BadRequestException('No uploaded photo to remove');
     }
 
-    // Clear user's avatar_file_id and soft-delete the file
+    // Clear user's avatar_file_id and soft-delete the file (keep preset if any)
     const { rows: updatedRows } = await this.pool.query(
       `UPDATE wiki.users
        SET avatar_file_id = NULL, updated_at = NOW()
        WHERE id = $1 AND deleted_at IS NULL
-       RETURNING id, email, name, role, library_id`,
+       RETURNING id, email, name, role, library_id, avatar_preset`,
       [userId]
     );
 
@@ -701,8 +724,11 @@ export class AuthService {
 
     const user = updatedRows[0];
 
+    // Determine new avatar URL - fall back to preset if available
+    const avatarUrl = user.avatar_preset ? `/assets/avatars/${user.avatar_preset}.png` : null;
+
     // Update session
-    req.session.avatarUrl = null;
+    req.session.avatarUrl = avatarUrl;
 
     return {
       success: true,
@@ -712,7 +738,62 @@ export class AuthService {
         name: user.name,
         role: user.role,
         libraryId: user.library_id,
-        avatarUrl: null,
+        avatarUrl,
+        avatarPreset: user.avatar_preset,
+      },
+    };
+  }
+
+  /**
+   * Set a preset avatar for the current user
+   */
+  async setAvatarPreset(
+    userId: number,
+    preset: string | null,
+    req: any
+  ): Promise<{ success: boolean; user: any }> {
+    // Validate preset name if provided
+    const validPresets = ['avatar-1', 'avatar-2', 'avatar-3', 'avatar-4', 'avatar-5', 'avatar-6', 'avatar-7', 'avatar-8'];
+    if (preset !== null && !validPresets.includes(preset)) {
+      throw new BadRequestException(`Invalid preset. Must be one of: ${validPresets.join(', ')}`);
+    }
+
+    // Update user's avatar_preset
+    const { rows } = await this.pool.query(
+      `UPDATE wiki.users
+       SET avatar_preset = $1, updated_at = NOW()
+       WHERE id = $2 AND deleted_at IS NULL
+       RETURNING id, email, name, role, library_id, avatar_file_id, avatar_preset`,
+      [preset, userId]
+    );
+
+    if (rows.length === 0) {
+      throw new BadRequestException('User not found');
+    }
+
+    const user = rows[0];
+
+    // Determine avatar URL based on priority: preset > uploaded file > null
+    let avatarUrl: string | null = null;
+    if (user.avatar_preset) {
+      avatarUrl = `/assets/avatars/${user.avatar_preset}.png`;
+    } else if (user.avatar_file_id) {
+      avatarUrl = `/api/v1/files/${user.avatar_file_id}/download`;
+    }
+
+    // Update session
+    req.session.avatarUrl = avatarUrl;
+
+    return {
+      success: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        libraryId: user.library_id,
+        avatarUrl,
+        avatarPreset: user.avatar_preset,
       },
     };
   }

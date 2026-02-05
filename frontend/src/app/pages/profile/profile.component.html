@@ -8,9 +8,9 @@
       <div class="profile-card">
         <!-- Avatar Section -->
         <div class="avatar-section">
-          <div class="avatar-preview" [class.loading]="isAvatarLoading">
+          <div class="avatar-preview" [class.loading]="isAvatarLoading || isPresetLoading">
             <img [src]="user.avatarUrl || '/assets/default-avatar.png'" [alt]="user.name" class="avatar-large">
-            @if (isAvatarLoading) {
+            @if (isAvatarLoading || isPresetLoading) {
               <div class="avatar-loading-overlay">
                 <i class="fas fa-spinner fa-spin"></i>
               </div>
@@ -28,17 +28,17 @@
               type="button"
               class="btn-secondary"
               (click)="triggerAvatarUpload()"
-              [disabled]="isAvatarLoading"
+              [disabled]="isAvatarLoading || isPresetLoading"
             >
               <i class="fas fa-camera"></i>
-              {{ user.avatarUrl ? 'Change Photo' : 'Upload Photo' }}
+              Upload Photo
             </button>
-            @if (user.avatarUrl) {
+            @if (user.avatarUrl && !user.avatarPreset) {
               <button
                 type="button"
                 class="btn-danger-outline"
                 (click)="removeAvatar()"
-                [disabled]="isAvatarLoading"
+                [disabled]="isAvatarLoading || isPresetLoading"
               >
                 <i class="fas fa-trash"></i>
                 Remove
@@ -46,6 +46,33 @@
             }
           </div>
           <p class="avatar-hint">JPG, PNG, GIF, or WebP. Max 5MB.</p>
+
+          <!-- Preset Avatar Gallery -->
+          <div class="avatar-gallery-section">
+            <div class="gallery-divider">
+              <span>or choose an avatar</span>
+            </div>
+            <div class="avatar-gallery">
+              @for (num of presetAvatars; track num) {
+                <button
+                  type="button"
+                  class="avatar-option"
+                  [class.selected]="isPresetSelected(num)"
+                  (click)="selectPreset(num)"
+                  [disabled]="isAvatarLoading || isPresetLoading"
+                  [attr.aria-label]="'Select avatar ' + num"
+                >
+                  <img [src]="'/assets/avatars/avatar-' + num + '.png'" [alt]="'Avatar option ' + num">
+                  @if (isPresetSelected(num)) {
+                    <div class="selected-indicator">
+                      <i class="fas fa-check"></i>
+                    </div>
+                  }
+                </button>
+              }
+            </div>
+          </div>
+
           @if (avatarError) {
             <div class="avatar-error">{{ avatarError }}</div>
           }

@@ -129,4 +129,16 @@ export class AuthService {
       })
     );
   }
+
+  setAvatarPreset(preset: string | null): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/auth/profile/avatar-preset`, { preset }, {
+      withCredentials: true
+    }).pipe(
+      tap(response => {
+        if (response.user) {
+          this.currentUserSubject.next(response.user);
+        }
+      })
+    );
+  }
 }

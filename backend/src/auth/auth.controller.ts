@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Patch, Delete, Body, Req, Param, HttpCode, UseGuards, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { Controller, Post, Get, Patch, Put, Delete, Body, Req, Param, HttpCode, UseGuards, UseInterceptors, UploadedFile } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
@@ -35,6 +35,7 @@ export class AuthController {
         role: user.role,
         libraryId: user.library_id,
         avatarUrl: user.avatarUrl,
+        avatarPreset: user.avatar_preset,
       },
     };
   }
@@ -63,6 +64,7 @@ export class AuthController {
         role: req.session.role,
         libraryId: req.session.libraryId,
         avatarUrl: req.session.avatarUrl || null,
+        avatarPreset: req.session.avatarPreset || null,
       },
     };
   }
@@ -121,5 +123,12 @@ export class AuthController {
   @UseGuards(AuthGuard)
   async removeAvatar(@Req() req: any) {
     return this.authService.removeAvatar(req.session.userId, req);
+  }
+
+  @Put('profile/avatar-preset')
+  @HttpCode(200)
+  @UseGuards(AuthGuard)
+  async setAvatarPreset(@Req() req: any, @Body() body: { preset: string | null }) {
+    return this.authService.setAvatarPreset(req.session.userId, body.preset, req);
   }
 }
