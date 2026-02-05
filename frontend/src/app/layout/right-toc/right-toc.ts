@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, HostBinding } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Observable } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { TocService, TocItem } from '../../core/services/toc.service';
 
 @Component({
@@ -12,11 +13,19 @@ import { TocService, TocItem } from '../../core/services/toc.service';
 export class RightToc implements OnInit {
   headings$!: Observable<TocItem[]>;
   activeId$!: Observable<string | null>;
+  hasHeadings = false;
+
+  @HostBinding('class.has-content')
+  get showSidebar(): boolean {
+    return this.hasHeadings;
+  }
 
   constructor(private tocService: TocService) {}
 
   ngOnInit(): void {
-    this.headings$ = this.tocService.headings$;
+    this.headings$ = this.tocService.headings$.pipe(
+      tap(headings => this.hasHeadings = headings.length > 0)
+    );
     this.activeId$ = this.tocService.activeId$;
   }
 

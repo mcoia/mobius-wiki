@@ -1,3 +1,12 @@
+/* Hide the sidebar when there are no headings */
+:host {
+  display: none;
+}
+
+:host(.has-content) {
+  display: block;
+}
+
 /* Level indentation for nested headings */
 .toc-list li.level-1 {
   padding-left: 0;
