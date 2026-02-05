@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectorRef } from '@angular/core';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
@@ -18,7 +18,8 @@ export class LoginComponent {
   constructor(
     private authService: AuthService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private cdr: ChangeDetectorRef
   ) {}
 
   onSubmit(): void {
@@ -47,6 +48,7 @@ export class LoginComponent {
           this.errorMessage = error.error?.message || 'Login failed. Please check your credentials.';
         }
         this.isLoading = false;
+        this.cdr.detectChanges();
       },
       complete: () => {
         this.isLoading = false;
