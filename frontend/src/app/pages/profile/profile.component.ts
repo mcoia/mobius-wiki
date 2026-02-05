@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Observable } from 'rxjs';
@@ -13,7 +13,13 @@ import { User } from '../../core/models/user.model';
   styleUrl: './profile.component.css'
 })
 export class ProfileComponent implements OnInit {
+  @ViewChild('avatarInput') avatarInput!: ElementRef<HTMLInputElement>;
+
   currentUser$!: Observable<User | null>;
+
+  // Avatar upload
+  isAvatarLoading = false;
+  avatarError = '';
 
   // Profile form
   profileName = '';
@@ -28,6 +34,10 @@ export class ProfileComponent implements OnInit {
   isPasswordLoading = false;
   passwordError = '';
   showPasswordForm = false;
+
+  // Allowed file types for avatar
+  private readonly ALLOWED_AVATAR_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+  private readonly MAX_AVATAR_SIZE = 5 * 1024 * 1024; // 5MB
 
   constructor(
     private authService: AuthService,
@@ -46,6 +56,19 @@ export class ProfileComponent implements OnInit {
     });
   }
 
+  /**
+   * Get user initials for avatar fallback
+   */
+  getInitials(name: string): string {
+    if (!name) return '?';
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  }
+
   getRoleDisplayName(role: string): string {
     const roleNames: Record<string, string> = {
       'guest': 'Guest',
@@ -54,6 +77,85 @@ export class ProfileComponent implements OnInit {
       'site_admin': 'Site Administrator'
     };
     return roleNames[role] || role;
+  }
+
+  /**
+   * Trigger file input click
+   */
+  triggerAvatarUpload(): void {
+    this.avatarInput.nativeElement.click();
+  }
+
+  /**
+   * Handle file selection for avatar upload
+   */
+  onAvatarFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) {
+      return;
+    }
+
+    const file = input.files[0];
+    this.avatarError = '';
+
+    // Validate file type
+    if (!this.ALLOWED_AVATAR_TYPES.includes(file.type)) {
+      this.avatarError = 'Please select a valid image file (JPG, PNG, GIF, or WebP)';
+      this.toastService.error(this.avatarError);
+      input.value = ''; // Clear the input
+      return;
+    }
+
+    // Validate file size
+    if (file.size > this.MAX_AVATAR_SIZE) {
+      this.avatarError = 'File size must be less than 5MB';
+      this.toastService.error(this.avatarError);
+      input.value = ''; // Clear the input
+      return;
+    }
+
+    this.uploadAvatar(file);
+    input.value = ''; // Clear the input for next selection
+  }
+
+  /**
+   * Upload avatar file
+   */
+  private uploadAvatar(file: File): void {
+    this.isAvatarLoading = true;
+    this.avatarError = '';
+
+    this.authService.uploadAvatar(file).subscribe({
+      next: () => {
+        this.toastService.success('Profile photo updated');
+        this.isAvatarLoading = false;
+      },
+      error: (err) => {
+        this.avatarError = err.error?.message || 'Failed to upload photo';
+        this.toastService.error(this.avatarError);
+        this.isAvatarLoading = false;
+      }
+    });
+  }
+
+  /**
+   * Remove current avatar
+   */
+  removeAvatar(): void {
+    this.isAvatarLoading = true;
+    this.avatarError = '';
+
+    this.authService.removeAvatar().subscribe({
+      next: () => {
+        this.toastService.success('Profile photo removed');
+        this.isAvatarLoading = false;
+      },
+      error: (err) => {
+        this.avatarError = err.error?.message || 'Failed to remove photo';
+        this.toastService.error(this.avatarError);
+        this.isAvatarLoading = false;
+      }
+    });
   }
 
   onProfileSubmit(): void {

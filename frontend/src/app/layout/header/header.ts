@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, HostListener, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -16,11 +16,13 @@ import { User } from '../../core/models/user.model';
 export class Header implements OnInit {
   currentUser$!: Observable<User | null>;
   searchQuery = '';
+  isDropdownOpen = false;
 
   constructor(
     private authService: AuthService,
     private router: Router,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private elementRef: ElementRef
   ) {}
 
   ngOnInit(): void {
@@ -47,7 +49,50 @@ export class Header implements OnInit {
     }
   }
 
+  /**
+   * Toggle avatar dropdown menu
+   */
+  toggleDropdown(): void {
+    this.isDropdownOpen = !this.isDropdownOpen;
+  }
+
+  /**
+   * Close dropdown when clicking outside
+   */
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    const clickedInside = this.elementRef.nativeElement
+      .querySelector('.avatar-dropdown-container')
+      ?.contains(event.target as Node);
+
+    if (!clickedInside) {
+      this.isDropdownOpen = false;
+    }
+  }
+
+  /**
+   * Get user initials for avatar fallback
+   */
+  getInitials(name: string): string {
+    if (!name) return '?';
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  }
+
+  /**
+   * Navigate to a route and close dropdown
+   */
+  navigateTo(route: string): void {
+    this.isDropdownOpen = false;
+    this.router.navigate([route]);
+  }
+
   logout(): void {
+    this.isDropdownOpen = false;
     this.authService.logout().subscribe({
       next: () => {
         this.toastService.success('You have been logged out');

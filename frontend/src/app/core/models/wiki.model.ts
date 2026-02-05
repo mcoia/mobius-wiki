@@ -57,6 +57,7 @@ export interface Page {
     id: number;
     name: string;
     email: string;
+    avatarUrl: string | null;
   };
   // Version metadata (added by backend getVisibleVersion)
   publishedVersionNumber?: number;

@@ -34,7 +34,12 @@ export class PagesService {
     // Get current version number and author
     const { rows: versionRows } = await this.pool.query(
       `SELECT pv.version_number, pv.created_by, pv.created_at,
-              json_build_object('id', u.id, 'name', u.name, 'email', u.email) as version_author
+              json_build_object(
+                'id', u.id,
+                'name', u.name,
+                'email', u.email,
+                'avatarUrl', CASE WHEN u.avatar_file_id IS NOT NULL THEN '/api/v1/files/' || u.avatar_file_id || '/download' ELSE NULL END
+              ) as version_author
        FROM wiki.page_versions pv
        LEFT JOIN wiki.users u ON pv.created_by = u.id
        WHERE pv.page_id = $1
@@ -73,7 +78,12 @@ export class PagesService {
     if (page.status === 'draft' && page.published_version_number) {
       const { rows } = await this.pool.query(
         `SELECT pv.content, pv.title, pv.scripts,
-                json_build_object('id', u.id, 'name', u.name, 'email', u.email) as version_author
+                json_build_object(
+                  'id', u.id,
+                  'name', u.name,
+                  'email', u.email,
+                  'avatarUrl', CASE WHEN u.avatar_file_id IS NOT NULL THEN '/api/v1/files/' || u.avatar_file_id || '/download' ELSE NULL END
+                ) as version_author
          FROM wiki.page_versions pv
          LEFT JOIN wiki.users u ON pv.created_by = u.id
          WHERE pv.page_id = $1 AND pv.version_number = $2`,
@@ -213,7 +223,12 @@ export class PagesService {
         p.deleted_by,
         json_build_object('title', w.title, 'slug', w.slug) as wiki,
         json_build_object('title', s.title, 'slug', s.slug) as section,
-        json_build_object('id', u.id, 'name', u.name, 'email', u.email) as author
+        json_build_object(
+          'id', u.id,
+          'name', u.name,
+          'email', u.email,
+          'avatarUrl', CASE WHEN u.avatar_file_id IS NOT NULL THEN '/api/v1/files/' || u.avatar_file_id || '/download' ELSE NULL END
+        ) as author
       FROM wiki.pages p
       JOIN wiki.sections s ON p.section_id = s.id
       JOIN wiki.wikis w ON s.wiki_id = w.id

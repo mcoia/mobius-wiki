@@ -105,7 +105,7 @@
         </div>
         <div class="author-row">
           <div class="author-avatar">
-            <lucide-icon [img]="User" [size]="16"></lucide-icon>
+            <img [src]="authorAvatarUrl || '/assets/default-avatar.png'" [alt]="authorName || 'Author'" class="avatar-img">
           </div>
           @if (authorName) {
             <span class="author-name">{{ authorName }}</span>
@@ -174,7 +174,7 @@
         </div>
         <div class="author-row">
           <div class="author-avatar">
-            <lucide-icon [img]="User" [size]="16"></lucide-icon>
+            <img [src]="authorAvatarUrl || '/assets/default-avatar.png'" [alt]="authorName || 'Author'" class="avatar-img">
           </div>
           @if (authorName) {
             <span class="author-name">{{ authorName }}</span>
@@ -232,7 +232,7 @@
         </div>
         <div class="author-row">
           <div class="author-avatar">
-            <lucide-icon [img]="User" [size]="16"></lucide-icon>
+            <img [src]="authorAvatarUrl || '/assets/default-avatar.png'" [alt]="authorName || 'Author'" class="avatar-img">
           </div>
           @if (authorName) {
             <span class="author-name">{{ authorName }}</span>
@@ -300,7 +300,7 @@
         </div>
         <div class="author-row">
           <div class="author-avatar">
-            <lucide-icon [img]="User" [size]="16"></lucide-icon>
+            <img [src]="authorAvatarUrl || '/assets/default-avatar.png'" [alt]="authorName || 'Author'" class="avatar-img">
           </div>
           @if (authorName) {
             <span class="author-name">{{ authorName }}</span>

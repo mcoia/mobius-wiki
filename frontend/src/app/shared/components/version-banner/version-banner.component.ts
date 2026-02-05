@@ -28,6 +28,7 @@ export class VersionBannerComponent {
 
   // Author info
   @Input() authorName?: string;
+  @Input() authorAvatarUrl?: string | null;
   @Input() updatedAt?: string;
 
   // Version history
@@ -134,5 +135,18 @@ export class VersionBannerComponent {
     if (!target.closest('.version-dropdown-container')) {
       this.showVersionDropdown = false;
     }
+  }
+
+  /**
+   * Get initials from author name for avatar fallback
+   */
+  getInitials(name?: string): string {
+    if (!name) return '?';
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
   }
 }

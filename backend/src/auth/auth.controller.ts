@@ -1,4 +1,5 @@
-import { Controller, Post, Get, Patch, Body, Req, Param, HttpCode, UseGuards } from '@nestjs/common';
+import { Controller, Post, Get, Patch, Delete, Body, Req, Param, HttpCode, UseGuards, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { AuthGuard } from './guards/auth.guard';
@@ -33,6 +34,7 @@ export class AuthController {
         name: user.name,
         role: user.role,
         libraryId: user.library_id,
+        avatarUrl: user.avatarUrl,
       },
     };
   }
@@ -60,6 +62,7 @@ export class AuthController {
         name: req.session.name,
         role: req.session.role,
         libraryId: req.session.libraryId,
+        avatarUrl: req.session.avatarUrl || null,
       },
     };
   }
@@ -100,5 +103,23 @@ export class AuthController {
   @HttpCode(200)
   async acceptInvitation(@Body() dto: AcceptInvitationDto) {
     return this.authService.acceptInvitation(dto.token, dto.password);
+  }
+
+  @Post('profile/avatar')
+  @HttpCode(200)
+  @UseGuards(AuthGuard)
+  @UseInterceptors(FileInterceptor('avatar'))
+  async uploadAvatar(@Req() req: any, @UploadedFile() file: Express.Multer.File) {
+    if (!file) {
+      throw new Error('No file uploaded');
+    }
+    return this.authService.uploadAvatar(req.session.userId, file, req);
+  }
+
+  @Delete('profile/avatar')
+  @HttpCode(200)
+  @UseGuards(AuthGuard)
+  async removeAvatar(@Req() req: any) {
+    return this.authService.removeAvatar(req.session.userId, req);
   }
 }

@@ -15,23 +15,43 @@
   <!-- User menu -->
   <div class="user-menu-container">
     @if (currentUser$ | async; as user) {
-      <!-- Authenticated user -->
-      <div class="user-menu">
-        @if (user.role === 'site_admin') {
-          <a routerLink="/admin" class="admin-link" title="Admin Panel">
-            <i class="fas fa-cog"></i>
-          </a>
-        } @else if (user.role === 'mobius_staff') {
-          <a routerLink="/staff" class="admin-link" title="Staff Panel">
-            <i class="fas fa-cog"></i>
-          </a>
-        }
-        <a routerLink="/profile" class="profile-link" title="My Profile">
-          <i class="fas fa-user"></i> {{ user.name }}
-        </a>
-        <button class="logout-btn" (click)="logout()" type="button">
-          Logout
+      <!-- Authenticated user - Avatar dropdown -->
+      <div class="avatar-dropdown-container">
+        <button class="avatar-trigger" (click)="toggleDropdown()" type="button">
+          <img [src]="user.avatarUrl || '/assets/default-avatar.png'" [alt]="user.name" class="avatar-image">
+          <i class="fas fa-chevron-down dropdown-arrow" [class.open]="isDropdownOpen"></i>
         </button>
+
+        @if (isDropdownOpen) {
+          <div class="dropdown-menu">
+            <div class="dropdown-header">
+              <span class="dropdown-user-name">{{ user.name }}</span>
+              <span class="dropdown-user-role">{{ user.role === 'site_admin' ? 'Site Administrator' : user.role === 'mobius_staff' ? 'MOBIUS Staff' : 'Library Staff' }}</span>
+            </div>
+            <div class="dropdown-divider"></div>
+            <button class="dropdown-item" (click)="navigateTo('/profile')" type="button">
+              <i class="fas fa-user"></i>
+              My Profile
+            </button>
+            @if (user.role === 'site_admin') {
+              <button class="dropdown-item" (click)="navigateTo('/admin')" type="button">
+                <i class="fas fa-cog"></i>
+                Admin Panel
+              </button>
+            }
+            @if (user.role === 'mobius_staff') {
+              <button class="dropdown-item" (click)="navigateTo('/staff')" type="button">
+                <i class="fas fa-users-cog"></i>
+                Staff Panel
+              </button>
+            }
+            <div class="dropdown-divider"></div>
+            <button class="dropdown-item logout" (click)="logout()" type="button">
+              <i class="fas fa-sign-out-alt"></i>
+              Logout
+            </button>
+          </div>
+        }
       </div>
     } @else {
       <!-- Guest user -->

@@ -4,6 +4,7 @@ export interface User {
   name: string;
   role: 'guest' | 'library_staff' | 'mobius_staff' | 'site_admin';
   libraryId: number | null;
+  avatarUrl: string | null;
   library?: {
     id: number;
     name: string;

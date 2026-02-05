@@ -59,6 +59,110 @@
   color: var(--gray-500, #666);
 }
 
+/* ===== Avatar Section ===== */
+.avatar-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 0;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--gray-200, #eee);
+}
+
+.avatar-preview {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  overflow: hidden;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.avatar-preview.loading {
+  pointer-events: none;
+}
+
+.avatar-large {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-initials-large {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #0097A7 0%, #006064 100%);
+  color: white;
+  font-size: 42px;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.avatar-loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: var(--mobius-teal, #0097A7);
+}
+
+.avatar-actions {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.avatar-file-input {
+  display: none;
+}
+
+.avatar-hint {
+  font-size: 12px;
+  color: var(--gray-500, #999);
+  margin: 0;
+}
+
+.avatar-error {
+  font-size: 13px;
+  color: var(--color-danger, #dc3545);
+  margin-top: 8px;
+}
+
+.btn-danger-outline {
+  padding: 10px 16px;
+  background: transparent;
+  color: var(--color-danger, #dc3545);
+  border: 1px solid var(--color-danger, #dc3545);
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-danger-outline:hover:not(:disabled) {
+  background: var(--color-danger, #dc3545);
+  color: white;
+}
+
+.btn-danger-outline:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .profile-card h3 {
   font-size: 16px;
   font-weight: 500;

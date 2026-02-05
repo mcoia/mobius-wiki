@@ -2,6 +2,8 @@ import { Injectable, Inject, UnauthorizedException, BadRequestException, NotFoun
 import { ConfigService } from '@nestjs/config';
 import { Pool } from 'pg';
 import { randomBytes } from 'crypto';
+import * as fs from 'fs/promises';
+import * as path from 'path';
 
 import { verifyPassword, hashPassword, validatePassword } from './utils/password.util';
 import { UpdateProfileDto, ChangePasswordDto } from './dto/update-profile.dto';
@@ -11,6 +13,17 @@ import { generateAccountInvitationEmail, generateAccountInvitationText } from '.
 
 const TOKEN_EXPIRY_HOURS = 1;
 const DEFAULT_INVITATION_EXPIRY_DAYS = 7;
+
+// Allowed avatar MIME types
+const AVATAR_ALLOWED_MIME_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+];
+
+// Max avatar file size: 5MB
+const AVATAR_MAX_SIZE_BYTES = 5 * 1024 * 1024;
 
 @Injectable()
 export class AuthService {
@@ -24,9 +37,11 @@ export class AuthService {
 
   async validateUser(email: string, password: string) {
     const { rows } = await this.pool.query(
-      `SELECT id, email, password_hash, name, role, library_id
-       FROM wiki.users
-       WHERE email = $1 AND is_active = true AND deleted_at IS NULL`,
+      `SELECT u.id, u.email, u.password_hash, u.name, u.role, u.library_id, u.avatar_file_id,
+              f.storage_path as avatar_storage_path
+       FROM wiki.users u
+       LEFT JOIN wiki.files f ON u.avatar_file_id = f.id AND f.deleted_at IS NULL
+       WHERE u.email = $1 AND u.is_active = true AND u.deleted_at IS NULL`,
       [email],
     );
 
@@ -41,8 +56,11 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const { password_hash, ...result } = user;
-    return result;
+    const { password_hash, avatar_storage_path, ...result } = user;
+    return {
+      ...result,
+      avatarUrl: avatar_storage_path ? `/api/v1/files/${result.avatar_file_id}/download` : null,
+    };
   }
 
   async login(req: any, user: any) {
@@ -51,6 +69,7 @@ export class AuthService {
     req.session.name = user.name;
     req.session.role = user.role;
     req.session.libraryId = user.library_id;
+    req.session.avatarUrl = user.avatarUrl;
     req.session.loginAt = new Date().toISOString();
   }
 
@@ -525,5 +544,176 @@ export class AuthService {
     await this.generateInvitationToken(userId);
 
     return { success: true, message: 'Invitation has been resent successfully.' };
+  }
+
+  /**
+   * Get avatar URL for a user by ID
+   */
+  async getAvatarUrl(userId: number): Promise<string | null> {
+    const { rows } = await this.pool.query(
+      `SELECT u.avatar_file_id, f.storage_path
+       FROM wiki.users u
+       LEFT JOIN wiki.files f ON u.avatar_file_id = f.id AND f.deleted_at IS NULL
+       WHERE u.id = $1 AND u.deleted_at IS NULL`,
+      [userId]
+    );
+
+    if (rows.length === 0 || !rows[0].avatar_file_id) {
+      return null;
+    }
+
+    return `/api/v1/files/${rows[0].avatar_file_id}/download`;
+  }
+
+  /**
+   * Upload a new avatar for the current user
+   */
+  async uploadAvatar(
+    userId: number,
+    file: Express.Multer.File,
+    req: any
+  ): Promise<{ success: boolean; user: any }> {
+    // Validate file type
+    if (!AVATAR_ALLOWED_MIME_TYPES.includes(file.mimetype)) {
+      throw new BadRequestException(
+        `Invalid file type. Allowed types: JPG, PNG, GIF, WebP`
+      );
+    }
+
+    // Validate file size
+    if (file.size > AVATAR_MAX_SIZE_BYTES) {
+      const maxMb = AVATAR_MAX_SIZE_BYTES / (1024 * 1024);
+      throw new BadRequestException(
+        `File size exceeds maximum allowed size (${maxMb} MB)`
+      );
+    }
+
+    // Get current user to check for existing avatar
+    const { rows: userRows } = await this.pool.query(
+      `SELECT avatar_file_id FROM wiki.users WHERE id = $1 AND deleted_at IS NULL`,
+      [userId]
+    );
+
+    if (userRows.length === 0) {
+      throw new BadRequestException('User not found');
+    }
+
+    const oldAvatarFileId = userRows[0].avatar_file_id;
+
+    // Generate unique filename
+    const fileHash = randomBytes(16).toString('hex');
+    const ext = path.extname(file.originalname) || '.jpg';
+    const filename = `avatar_${userId}_${fileHash}${ext}`;
+    const storagePath = `uploads/${filename}`;
+    const uploadDir = path.join(process.cwd(), 'uploads');
+    const fullPath = path.join(uploadDir, filename);
+
+    // Ensure upload directory exists
+    try {
+      await fs.access(uploadDir);
+    } catch {
+      await fs.mkdir(uploadDir, { recursive: true });
+    }
+
+    // Save file to disk
+    await fs.writeFile(fullPath, file.buffer);
+
+    // Insert file record
+    const { rows: fileRows } = await this.pool.query(
+      `INSERT INTO wiki.files (filename, storage_path, mime_type, size_bytes, uploaded_by)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING id`,
+      [file.originalname, storagePath, file.mimetype, file.size, userId]
+    );
+
+    const newFileId = fileRows[0].id;
+
+    // Update user's avatar_file_id
+    const { rows: updatedRows } = await this.pool.query(
+      `UPDATE wiki.users
+       SET avatar_file_id = $1, updated_at = NOW()
+       WHERE id = $2 AND deleted_at IS NULL
+       RETURNING id, email, name, role, library_id, avatar_file_id`,
+      [newFileId, userId]
+    );
+
+    // Soft-delete old avatar file if it exists
+    if (oldAvatarFileId) {
+      await this.pool.query(
+        `UPDATE wiki.files SET deleted_at = NOW(), deleted_by = $1 WHERE id = $2`,
+        [userId, oldAvatarFileId]
+      );
+    }
+
+    const user = updatedRows[0];
+    const avatarUrl = `/api/v1/files/${newFileId}/download`;
+
+    // Update session
+    req.session.avatarUrl = avatarUrl;
+
+    return {
+      success: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        libraryId: user.library_id,
+        avatarUrl,
+      },
+    };
+  }
+
+  /**
+   * Remove the current user's avatar
+   */
+  async removeAvatar(userId: number, req: any): Promise<{ success: boolean; user: any }> {
+    // Get current user's avatar
+    const { rows: userRows } = await this.pool.query(
+      `SELECT avatar_file_id FROM wiki.users WHERE id = $1 AND deleted_at IS NULL`,
+      [userId]
+    );
+
+    if (userRows.length === 0) {
+      throw new BadRequestException('User not found');
+    }
+
+    const avatarFileId = userRows[0].avatar_file_id;
+
+    if (!avatarFileId) {
+      throw new BadRequestException('No avatar to remove');
+    }
+
+    // Clear user's avatar_file_id and soft-delete the file
+    const { rows: updatedRows } = await this.pool.query(
+      `UPDATE wiki.users
+       SET avatar_file_id = NULL, updated_at = NOW()
+       WHERE id = $1 AND deleted_at IS NULL
+       RETURNING id, email, name, role, library_id`,
+      [userId]
+    );
+
+    // Soft-delete the file
+    await this.pool.query(
+      `UPDATE wiki.files SET deleted_at = NOW(), deleted_by = $1 WHERE id = $2`,
+      [userId, avatarFileId]
+    );
+
+    const user = updatedRows[0];
+
+    // Update session
+    req.session.avatarUrl = null;
+
+    return {
+      success: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        libraryId: user.library_id,
+        avatarUrl: null,
+      },
+    };
   }
 }

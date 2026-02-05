@@ -17,6 +17,7 @@
         [publishedAt]="page.published_at"
         [canEdit]="true"
         [authorName]="page.author?.name"
+        [authorAvatarUrl]="page.author?.avatarUrl"
         [updatedAt]="page.updated_at"
         [versions]="(versions$ | async) || []"
         [viewingVersionNumber]="viewingVersionNumber"

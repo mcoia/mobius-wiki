@@ -6,6 +6,51 @@
 
     <div class="profile-content">
       <div class="profile-card">
+        <!-- Avatar Section -->
+        <div class="avatar-section">
+          <div class="avatar-preview" [class.loading]="isAvatarLoading">
+            <img [src]="user.avatarUrl || '/assets/default-avatar.png'" [alt]="user.name" class="avatar-large">
+            @if (isAvatarLoading) {
+              <div class="avatar-loading-overlay">
+                <i class="fas fa-spinner fa-spin"></i>
+              </div>
+            }
+          </div>
+          <div class="avatar-actions">
+            <input
+              #avatarInput
+              type="file"
+              accept="image/jpeg,image/png,image/gif,image/webp"
+              (change)="onAvatarFileSelected($event)"
+              class="avatar-file-input"
+            >
+            <button
+              type="button"
+              class="btn-secondary"
+              (click)="triggerAvatarUpload()"
+              [disabled]="isAvatarLoading"
+            >
+              <i class="fas fa-camera"></i>
+              {{ user.avatarUrl ? 'Change Photo' : 'Upload Photo' }}
+            </button>
+            @if (user.avatarUrl) {
+              <button
+                type="button"
+                class="btn-danger-outline"
+                (click)="removeAvatar()"
+                [disabled]="isAvatarLoading"
+              >
+                <i class="fas fa-trash"></i>
+                Remove
+              </button>
+            }
+          </div>
+          <p class="avatar-hint">JPG, PNG, GIF, or WebP. Max 5MB.</p>
+          @if (avatarError) {
+            <div class="avatar-error">{{ avatarError }}</div>
+          }
+        </div>
+
         <h2><i class="fas fa-user-cog"></i> Account Information</h2>
 
         <!-- Read-only info -->
