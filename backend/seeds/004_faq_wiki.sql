@@ -456,7 +456,7 @@ VALUES (
 
 <h2>Supported Formats</h2>
 
-<p>JPEG, PNG, GIF, WebP, and SVG files up to 10 MB.</p>
+<p>JPEG, PNG, GIF, WebP, and SVG files up to 50 MB.</p>
 
 <div class="note-box info">
 <strong><svg class="lucide" viewBox="0 0 24 24"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg> Tip</strong>
@@ -721,32 +721,32 @@ VALUES (
   '<h1>Is my work saved automatically?</h1>
 
 <div class="callout">
-<p><strong>Yes!</strong> MOBIUS Wiki auto-saves your work while you''re editing.</p>
+<p><strong>No.</strong> You must click the Save button to save your changes.</p>
 </div>
 
-<h2>How Auto-Save Works</h2>
+<h2>How Saving Works</h2>
 
 <ul>
-<li>Changes are saved automatically as you type</li>
-<li>Look for the "Saving..." indicator</li>
-<li>Auto-saves create versions in history</li>
+<li>Click the <strong>Save</strong> button in the toolbar to save</li>
+<li>Each save creates a new version in history</li>
+<li>You can restore any previous version if needed</li>
 </ul>
 
-<div class="status-card success">
-<strong><svg class="lucide" viewBox="0 0 24 24"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></svg> Your Work is Protected</strong>
-<p>If your browser crashes or you lose connection, your recent work should be recoverable from version history.</p>
+<div class="status-card warning">
+<strong><svg class="lucide" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> Browser Protection</strong>
+<p>If you try to close your browser or navigate away with unsaved changes, you will see a warning. However, this is your last line of defense&mdash;save frequently!</p>
 </div>
 
 <h2>Best Practice</h2>
 
-<div class="note-box warning">
-<strong><svg class="lucide" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> Still Click Save!</strong>
-While auto-save protects your work, you should still click <strong>Save</strong> before leaving a page to ensure everything is captured. Use <kbd>Ctrl</kbd> + <kbd>S</kbd> for quick saving.
+<div class="note-box success">
+<strong><svg class="lucide" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg> Save Often</strong>
+Get in the habit of clicking Save after making changes. If your browser crashes or you lose power, unsaved work is lost.
 </div>
 
 <h2>Session Expiration</h2>
 
-<p>Your edit session expires after 30 minutes of inactivity. Stay active (typing, scrolling) to keep the session alive, and save frequently.</p>
+<p>Your edit session expires after 60 minutes of inactivity. Stay active (typing, scrolling) to keep the session alive, and save frequently.</p>
 
 <h2>Learn More</h2>
 
@@ -782,11 +782,11 @@ VALUES (
 <tr><th>Format</th><th>Extensions</th><th>Max Size</th></tr>
 </thead>
 <tbody>
-<tr><td>JPEG</td><td>.jpg, .jpeg</td><td>10 MB</td></tr>
-<tr><td>PNG</td><td>.png</td><td>10 MB</td></tr>
-<tr><td>GIF</td><td>.gif</td><td>10 MB</td></tr>
-<tr><td>WebP</td><td>.webp</td><td>10 MB</td></tr>
-<tr><td>SVG</td><td>.svg</td><td>10 MB</td></tr>
+<tr><td>JPEG</td><td>.jpg, .jpeg</td><td>50 MB</td></tr>
+<tr><td>PNG</td><td>.png</td><td>50 MB</td></tr>
+<tr><td>GIF</td><td>.gif</td><td>50 MB</td></tr>
+<tr><td>WebP</td><td>.webp</td><td>50 MB</td></tr>
+<tr><td>SVG</td><td>.svg</td><td>50 MB</td></tr>
 </tbody>
 </table>
 
@@ -797,12 +797,12 @@ VALUES (
 <tr><th>Format</th><th>Extensions</th><th>Max Size</th></tr>
 </thead>
 <tbody>
-<tr><td>PDF</td><td>.pdf</td><td>25 MB</td></tr>
-<tr><td>Word</td><td>.doc, .docx</td><td>25 MB</td></tr>
-<tr><td>Excel</td><td>.xls, .xlsx</td><td>25 MB</td></tr>
-<tr><td>Text</td><td>.txt</td><td>25 MB</td></tr>
-<tr><td>CSV</td><td>.csv</td><td>25 MB</td></tr>
-<tr><td>ZIP</td><td>.zip</td><td>25 MB</td></tr>
+<tr><td>PDF</td><td>.pdf</td><td>50 MB</td></tr>
+<tr><td>Word</td><td>.doc, .docx</td><td>50 MB</td></tr>
+<tr><td>Excel</td><td>.xls, .xlsx</td><td>50 MB</td></tr>
+<tr><td>Text</td><td>.txt</td><td>50 MB</td></tr>
+<tr><td>CSV</td><td>.csv</td><td>50 MB</td></tr>
+<tr><td>ZIP</td><td>.zip</td><td>50 MB</td></tr>
 </tbody>
 </table>
 

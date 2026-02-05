@@ -237,9 +237,9 @@ VALUES (
 <p>Click <strong>Save</strong> when finished. Your changes are preserved in version history.</p>
 </div>
 
-<div class="note-box success">
-<strong><svg class="lucide" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg> Auto-Save</strong>
-Changes are automatically saved as you type, but always click Save before leaving to ensure nothing is lost.
+<div class="note-box warning">
+<strong><svg class="lucide" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> Remember to Save</strong>
+Changes are NOT automatically saved. Click the Save button to save your work. If you try to leave with unsaved changes, you''ll see a warning.
 </div>
 
 <h2>Create a New Page</h2>
@@ -271,11 +271,6 @@ Changes are automatically saved as you type, but always click Save before leavin
 <li>Results show page titles and snippets of matching content</li>
 <li>Click any result to open that page</li>
 </ul>
-
-<div class="note-box info">
-<strong><svg class="lucide" viewBox="0 0 24 24"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg> Pro Tip</strong>
-Press <kbd>/</kbd> from anywhere to quickly focus the search box.
-</div>
 
 <h2>What''s Next?</h2>
 
@@ -352,11 +347,6 @@ VALUES (
 <li>Search matches page titles, content, and tags</li>
 </ul>
 
-<div class="note-box info">
-<strong><svg class="lucide" viewBox="0 0 24 24"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg> Quick Search</strong>
-Press <kbd>/</kbd> from anywhere to focus the search box instantly.
-</div>
-
 <h2>Keyboard Navigation</h2>
 
 <table>
@@ -364,9 +354,7 @@ Press <kbd>/</kbd> from anywhere to focus the search box instantly.
 <tr><th>Shortcut</th><th>Action</th></tr>
 </thead>
 <tbody>
-<tr><td><kbd>/</kbd></td><td>Focus the search box</td></tr>
 <tr><td><kbd>Esc</kbd></td><td>Close dialogs and menus</td></tr>
-<tr><td><kbd>Ctrl</kbd> + <kbd>S</kbd></td><td>Save current page (when editing)</td></tr>
 </tbody>
 </table>
 
@@ -598,18 +586,18 @@ VALUES (
 
 <p>To publish a draft, edit the page and click <strong>Publish</strong> or change the status to Published.</p>
 
-<h2>Auto-Save</h2>
+<h2>Saving Your Work</h2>
 
-<div class="note-box info">
-<strong><svg class="lucide" viewBox="0 0 24 24"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></svg> Your Work is Protected</strong>
-MOBIUS Wiki automatically saves your changes as you type. Look for the "Saving..." indicator to know when auto-save is running.
+<div class="note-box warning">
+<strong><svg class="lucide" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> Save Manually</strong>
+MOBIUS Wiki does NOT auto-save. You must click the <strong>Save</strong> button to save your changes.
 </div>
 
-<p>However, you should still:</p>
+<p>To protect your work:</p>
 <ul>
-<li>Click <strong>Save</strong> before leaving the page</li>
-<li>Not rely solely on auto-save for critical changes</li>
-<li>Check the "Last saved" timestamp to verify your work is saved</li>
+<li>Save frequently by clicking the <strong>Save</strong> button</li>
+<li>If you try to leave with unsaved changes, your browser will warn you</li>
+<li>Every save creates a new version in history, so you can always recover previous content</li>
 </ul>
 
 <h2>Edit Permissions</h2>
@@ -1073,7 +1061,7 @@ VALUES (
 <h2>File Size Limits</h2>
 
 <div class="note-box info">
-<strong><svg class="lucide" viewBox="0 0 24 24"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></svg> Maximum Size: 10 MB</strong>
+<strong><svg class="lucide" viewBox="0 0 24 24"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></svg> Maximum Size: 50 MB</strong>
 For best performance, keep images under 2 MB. Large images slow down page loading for all users.
 </div>
 
@@ -1209,8 +1197,8 @@ VALUES (
 <h2>File Size Limits</h2>
 
 <div class="note-box info">
-<strong><svg class="lucide" viewBox="0 0 24 24"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></svg> Maximum Size: 25 MB</strong>
-Files larger than 25 MB cannot be uploaded. Consider using external file sharing for very large files.
+<strong><svg class="lucide" viewBox="0 0 24 24"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></svg> Maximum Size: 50 MB</strong>
+Files larger than 50 MB cannot be uploaded. Consider using external file sharing for very large files.
 </div>
 
 <h2>Managing Uploaded Files</h2>
@@ -1490,7 +1478,7 @@ VALUES (
 <div class="flow-step">
 <span class="step-number">1</span>
 <strong>Focus Search</strong>
-<p>Click the search box in the header or press <kbd>/</kbd> from anywhere.</p>
+<p>Click the search box in the header.</p>
 </div>
 
 <div class="flow-step">
@@ -1533,22 +1521,6 @@ You only see results for pages you have permission to view. Content in restricte
 
 <p>Finds pages with both "network" AND "troubleshooting".</p>
 
-<h3>Exact Phrases</h3>
-
-<p>Use quotes to search for an exact phrase:</p>
-
-<pre><code>"password reset"</code></pre>
-
-<p>Finds pages with exactly "password reset" as a phrase.</p>
-
-<h3>Partial Matches</h3>
-
-<p>Search automatically matches partial words:</p>
-
-<pre><code>config</code></pre>
-
-<p>Finds "config", "configuration", "configured", etc.</p>
-
 <h2>Refining Results</h2>
 
 <div class="stats-grid">
@@ -1585,7 +1557,6 @@ You only see results for pages you have permission to view. Content in restricte
 <tr><th>Shortcut</th><th>Action</th></tr>
 </thead>
 <tbody>
-<tr><td><kbd>/</kbd></td><td>Focus search box from anywhere</td></tr>
 <tr><td><kbd>Enter</kbd></td><td>Submit search</td></tr>
 <tr><td><kbd>Esc</kbd></td><td>Clear search and close results</td></tr>
 </tbody>
@@ -1634,12 +1605,6 @@ VALUES (
 
 <div class="flow-step">
 <span class="step-number">3</span>
-<strong>Changes Auto-Save</strong>
-<p>Your work is saved automatically during the session.</p>
-</div>
-
-<div class="flow-step">
-<span class="step-number">4</span>
 <strong>Session Ends</strong>
 <p>When you save or cancel, the session closes and others can edit.</p>
 </div>
@@ -1656,15 +1621,15 @@ VALUES (
 <h2>Session Timeouts</h2>
 
 <div class="note-box warning">
-<strong><svg class="lucide" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> Sessions Expire After 30 Minutes</strong>
-If you''re inactive for 30 minutes, your session expires. You''ll see a warning before this happens. Activity like typing or scrolling resets the timer.
+<strong><svg class="lucide" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> Sessions Expire After 60 Minutes</strong>
+If you''re inactive for 60 minutes, your session expires. You''ll see a warning before this happens. Activity like typing or scrolling resets the timer (heartbeat every 30 seconds).
 </div>
 
 <p>If your session expires with unsaved changes:</p>
 <ul>
 <li>Save immediately if possible</li>
 <li>Copy your content as backup</li>
-<li>Check version history for auto-saved content</li>
+<li>Check version history for your last saved version</li>
 </ul>
 
 <h2>Taking Over a Session</h2>
@@ -1764,35 +1729,12 @@ VALUES (
 <li>A banner indicates you''re viewing a historical version</li>
 </ol>
 
-<h2>Comparing Versions</h2>
-
-<p>To see what changed between versions:</p>
-
-<div class="flow-step">
-<span class="step-number">1</span>
-<strong>Select Two Versions</strong>
-<p>Choose the versions you want to compare.</p>
-</div>
-
-<div class="flow-step">
-<span class="step-number">2</span>
-<strong>Click Compare</strong>
-<p>The comparison view opens.</p>
-</div>
-
-<div class="flow-step">
-<span class="step-number">3</span>
-<strong>Review Changes</strong>
-<p>Additions show in <span style="color: green;">green</span>, deletions in <span style="color: red;">red</span>.</p>
-</div>
-
 <h2>When Versions Are Created</h2>
 
 <p>A new version is created when:</p>
 
 <ul>
 <li>You click Save while editing</li>
-<li>Auto-save runs during editing</li>
 <li>A page is restored from a previous version</li>
 </ul>
 
@@ -2360,12 +2302,12 @@ VALUES (
 
 <div class="status-card info">
 <strong>Don''t Panic!</strong>
-<p>MOBIUS Wiki has auto-save and version history. Your work may be recoverable.</p>
+<p>MOBIUS Wiki keeps version history. Your last saved work may be recoverable.</p>
 </div>
 
 <p><strong>Recovery Steps:</strong></p>
 <ol>
-<li>Check the version history for recent auto-saves</li>
+<li>Check the version history for your last saved version</li>
 <li>Look for versions saved around the time you were editing</li>
 <li>If found, restore that version</li>
 <li>Contact your administrator if you need help</li>
@@ -2375,13 +2317,13 @@ VALUES (
 
 <div class="status-card warning">
 <strong>What Happened:</strong>
-<p>Sessions expire after 30 minutes of inactivity to protect security.</p>
+<p>Sessions expire after 60 minutes of inactivity to protect security.</p>
 </div>
 
 <p><strong>Solutions:</strong></p>
 <ul>
 <li>Log in again</li>
-<li>Check version history for auto-saved content</li>
+<li>Check version history for your last saved version</li>
 <li>Save more frequently to avoid losing work</li>
 <li>Stay active while editing (typing resets the timer)</li>
 </ul>
@@ -2499,7 +2441,7 @@ VALUES (
 <div class="status-card warning">
 <strong>Common Causes:</strong>
 <ul>
-<li>File exceeds size limit (max 10 MB for images, 25 MB for files)</li>
+<li>File exceeds size limit (max 50 MB)</li>
 <li>File type not supported</li>
 <li>Network interruption during upload</li>
 </ul>
@@ -2667,25 +2609,13 @@ VALUES (
 <tr><th>Shortcut</th><th>Action</th></tr>
 </thead>
 <tbody>
-<tr><td><kbd>/</kbd></td><td>Focus the search box</td></tr>
 <tr><td><kbd>Esc</kbd></td><td>Close dialogs, menus, and overlays</td></tr>
 </tbody>
 </table>
 
 <h2>Editor Shortcuts</h2>
 
-<p>Available when editing a page:</p>
-
-<h3>Saving</h3>
-
-<table>
-<thead>
-<tr><th>Shortcut</th><th>Action</th></tr>
-</thead>
-<tbody>
-<tr><td><kbd>Ctrl</kbd> + <kbd>S</kbd></td><td>Save the page</td></tr>
-</tbody>
-</table>
+<p>Available when editing a page (these are TinyMCE editor shortcuts):</p>
 
 <h3>Text Formatting</h3>
 
@@ -2752,9 +2682,9 @@ Replace <kbd>Ctrl</kbd> with <kbd>Cmd</kbd> (&#8984;) for all shortcuts on Mac.
 <div class="note-box success">
 <strong><svg class="lucide" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg> Pro Tips</strong>
 <ul>
-<li>Use <kbd>/</kbd> to quickly search without reaching for the mouse</li>
-<li><kbd>Ctrl</kbd> + <kbd>S</kbd> works even when auto-save is active</li>
 <li>Paste as plain text (<kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>V</kbd>) to avoid formatting issues</li>
+<li>Use <kbd>Ctrl</kbd> + <kbd>Z</kbd> to undo mistakes while editing</li>
+<li>Remember to click <strong>Save</strong> frequently&mdash;there is no auto-save!</li>
 </ul>
 </div>',
   NULL,
