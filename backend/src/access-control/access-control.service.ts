@@ -16,6 +16,12 @@ interface AccessRule {
   rule_value: string | null;
 }
 
+interface PageHierarchy {
+  page_id: number;
+  section_id: number;
+  wiki_id: number;
+}
+
 @Injectable()
 export class AccessControlService {
   constructor(@Inject('DATABASE_POOL') private pool: Pool) {}
@@ -95,6 +101,158 @@ export class AccessControlService {
     // If user can read and has staff role, they can edit
     // (No more library boundary check)
     return true;
+  }
+
+  /**
+   * Batch access check for multiple pages
+   * Reduces N+1 queries to 2-3 queries total
+   * Returns Map<pageId, canAccess>
+   */
+  async canAccessBatch(
+    user: User | null,
+    _contentType: 'page',
+    contentIds: number[],
+  ): Promise<Map<number, boolean>> {
+    const result = new Map<number, boolean>();
+
+    if (contentIds.length === 0) {
+      return result;
+    }
+
+    // Step 1: Batch load page hierarchy (page → section → wiki)
+    const hierarchyMap = await this.batchGetPageHierarchy(contentIds);
+
+    // Collect all section and wiki IDs
+    const sectionIds = new Set<number>();
+    const wikiIds = new Set<number>();
+    for (const hierarchy of hierarchyMap.values()) {
+      sectionIds.add(hierarchy.section_id);
+      wikiIds.add(hierarchy.wiki_id);
+    }
+
+    // Step 2: Batch load all access rules for pages, sections, and wikis
+    const rulesMap = await this.batchGetRules(
+      contentIds,
+      Array.from(sectionIds),
+      Array.from(wikiIds),
+    );
+
+    // Step 3: Process ACL in memory for each page
+    for (const pageId of contentIds) {
+      const hierarchy = hierarchyMap.get(pageId);
+      if (!hierarchy) {
+        // Page not found in hierarchy (maybe deleted), deny access
+        result.set(pageId, false);
+        continue;
+      }
+
+      const canAccess = this.evaluateAccessInMemory(
+        user,
+        pageId,
+        hierarchy,
+        rulesMap,
+      );
+      result.set(pageId, canAccess);
+    }
+
+    return result;
+  }
+
+  /**
+   * Batch load page → section → wiki hierarchy
+   */
+  private async batchGetPageHierarchy(
+    pageIds: number[],
+  ): Promise<Map<number, PageHierarchy>> {
+    const { rows } = await this.pool.query<PageHierarchy>(
+      `SELECT
+        p.id as page_id,
+        p.section_id,
+        s.wiki_id
+       FROM wiki.pages p
+       JOIN wiki.sections s ON p.section_id = s.id
+       WHERE p.id = ANY($1) AND p.deleted_at IS NULL AND s.deleted_at IS NULL`,
+      [pageIds],
+    );
+
+    const map = new Map<number, PageHierarchy>();
+    for (const row of rows) {
+      map.set(row.page_id, row);
+    }
+    return map;
+  }
+
+  /**
+   * Batch load access rules for pages, sections, and wikis
+   * Returns Map keyed by "type:id" (e.g., "page:123")
+   */
+  private async batchGetRules(
+    pageIds: number[],
+    sectionIds: number[],
+    wikiIds: number[],
+  ): Promise<Map<string, AccessRule[]>> {
+    const { rows } = await this.pool.query<AccessRule>(
+      `SELECT id, ruleable_type, ruleable_id, rule_type, rule_value
+       FROM wiki.access_rules
+       WHERE (ruleable_type = 'page' AND ruleable_id = ANY($1))
+          OR (ruleable_type = 'section' AND ruleable_id = ANY($2))
+          OR (ruleable_type = 'wiki' AND ruleable_id = ANY($3))`,
+      [pageIds, sectionIds, wikiIds],
+    );
+
+    const map = new Map<string, AccessRule[]>();
+    for (const row of rows) {
+      const key = `${row.ruleable_type}:${row.ruleable_id}`;
+      if (!map.has(key)) {
+        map.set(key, []);
+      }
+      map.get(key)!.push(row);
+    }
+    return map;
+  }
+
+  /**
+   * Evaluate access in memory using pre-loaded rules
+   * Implements inheritance: page → section → wiki → public
+   */
+  private evaluateAccessInMemory(
+    user: User | null,
+    pageId: number,
+    hierarchy: PageHierarchy,
+    rulesMap: Map<string, AccessRule[]>,
+  ): boolean {
+    // Check page rules first
+    const pageRules = rulesMap.get(`page:${pageId}`) || [];
+    if (pageRules.length > 0) {
+      return this.matchesAnyRule(pageRules, user);
+    }
+
+    // No page rules, check section (inheritance)
+    const sectionRules = rulesMap.get(`section:${hierarchy.section_id}`) || [];
+    if (sectionRules.length > 0) {
+      return this.matchesAnyRule(sectionRules, user);
+    }
+
+    // No section rules, check wiki (inheritance)
+    const wikiRules = rulesMap.get(`wiki:${hierarchy.wiki_id}`) || [];
+    if (wikiRules.length > 0) {
+      return this.matchesAnyRule(wikiRules, user);
+    }
+
+    // No rules anywhere in chain = public
+    return true;
+  }
+
+  /**
+   * Check if any rule in the array matches the user (OR logic)
+   */
+  private matchesAnyRule(rules: AccessRule[], user: User | null): boolean {
+    for (const rule of rules) {
+      if (this.matchesRule(rule, user)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**

@@ -102,24 +102,27 @@ export class SearchService {
       params,
     );
 
-    // Filter by ACL (only show accessible content)
+    // Get all page IDs from search results
+    const pageIds = rows.map(r => r.id);
+
+    // Batch check access (2-3 queries instead of 240+)
+    const accessMap = await this.aclService.canAccessBatch(user, 'page', pageIds);
+
+    // Batch check link-shared status (1 query)
+    const linkSharedMap = await this.batchIsLinkSharedOnly(pageIds);
+
+    // Filter in memory and limit results
     const accessibleResults: SearchResult[] = [];
     for (const row of rows) {
-      // Skip if we already have enough results
       if (accessibleResults.length >= limit) {
         break;
       }
 
-      // Check if user can access this page
-      const canAccess = await this.aclService.canAccess(user, 'page', row.id);
+      const canAccess = accessMap.get(row.id) ?? false;
+      const isLinkShared = linkSharedMap.get(row.id) ?? false;
 
-      if (canAccess) {
-        // Check if this page is link-shared only (should not be discoverable)
-        const isLinkShared = await this.isLinkSharedOnly(row.id);
-
-        if (!isLinkShared) {
-          accessibleResults.push(row);
-        }
+      if (canAccess && !isLinkShared) {
+        accessibleResults.push(row);
       }
     }
 
@@ -155,24 +158,44 @@ export class SearchService {
   }
 
   /**
-   * Check if a page is ONLY accessible via link sharing
-   * (has only link-type rules, making it non-discoverable)
+   * Batch check if pages are ONLY accessible via link sharing
+   * (has only link-type rules, making them non-discoverable)
+   * Returns Map<pageId, isLinkSharedOnly>
    */
-  private async isLinkSharedOnly(pageId: number): Promise<boolean> {
-    const { rows } = await this.pool.query(
-      `SELECT rule_type FROM wiki.access_rules
-       WHERE ruleable_type = 'page' AND ruleable_id = $1`,
-      [pageId],
-    );
+  private async batchIsLinkSharedOnly(
+    pageIds: number[],
+  ): Promise<Map<number, boolean>> {
+    const result = new Map<number, boolean>();
 
-    // If no rules, it's public (not link-shared only)
-    if (rows.length === 0) {
-      return false;
+    if (pageIds.length === 0) {
+      return result;
     }
 
-    // Check if ALL rules are link-type
-    const allLink = rows.every(rule => rule.rule_type === 'link');
-    return allLink;
+    // Initialize all pages as not link-shared (default for pages with no rules)
+    for (const id of pageIds) {
+      result.set(id, false);
+    }
+
+    // Batch load rules and group by page
+    const { rows } = await this.pool.query<{
+      ruleable_id: number;
+      rule_types: string[];
+    }>(
+      `SELECT ruleable_id, array_agg(rule_type) as rule_types
+       FROM wiki.access_rules
+       WHERE ruleable_type = 'page' AND ruleable_id = ANY($1)
+       GROUP BY ruleable_id`,
+      [pageIds],
+    );
+
+    // Check each page's rules
+    for (const row of rows) {
+      // Link-shared only if ALL rules are 'link' type
+      const allLink = row.rule_types.every((t: string) => t === 'link');
+      result.set(row.ruleable_id, allLink);
+    }
+
+    return result;
   }
 
   /**
