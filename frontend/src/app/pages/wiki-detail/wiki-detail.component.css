@@ -29,7 +29,7 @@
   font-size: 1.125rem;
   color: #6b7280;
   line-height: 1.6;
-  margin: 0;
+  margin: -24px 0 32px 0;  /* Negative top to tuck under header, bottom spacing */
 }
 
 /* Base toolbar button (matches wiki-page-viewer) */

@@ -22,9 +22,6 @@
     <div class="wiki-header">
       <div class="header-content">
         <h1>{{ wiki.title }}</h1>
-        @if (wiki.description) {
-          <p class="description">{{ wiki.description }}</p>
-        }
       </div>
       @if (canEdit$ | async) {
         <div class="header-actions">
@@ -61,6 +58,10 @@
         </div>
       }
     </div>
+
+    @if (wiki.description) {
+      <p class="description">{{ wiki.description }}</p>
+    }
 
     <!-- Access Control Panel for Wiki -->
     @if (showAccessControlPanel && (canEdit$ | async)) {
