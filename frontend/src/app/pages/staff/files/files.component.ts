@@ -1,8 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { Observable, BehaviorSubject, of, combineLatest } from 'rxjs';
+import { Observable, BehaviorSubject, of } from 'rxjs';
 import { switchMap, catchError, shareReplay, map, tap } from 'rxjs/operators';
 import { BaseChartDirective } from 'ng2-charts';
 import { Chart, ChartConfiguration, ChartData, registerables } from 'chart.js';
@@ -75,7 +75,8 @@ export class FilesComponent implements OnInit {
   showReplaceModal = false;
   fileLinks: FileLinkInfo[] = [];
   auditLogs: FileAuditLog[] = [];
-  loadingDetails = false;
+  loadingLinks = false;
+  loadingLogs = false;
 
   // Replace modal state
   replaceFile: File | null = null;
@@ -114,7 +115,8 @@ export class FilesComponent implements OnInit {
 
   constructor(
     private fileService: FileService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -263,22 +265,30 @@ export class FilesComponent implements OnInit {
   openDetailsModal(file: FileWithMeta): void {
     this.selectedFile = file;
     this.showDetailsModal = true;
-    this.loadingDetails = true;
     this.descriptionInput = file.description || '';
 
-    // Load file links and audit logs in parallel
-    combineLatest([
-      this.fileService.getFileLinks(file.id).pipe(catchError(() => of({ data: [] }))),
-      this.fileService.getFileAuditLogs(file.id).pipe(catchError(() => of({ data: [] }))),
-    ]).subscribe({
-      next: ([linksRes, logsRes]) => {
-        this.fileLinks = linksRes.data;
-        this.auditLogs = logsRes.data;
-        this.loadingDetails = false;
-      },
-      error: () => {
-        this.loadingDetails = false;
-      }
+    // Reset state
+    this.fileLinks = [];
+    this.auditLogs = [];
+    this.loadingLinks = true;
+    this.loadingLogs = true;
+
+    // Load independently - show each section as it arrives (no blocking)
+    // Use markForCheck to ensure change detection runs after async updates
+    this.fileService.getFileLinks(file.id).pipe(
+      catchError(() => of({ data: [] }))
+    ).subscribe(res => {
+      this.fileLinks = res.data;
+      this.loadingLinks = false;
+      this.cdr.markForCheck();
+    });
+
+    this.fileService.getFileAuditLogs(file.id).pipe(
+      catchError(() => of({ data: [] }))
+    ).subscribe(res => {
+      this.auditLogs = res.data;
+      this.loadingLogs = false;
+      this.cdr.markForCheck();
     });
   }
 

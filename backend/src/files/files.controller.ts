@@ -17,6 +17,7 @@ import {
   SetMetadata,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { SkipThrottle } from '@nestjs/throttler';
 import { Response, Request } from 'express';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { RoleGuard } from '../auth/guards/role.guard';
@@ -111,6 +112,7 @@ export class FilesController {
   }
 
   @Get(':id/download')
+  @SkipThrottle()
   @UseGuards(AccessControlGuard)
   @SetMetadata('aclCheck', { type: 'file', idParam: 'id' })
   async download(@Param('id', ParseIntPipe) id: number, @Res() res: Response) {
@@ -132,6 +134,7 @@ export class FilesController {
   }
 
   @Get(':id/links')
+  @SkipThrottle()
   @UseGuards(AuthGuard, RoleGuard)
   @SetMetadata('roles', ['mobius_staff'])
   async getFileLinks(@Param('id', ParseIntPipe) id: number) {
@@ -139,6 +142,7 @@ export class FilesController {
   }
 
   @Get(':id/audit-logs')
+  @SkipThrottle()
   @UseGuards(AuthGuard, RoleGuard)
   @SetMetadata('roles', ['mobius_staff'])
   async getFileAuditLogs(

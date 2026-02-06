@@ -507,11 +507,13 @@ export class FilesService {
 
   /**
    * Get all content linked to a file
+   * Optimized: Simple query with separate title lookups instead of 9 JOINs
    */
   async getFileLinks(fileId: number) {
     // Verify file exists
     await this.findOne(fileId, true);
 
+    // Simple query: just file_links + user who created link
     const { rows } = await this.pool.query(`
       SELECT
         fl.id,
@@ -519,37 +521,65 @@ export class FilesService {
         fl.linkable_id,
         fl.created_at,
         fl.created_by,
-        u.name as created_by_name,
-        CASE
-          WHEN fl.linkable_type = 'wiki' THEN (SELECT title FROM wiki.wikis WHERE id = fl.linkable_id)
-          WHEN fl.linkable_type = 'section' THEN (SELECT title FROM wiki.sections WHERE id = fl.linkable_id)
-          WHEN fl.linkable_type = 'page' THEN (SELECT title FROM wiki.pages WHERE id = fl.linkable_id)
-          WHEN fl.linkable_type = 'user' THEN (SELECT name FROM wiki.users WHERE id = fl.linkable_id)
-        END as linked_title,
-        CASE
-          WHEN fl.linkable_type = 'page' THEN (
-            SELECT json_build_object(
-              'wiki_slug', w.slug,
-              'section_slug', s.slug,
-              'page_slug', p.slug
-            )
-            FROM wiki.pages p
-            JOIN wiki.sections s ON p.section_id = s.id
-            JOIN wiki.wikis w ON s.wiki_id = w.id
-            WHERE p.id = fl.linkable_id
-          )
-          ELSE NULL
-        END as link_path
+        u.name as created_by_name
       FROM wiki.file_links fl
       LEFT JOIN wiki.users u ON fl.created_by = u.id
       WHERE fl.file_id = $1
       ORDER BY fl.created_at DESC
+      LIMIT 50
     `, [fileId]);
+
+    // Hydrate titles and link paths with individual lookups
+    for (const row of rows) {
+      const linkInfo = await this.getLinkableInfo(row.linkable_type, row.linkable_id);
+      row.linked_title = linkInfo.title;
+      row.link_path = linkInfo.path;
+    }
 
     return {
       data: rows,
       meta: { total: rows.length },
     };
+  }
+
+  /**
+   * Get title and path info for a linkable entity
+   */
+  private async getLinkableInfo(type: string, id: number): Promise<{ title: string | null; path: any }> {
+    switch (type) {
+      case 'wiki': {
+        const { rows } = await this.pool.query('SELECT title FROM wiki.wikis WHERE id = $1', [id]);
+        return { title: rows[0]?.title || null, path: null };
+      }
+      case 'section': {
+        const { rows } = await this.pool.query('SELECT title FROM wiki.sections WHERE id = $1', [id]);
+        return { title: rows[0]?.title || null, path: null };
+      }
+      case 'page': {
+        const { rows } = await this.pool.query(`
+          SELECT p.title, p.slug as page_slug, s.slug as section_slug, w.slug as wiki_slug
+          FROM wiki.pages p
+          LEFT JOIN wiki.sections s ON p.section_id = s.id
+          LEFT JOIN wiki.wikis w ON s.wiki_id = w.id
+          WHERE p.id = $1
+        `, [id]);
+        if (rows.length === 0) return { title: null, path: null };
+        return {
+          title: rows[0].title,
+          path: {
+            wiki_slug: rows[0].wiki_slug,
+            section_slug: rows[0].section_slug,
+            page_slug: rows[0].page_slug,
+          },
+        };
+      }
+      case 'user': {
+        const { rows } = await this.pool.query('SELECT name FROM wiki.users WHERE id = $1', [id]);
+        return { title: rows[0]?.name || null, path: null };
+      }
+      default:
+        return { title: null, path: null };
+    }
   }
 
   /**

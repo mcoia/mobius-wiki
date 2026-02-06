@@ -163,7 +163,7 @@
             <tr [class.deleted]="file.deleted_at">
               <td class="col-preview">
                 @if (isImage(file.mime_type)) {
-                  <img [src]="getThumbnailUrl(file)" alt="thumbnail" class="thumbnail">
+                  <img [src]="getThumbnailUrl(file)" alt="thumbnail" class="thumbnail" loading="lazy">
                 } @else {
                   <i class="fas {{ getFileIcon(file.mime_type) }} file-icon"></i>
                 }
@@ -276,117 +276,120 @@
       </div>
 
       <div class="modal-body">
-        @if (loadingDetails) {
-          <div class="loading-state">
-            <i class="fas fa-spinner fa-spin"></i>
-            <p>Loading details...</p>
+        <div class="details-grid">
+          <!-- File Preview -->
+          <div class="detail-section preview-section">
+            @if (isImage(selectedFile.mime_type)) {
+              <img [src]="getThumbnailUrl(selectedFile)" alt="preview" class="file-preview">
+            } @else {
+              <div class="file-preview-icon">
+                <i class="fas {{ getFileIcon(selectedFile.mime_type) }}"></i>
+              </div>
+            }
           </div>
-        } @else {
-          <div class="details-grid">
-            <!-- File Preview -->
-            <div class="detail-section preview-section">
-              @if (isImage(selectedFile.mime_type)) {
-                <img [src]="getThumbnailUrl(selectedFile)" alt="preview" class="file-preview">
-              } @else {
-                <div class="file-preview-icon">
-                  <i class="fas {{ getFileIcon(selectedFile.mime_type) }}"></i>
+
+          <!-- File Info -->
+          <div class="detail-section info-section">
+            <h4>{{ selectedFile.filename }}</h4>
+            <dl class="info-list">
+              <dt>Type</dt>
+              <dd>{{ selectedFile.mime_type }}</dd>
+              <dt>Size</dt>
+              <dd>{{ formatSize(selectedFile.size_bytes) }}</dd>
+              <dt>Uploaded</dt>
+              <dd>{{ formatDate(selectedFile.uploaded_at) }}</dd>
+              <dt>Uploaded By</dt>
+              <dd>{{ selectedFile.uploader_name || 'Unknown' }}</dd>
+              <dt>Links</dt>
+              <dd>{{ selectedFile.link_count }}</dd>
+            </dl>
+
+            <!-- Description -->
+            <div class="description-section">
+              <label>Description</label>
+              @if (editingDescription) {
+                <textarea
+                  [(ngModel)]="descriptionInput"
+                  rows="3"
+                  placeholder="Add a description..."></textarea>
+                <div class="description-actions">
+                  <button class="btn btn-sm btn-primary" (click)="saveDescription()" [disabled]="savingDescription">
+                    @if (savingDescription) {
+                      <i class="fas fa-spinner fa-spin"></i>
+                    } @else {
+                      Save
+                    }
+                  </button>
+                  <button class="btn btn-sm" (click)="cancelEditDescription()">Cancel</button>
                 </div>
+              } @else {
+                <p class="description-text">{{ selectedFile.description || 'No description' }}</p>
+                <button class="btn btn-sm btn-text" (click)="startEditDescription()">
+                  <i class="fas fa-edit"></i> Edit
+                </button>
               }
             </div>
+          </div>
+        </div>
 
-            <!-- File Info -->
-            <div class="detail-section info-section">
-              <h4>{{ selectedFile.filename }}</h4>
-              <dl class="info-list">
-                <dt>Type</dt>
-                <dd>{{ selectedFile.mime_type }}</dd>
-                <dt>Size</dt>
-                <dd>{{ formatSize(selectedFile.size_bytes) }}</dd>
-                <dt>Uploaded</dt>
-                <dd>{{ formatDate(selectedFile.uploaded_at) }}</dd>
-                <dt>Uploaded By</dt>
-                <dd>{{ selectedFile.uploader_name || 'Unknown' }}</dd>
-                <dt>Links</dt>
-                <dd>{{ selectedFile.link_count }}</dd>
-              </dl>
-
-              <!-- Description -->
-              <div class="description-section">
-                <label>Description</label>
-                @if (editingDescription) {
-                  <textarea
-                    [(ngModel)]="descriptionInput"
-                    rows="3"
-                    placeholder="Add a description..."></textarea>
-                  <div class="description-actions">
-                    <button class="btn btn-sm btn-primary" (click)="saveDescription()" [disabled]="savingDescription">
-                      @if (savingDescription) {
-                        <i class="fas fa-spinner fa-spin"></i>
-                      } @else {
-                        Save
-                      }
-                    </button>
-                    <button class="btn btn-sm" (click)="cancelEditDescription()">Cancel</button>
-                  </div>
-                } @else {
-                  <p class="description-text">{{ selectedFile.description || 'No description' }}</p>
-                  <button class="btn btn-sm btn-text" (click)="startEditDescription()">
-                    <i class="fas fa-edit"></i> Edit
-                  </button>
-                }
-              </div>
+        <!-- Linked Content -->
+        <div class="detail-section">
+          <h4>Linked Content @if (!loadingLinks) { ({{ fileLinks.length }}) }</h4>
+          @if (loadingLinks) {
+            <div class="section-loading">
+              <i class="fas fa-spinner fa-spin"></i>
+              <span>Loading links...</span>
             </div>
-          </div>
-
-          <!-- Linked Content -->
-          <div class="detail-section">
-            <h4>Linked Content ({{ fileLinks.length }})</h4>
-            @if (fileLinks.length > 0) {
-              <ul class="links-list">
-                @for (link of fileLinks; track link.id) {
-                  <li class="link-item">
-                    <i class="fas fa-{{ link.linkable_type === 'page' ? 'file-alt' : link.linkable_type === 'wiki' ? 'book' : 'folder' }}"></i>
-                    <span class="link-type">{{ link.linkable_type }}</span>
-                    @if (getPageUrl(link)) {
-                      <a [routerLink]="getPageUrl(link)">{{ link.linked_title || 'Untitled' }}</a>
-                    } @else {
-                      <span>{{ link.linked_title || 'Untitled' }}</span>
+          } @else if (fileLinks.length > 0) {
+            <ul class="links-list">
+              @for (link of fileLinks; track link.id) {
+                <li class="link-item">
+                  <i class="fas fa-{{ link.linkable_type === 'page' ? 'file-alt' : link.linkable_type === 'wiki' ? 'book' : 'folder' }}"></i>
+                  <span class="link-type">{{ link.linkable_type }}</span>
+                  @if (getPageUrl(link)) {
+                    <a [routerLink]="getPageUrl(link)">{{ link.linked_title || 'Untitled' }}</a>
+                  } @else {
+                    <span>{{ link.linked_title || 'Untitled' }}</span>
+                  }
+                  <span class="link-meta">
+                    linked {{ formatDate(link.created_at) }}
+                    @if (link.created_by_name) {
+                      by {{ link.created_by_name }}
                     }
-                    <span class="link-meta">
-                      linked {{ formatDate(link.created_at) }}
-                      @if (link.created_by_name) {
-                        by {{ link.created_by_name }}
-                      }
-                    </span>
-                  </li>
-                }
-              </ul>
-            } @else {
-              <p class="no-data">No linked content</p>
-            }
-          </div>
+                  </span>
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="no-data">No linked content</p>
+          }
+        </div>
 
-          <!-- Audit Log -->
-          <div class="detail-section">
-            <h4>Audit Log</h4>
-            @if (auditLogs.length > 0) {
-              <ul class="audit-list">
-                @for (log of auditLogs; track log.id) {
-                  <li class="audit-item">
-                    <i class="fas {{ getActionIcon(log.action) }}"></i>
-                    <span class="audit-action">{{ formatActionLabel(log.action) }}</span>
-                    @if (log.actor_name) {
-                      <span class="audit-actor">by {{ log.actor_name }}</span>
-                    }
-                    <span class="audit-date">{{ formatDate(log.created_at) }}</span>
-                  </li>
-                }
-              </ul>
-            } @else {
-              <p class="no-data">No audit logs</p>
-            }
-          </div>
-        }
+        <!-- Audit Log -->
+        <div class="detail-section">
+          <h4>Audit Log</h4>
+          @if (loadingLogs) {
+            <div class="section-loading">
+              <i class="fas fa-spinner fa-spin"></i>
+              <span>Loading audit logs...</span>
+            </div>
+          } @else if (auditLogs.length > 0) {
+            <ul class="audit-list">
+              @for (log of auditLogs; track log.id) {
+                <li class="audit-item">
+                  <i class="fas {{ getActionIcon(log.action) }}"></i>
+                  <span class="audit-action">{{ formatActionLabel(log.action) }}</span>
+                  @if (log.actor_name) {
+                    <span class="audit-actor">by {{ log.actor_name }}</span>
+                  }
+                  <span class="audit-date">{{ formatDate(log.created_at) }}</span>
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="no-data">No audit logs</p>
+          }
+        </div>
       </div>
 
       <div class="modal-footer">
