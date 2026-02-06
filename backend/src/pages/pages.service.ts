@@ -38,7 +38,11 @@ export class PagesService {
                 'id', u.id,
                 'name', u.name,
                 'email', u.email,
-                'avatarUrl', CASE WHEN u.avatar_file_id IS NOT NULL THEN '/api/v1/files/' || u.avatar_file_id || '/download' ELSE NULL END
+                'avatarUrl', CASE
+                  WHEN u.avatar_preset IS NOT NULL THEN '/assets/avatars/' || u.avatar_preset || '.png'
+                  WHEN u.avatar_file_id IS NOT NULL THEN '/api/v1/files/' || u.avatar_file_id || '/download'
+                  ELSE NULL
+                END
               ) as version_author
        FROM wiki.page_versions pv
        LEFT JOIN wiki.users u ON pv.created_by = u.id
@@ -82,7 +86,11 @@ export class PagesService {
                   'id', u.id,
                   'name', u.name,
                   'email', u.email,
-                  'avatarUrl', CASE WHEN u.avatar_file_id IS NOT NULL THEN '/api/v1/files/' || u.avatar_file_id || '/download' ELSE NULL END
+                  'avatarUrl', CASE
+                    WHEN u.avatar_preset IS NOT NULL THEN '/assets/avatars/' || u.avatar_preset || '.png'
+                    WHEN u.avatar_file_id IS NOT NULL THEN '/api/v1/files/' || u.avatar_file_id || '/download'
+                    ELSE NULL
+                  END
                 ) as version_author
          FROM wiki.page_versions pv
          LEFT JOIN wiki.users u ON pv.created_by = u.id
@@ -227,7 +235,11 @@ export class PagesService {
           'id', u.id,
           'name', u.name,
           'email', u.email,
-          'avatarUrl', CASE WHEN u.avatar_file_id IS NOT NULL THEN '/api/v1/files/' || u.avatar_file_id || '/download' ELSE NULL END
+          'avatarUrl', CASE
+            WHEN u.avatar_preset IS NOT NULL THEN '/assets/avatars/' || u.avatar_preset || '.png'
+            WHEN u.avatar_file_id IS NOT NULL THEN '/api/v1/files/' || u.avatar_file_id || '/download'
+            ELSE NULL
+          END
         ) as author
       FROM wiki.pages p
       JOIN wiki.sections s ON p.section_id = s.id
