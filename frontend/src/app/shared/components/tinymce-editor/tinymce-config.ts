@@ -69,7 +69,7 @@ export const TINYMCE_BASE_CONFIG = {
   // TinyMCE Configuration
   base_url: '/tinymce',                  // Self-hosted TinyMCE
   suffix: '.min',
-  plugins: 'link image lists code table',  // Core plugins
+  plugins: 'link image lists code table textpattern',  // Core plugins + live templating
   menubar: false,                        // Disable menu bar
   statusbar: false,                      // Disable status bar
   branding: false,                       // Remove "Powered by Tiny" branding
@@ -118,6 +118,44 @@ export const TINYMCE_BASE_CONFIG = {
   image_dimensions: true,                // Show width/height
   resize_img_proportional: true,         // Maintain aspect ratio
   object_resizing: 'img',                // Enable resize handles on images
+
+  // Markdown + AsciiDoc text patterns for live formatting
+  // Patterns trigger on Space key after matching text at start of line (block patterns)
+  // or when surrounding text with delimiters (inline patterns)
+  text_patterns: [
+    // Headings - Markdown style (# + Space)
+    { start: '#', format: 'h1' },
+    { start: '##', format: 'h2' },
+    { start: '###', format: 'h3' },
+    { start: '####', format: 'h4' },
+
+    // Headings - AsciiDoc style (= + Space)
+    { start: '=', format: 'h1' },
+    { start: '==', format: 'h2' },
+    { start: '===', format: 'h3' },
+    { start: '====', format: 'h4' },
+
+    // Lists - bullet (- or * + Space)
+    { start: '-', cmd: 'InsertUnorderedList' },
+    { start: '*', cmd: 'InsertUnorderedList' },
+
+    // Lists - numbered (1. or . + Space)
+    { start: '1.', cmd: 'InsertOrderedList' },
+    { start: '.', cmd: 'InsertOrderedList' },
+
+    // Blockquote (> + Space)
+    { start: '>', format: 'blockquote' },
+
+    // Inline - Bold (Markdown double asterisk)
+    { start: '**', end: '**', format: 'bold' },
+
+    // Inline - Italic (Markdown single asterisk OR AsciiDoc underscore)
+    { start: '*', end: '*', format: 'italic' },
+    { start: '_', end: '_', format: 'italic' },
+
+    // Inline - Code (backticks - both Markdown and AsciiDoc)
+    { start: '`', end: '`', format: 'code' },
+  ],
 
   // Content styling (loaded inside editor iframe)
   // Note: Google Fonts are injected via JS in onEditorInit for reliability

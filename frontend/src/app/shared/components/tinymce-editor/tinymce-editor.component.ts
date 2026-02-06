@@ -306,6 +306,46 @@ export class TinymceEditorComponent implements AfterViewInit, OnDestroy {
         ]);
       }
     });
+
+    // Code block triggers: ``` (Markdown) or ---- (AsciiDoc)
+    // These aren't supported by textpattern plugin, so we handle manually
+    editor.on('input', () => {
+      const node = editor.selection.getNode();
+      if (node.nodeName === 'P') {
+        const text = node.textContent?.trim();
+        if (text === '```' || text === '----') {
+          editor.undoManager.transact(() => {
+            editor.dom.remove(node);
+            editor.insertContent('<pre><code>\n</code></pre>');
+            // Position cursor inside code block
+            const pres = editor.dom.select('pre');
+            const pre = pres[pres.length - 1];
+            if (pre?.firstChild) {
+              editor.selection.setCursorLocation(pre.firstChild, 0);
+            }
+          });
+        }
+      }
+    });
+
+    // Shift+Enter inside code block = exit to new paragraph
+    editor.on('keydown', (e: KeyboardEvent) => {
+      if (e.key === 'Enter' && e.shiftKey) {
+        const node = editor.selection.getNode();
+        // Check if we're inside a code block (pre or code element)
+        const preBlock = editor.dom.getParent(node, 'pre');
+        if (preBlock) {
+          e.preventDefault();
+          editor.undoManager.transact(() => {
+            // Create new paragraph after the pre block
+            const p = editor.dom.create('p', {}, '<br>');
+            editor.dom.insertAfter(p, preBlock);
+            // Move cursor to the new paragraph
+            editor.selection.setCursorLocation(p, 0);
+          });
+        }
+      }
+    });
   }
 
   // Insert Element Template
