@@ -149,23 +149,68 @@
 }
 
 .search-box {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  position: relative;
   flex: 1;
-  min-width: 200px;
+  min-width: 250px;
+  max-width: 400px;
 }
 
-.search-box i {
+.search-box .search-icon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
   color: var(--text-secondary);
+  pointer-events: none;
 }
 
 .search-box input {
-  flex: 1;
-  padding: 0.5rem;
+  width: 100%;
+  padding: 0.5rem 2.25rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+}
+
+.search-box input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(8, 145, 178, 0.1);
+}
+
+.search-box .clear-btn {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.25rem;
+}
+
+.search-box .clear-btn:hover {
+  color: var(--text-color);
+  background: var(--hover-bg);
+}
+
+/* Date inputs */
+.filter-group input[type="date"] {
+  padding: 0.4375rem 0.5rem;
   border: 1px solid var(--border-color);
   border-radius: 0.25rem;
   font-size: 0.875rem;
+  min-width: 140px;
+}
+
+.filter-group input[type="date"]:focus {
+  outline: none;
+  border-color: var(--primary-color);
 }
 
 .filter-controls {

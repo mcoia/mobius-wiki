@@ -1,9 +1,9 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { Observable, BehaviorSubject, of } from 'rxjs';
-import { switchMap, catchError, shareReplay, map, tap } from 'rxjs/operators';
+import { Observable, BehaviorSubject, Subject, of } from 'rxjs';
+import { switchMap, catchError, shareReplay, map, tap, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { BaseChartDirective } from 'ng2-charts';
 import { Chart, ChartConfiguration, ChartData, registerables } from 'chart.js';
 
@@ -38,7 +38,7 @@ interface FilterState extends FileFilters {
   templateUrl: './files.component.html',
   styleUrl: './files.component.css',
 })
-export class FilesComponent implements OnInit {
+export class FilesComponent implements OnInit, OnDestroy {
   // Observable streams
   files$!: Observable<FileWithMeta[]>;
   meta$!: Observable<{ total: number; page: number; limit: number; totalPages: number }>;
@@ -49,6 +49,10 @@ export class FilesComponent implements OnInit {
 
   // Refresh triggers
   private refreshTrigger$ = new BehaviorSubject<void>(undefined);
+
+  // Debounced search
+  private searchSubject$ = new Subject<string>();
+  private destroy$ = new Subject<void>();
 
   // Filter state
   filters: FilterState = {
@@ -121,6 +125,22 @@ export class FilesComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadData();
+
+    // Setup debounced search
+    this.searchSubject$.pipe(
+      debounceTime(300),
+      distinctUntilChanged(),
+      takeUntil(this.destroy$)
+    ).subscribe(value => {
+      this.filters.search = value.trim() || null;
+      this.filters.page = 1;
+      this.refresh();
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   private loadData(): void {
@@ -190,6 +210,31 @@ export class FilesComponent implements OnInit {
 
   applySearch(): void {
     this.filters.search = this.searchInput.trim() || null;
+    this.filters.page = 1;
+    this.refresh();
+  }
+
+  onSearchInput(value: string): void {
+    this.searchSubject$.next(value);
+  }
+
+  clearSearch(): void {
+    this.searchInput = '';
+    this.searchSubject$.next('');
+  }
+
+  setDateFilter(type: 'from' | 'to', value: string | null): void {
+    if (type === 'from') {
+      this.filters.dateFrom = value || null;
+    } else {
+      this.filters.dateTo = value || null;
+    }
+    this.filters.page = 1;
+    this.refresh();
+  }
+
+  setUploaderFilter(uploaderId: number | null): void {
+    this.filters.uploadedBy = uploaderId;
     this.filters.page = 1;
     this.refresh();
   }

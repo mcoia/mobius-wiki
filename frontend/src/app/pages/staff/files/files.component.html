@@ -83,13 +83,17 @@
   <!-- Filters Section -->
   <div class="filters-section">
     <div class="search-box">
-      <i class="fas fa-search"></i>
+      <i class="fas fa-search search-icon"></i>
       <input
         type="text"
         placeholder="Search files..."
         [(ngModel)]="searchInput"
-        (keyup.enter)="applySearch()">
-      <button class="btn btn-sm" (click)="applySearch()">Search</button>
+        (ngModelChange)="onSearchInput($event)">
+      @if (searchInput) {
+        <button class="clear-btn" (click)="clearSearch()" title="Clear search">
+          <i class="fas fa-times"></i>
+        </button>
+      }
     </div>
 
     <div class="filter-controls">
@@ -103,6 +107,30 @@
           <option value="other">Other</option>
         </select>
       </div>
+
+      <div class="filter-group">
+        <label>From:</label>
+        <input type="date" [ngModel]="filters.dateFrom" (ngModelChange)="setDateFilter('from', $event)">
+      </div>
+
+      <div class="filter-group">
+        <label>To:</label>
+        <input type="date" [ngModel]="filters.dateTo" (ngModelChange)="setDateFilter('to', $event)">
+      </div>
+
+      @if (stats$ | async; as stats) {
+        @if (stats.topUploaders && stats.topUploaders.length > 0) {
+          <div class="filter-group">
+            <label>Uploader:</label>
+            <select [ngModel]="filters.uploadedBy" (ngModelChange)="setUploaderFilter($event)">
+              <option [ngValue]="null">All Uploaders</option>
+              @for (uploader of stats.topUploaders; track uploader.id) {
+                <option [ngValue]="uploader.id">{{ uploader.name }}</option>
+              }
+            </select>
+          </div>
+        }
+      }
 
       <div class="filter-group">
         <label class="checkbox-label">
