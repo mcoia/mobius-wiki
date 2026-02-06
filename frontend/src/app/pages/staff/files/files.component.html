@@ -1,0 +1,452 @@
+<div class="files-panel">
+  <!-- Storage Stats Section -->
+  @if (stats$ | async; as stats) {
+    <div class="stats-section">
+      <div class="stats-cards">
+        <div class="stat-card">
+          <div class="stat-icon">
+            <i class="fas fa-file"></i>
+          </div>
+          <div class="stat-content">
+            <span class="stat-value">{{ stats.totals.totalFiles }}</span>
+            <span class="stat-label">Total Files</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">
+            <i class="fas fa-database"></i>
+          </div>
+          <div class="stat-content">
+            <span class="stat-value">{{ formatSize(stats.totals.totalSize) }}</span>
+            <span class="stat-label">Total Storage</span>
+          </div>
+        </div>
+        <div class="stat-card warning" [class.highlight]="stats.orphanedCount > 0">
+          <div class="stat-icon">
+            <i class="fas fa-unlink"></i>
+          </div>
+          <div class="stat-content">
+            <span class="stat-value">{{ stats.orphanedCount }}</span>
+            <span class="stat-label">Orphaned Files</span>
+          </div>
+        </div>
+        <div class="stat-card muted">
+          <div class="stat-icon">
+            <i class="fas fa-trash"></i>
+          </div>
+          <div class="stat-content">
+            <span class="stat-value">{{ stats.totals.deletedFiles }}</span>
+            <span class="stat-label">Deleted Files</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats-details">
+        <!-- File Type Chart -->
+        <div class="chart-container">
+          <h4>Files by Type</h4>
+          @if (typeChartData$ | async; as chartData) {
+            <div class="chart-wrapper">
+              <canvas baseChart
+                      [data]="chartData"
+                      type="doughnut"
+                      [options]="doughnutChartOptions">
+              </canvas>
+            </div>
+          } @else {
+            <div class="chart-empty">No data available</div>
+          }
+        </div>
+
+        <!-- Top Uploaders -->
+        <div class="top-uploaders">
+          <h4>Top Uploaders</h4>
+          @if (stats.topUploaders.length > 0) {
+            <ul class="uploader-list">
+              @for (uploader of stats.topUploaders.slice(0, 5); track uploader.id) {
+                <li class="uploader-item">
+                  <span class="uploader-name">{{ uploader.name }}</span>
+                  <span class="uploader-stats">
+                    {{ uploader.fileCount }} files ({{ formatSize(uploader.totalSize) }})
+                  </span>
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="no-data">No uploaders yet</p>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Filters Section -->
+  <div class="filters-section">
+    <div class="search-box">
+      <i class="fas fa-search"></i>
+      <input
+        type="text"
+        placeholder="Search files..."
+        [(ngModel)]="searchInput"
+        (keyup.enter)="applySearch()">
+      <button class="btn btn-sm" (click)="applySearch()">Search</button>
+    </div>
+
+    <div class="filter-controls">
+      <div class="filter-group">
+        <label>Type:</label>
+        <select [ngModel]="filters.type" (ngModelChange)="setTypeFilter($event)">
+          <option [ngValue]="null">All Types</option>
+          <option value="image">Images</option>
+          <option value="document">Documents</option>
+          <option value="archive">Archives</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label class="checkbox-label">
+          <input type="checkbox" [checked]="filters.orphaned" (change)="toggleOrphaned()">
+          Orphaned Only
+        </label>
+      </div>
+
+      <div class="filter-group">
+        <label class="checkbox-label">
+          <input type="checkbox" [checked]="filters.includeDeleted" (change)="toggleIncludeDeleted()">
+          Include Deleted
+        </label>
+      </div>
+
+      <button class="btn btn-text" (click)="clearFilters()">
+        <i class="fas fa-times"></i> Clear Filters
+      </button>
+
+      <button class="btn btn-text" (click)="refresh()">
+        <i class="fas fa-sync"></i> Refresh
+      </button>
+    </div>
+  </div>
+
+  <!-- Files Table -->
+  <div class="table-container" [class.loading]="loading">
+    @if (loading) {
+      <div class="loading-overlay">
+        <i class="fas fa-spinner fa-spin"></i>
+      </div>
+    }
+
+    <table class="files-table">
+      <thead>
+        <tr>
+          <th class="col-preview">Preview</th>
+          <th class="col-filename sortable" (click)="sort('filename')">
+            Filename <i class="fas {{ getSortIcon('filename') }}"></i>
+          </th>
+          <th class="col-type sortable" (click)="sort('mime_type')">
+            Type <i class="fas {{ getSortIcon('mime_type') }}"></i>
+          </th>
+          <th class="col-size sortable" (click)="sort('size_bytes')">
+            Size <i class="fas {{ getSortIcon('size_bytes') }}"></i>
+          </th>
+          <th class="col-uploader">Uploader</th>
+          <th class="col-date sortable" (click)="sort('uploaded_at')">
+            Uploaded <i class="fas {{ getSortIcon('uploaded_at') }}"></i>
+          </th>
+          <th class="col-links">Links</th>
+          <th class="col-actions">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (files$ | async; as files) {
+          @for (file of files; track trackByFileId($index, file)) {
+            <tr [class.deleted]="file.deleted_at">
+              <td class="col-preview">
+                @if (isImage(file.mime_type)) {
+                  <img [src]="getThumbnailUrl(file)" alt="thumbnail" class="thumbnail">
+                } @else {
+                  <i class="fas {{ getFileIcon(file.mime_type) }} file-icon"></i>
+                }
+              </td>
+              <td class="col-filename">
+                <span class="filename" [title]="file.filename">{{ file.filename }}</span>
+                @if (file.deleted_at) {
+                  <span class="badge badge-deleted">Deleted</span>
+                }
+              </td>
+              <td class="col-type">
+                <span class="badge badge-type badge-{{ getFileCategory(file.mime_type) }}">
+                  {{ getFileCategory(file.mime_type) }}
+                </span>
+              </td>
+              <td class="col-size">{{ formatSize(file.size_bytes) }}</td>
+              <td class="col-uploader">
+                @if (file.uploader_name) {
+                  <span [title]="file.uploader_email || ''">{{ file.uploader_name }}</span>
+                } @else {
+                  <span class="text-muted">Unknown</span>
+                }
+              </td>
+              <td class="col-date">{{ formatDate(file.uploaded_at) }}</td>
+              <td class="col-links">
+                <span class="link-count" [class.orphaned]="file.link_count === 0">
+                  {{ file.link_count }}
+                </span>
+              </td>
+              <td class="col-actions">
+                <div class="action-buttons">
+                  <button class="btn btn-icon" title="View Details" (click)="openDetailsModal(file)">
+                    <i class="fas fa-info-circle"></i>
+                  </button>
+                  <button class="btn btn-icon" title="Download" (click)="downloadFile(file)">
+                    <i class="fas fa-download"></i>
+                  </button>
+                  @if (!file.deleted_at) {
+                    <button class="btn btn-icon" title="Replace" (click)="openReplaceModal(file)">
+                      <i class="fas fa-sync"></i>
+                    </button>
+                    <button class="btn btn-icon btn-danger" title="Delete" (click)="deleteFile(file)">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  } @else {
+                    <button class="btn btn-icon btn-success" title="Restore" (click)="restoreFile(file)">
+                      <i class="fas fa-undo"></i>
+                    </button>
+                  }
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="8" class="empty-state">
+                <i class="fas fa-folder-open"></i>
+                <p>No files found</p>
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  @if (meta$ | async; as meta) {
+    @if (meta.totalPages > 1) {
+      <div class="pagination">
+        <button
+          class="btn btn-sm"
+          [disabled]="meta.page === 1"
+          (click)="setPage(meta.page - 1)">
+          <i class="fas fa-chevron-left"></i>
+        </button>
+
+        @for (pageNum of getPageNumbers(meta); track pageNum) {
+          <button
+            class="btn btn-sm"
+            [class.active]="pageNum === meta.page"
+            (click)="setPage(pageNum)">
+            {{ pageNum }}
+          </button>
+        }
+
+        <button
+          class="btn btn-sm"
+          [disabled]="meta.page === meta.totalPages"
+          (click)="setPage(meta.page + 1)">
+          <i class="fas fa-chevron-right"></i>
+        </button>
+
+        <span class="pagination-info">
+          Page {{ meta.page }} of {{ meta.totalPages }} ({{ meta.total }} files)
+        </span>
+      </div>
+    }
+  }
+</div>
+
+<!-- File Details Modal -->
+@if (showDetailsModal && selectedFile) {
+  <div class="modal-backdrop" (click)="closeDetailsModal()">
+    <div class="modal-content modal-lg" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>File Details</h3>
+        <button class="btn btn-icon" (click)="closeDetailsModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        @if (loadingDetails) {
+          <div class="loading-state">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Loading details...</p>
+          </div>
+        } @else {
+          <div class="details-grid">
+            <!-- File Preview -->
+            <div class="detail-section preview-section">
+              @if (isImage(selectedFile.mime_type)) {
+                <img [src]="getThumbnailUrl(selectedFile)" alt="preview" class="file-preview">
+              } @else {
+                <div class="file-preview-icon">
+                  <i class="fas {{ getFileIcon(selectedFile.mime_type) }}"></i>
+                </div>
+              }
+            </div>
+
+            <!-- File Info -->
+            <div class="detail-section info-section">
+              <h4>{{ selectedFile.filename }}</h4>
+              <dl class="info-list">
+                <dt>Type</dt>
+                <dd>{{ selectedFile.mime_type }}</dd>
+                <dt>Size</dt>
+                <dd>{{ formatSize(selectedFile.size_bytes) }}</dd>
+                <dt>Uploaded</dt>
+                <dd>{{ formatDate(selectedFile.uploaded_at) }}</dd>
+                <dt>Uploaded By</dt>
+                <dd>{{ selectedFile.uploader_name || 'Unknown' }}</dd>
+                <dt>Links</dt>
+                <dd>{{ selectedFile.link_count }}</dd>
+              </dl>
+
+              <!-- Description -->
+              <div class="description-section">
+                <label>Description</label>
+                @if (editingDescription) {
+                  <textarea
+                    [(ngModel)]="descriptionInput"
+                    rows="3"
+                    placeholder="Add a description..."></textarea>
+                  <div class="description-actions">
+                    <button class="btn btn-sm btn-primary" (click)="saveDescription()" [disabled]="savingDescription">
+                      @if (savingDescription) {
+                        <i class="fas fa-spinner fa-spin"></i>
+                      } @else {
+                        Save
+                      }
+                    </button>
+                    <button class="btn btn-sm" (click)="cancelEditDescription()">Cancel</button>
+                  </div>
+                } @else {
+                  <p class="description-text">{{ selectedFile.description || 'No description' }}</p>
+                  <button class="btn btn-sm btn-text" (click)="startEditDescription()">
+                    <i class="fas fa-edit"></i> Edit
+                  </button>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Linked Content -->
+          <div class="detail-section">
+            <h4>Linked Content ({{ fileLinks.length }})</h4>
+            @if (fileLinks.length > 0) {
+              <ul class="links-list">
+                @for (link of fileLinks; track link.id) {
+                  <li class="link-item">
+                    <i class="fas fa-{{ link.linkable_type === 'page' ? 'file-alt' : link.linkable_type === 'wiki' ? 'book' : 'folder' }}"></i>
+                    <span class="link-type">{{ link.linkable_type }}</span>
+                    @if (getPageUrl(link)) {
+                      <a [routerLink]="getPageUrl(link)">{{ link.linked_title || 'Untitled' }}</a>
+                    } @else {
+                      <span>{{ link.linked_title || 'Untitled' }}</span>
+                    }
+                    <span class="link-meta">
+                      linked {{ formatDate(link.created_at) }}
+                      @if (link.created_by_name) {
+                        by {{ link.created_by_name }}
+                      }
+                    </span>
+                  </li>
+                }
+              </ul>
+            } @else {
+              <p class="no-data">No linked content</p>
+            }
+          </div>
+
+          <!-- Audit Log -->
+          <div class="detail-section">
+            <h4>Audit Log</h4>
+            @if (auditLogs.length > 0) {
+              <ul class="audit-list">
+                @for (log of auditLogs; track log.id) {
+                  <li class="audit-item">
+                    <i class="fas {{ getActionIcon(log.action) }}"></i>
+                    <span class="audit-action">{{ formatActionLabel(log.action) }}</span>
+                    @if (log.actor_name) {
+                      <span class="audit-actor">by {{ log.actor_name }}</span>
+                    }
+                    <span class="audit-date">{{ formatDate(log.created_at) }}</span>
+                  </li>
+                }
+              </ul>
+            } @else {
+              <p class="no-data">No audit logs</p>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn" (click)="closeDetailsModal()">Close</button>
+        <button class="btn btn-primary" (click)="downloadFile(selectedFile)">
+          <i class="fas fa-download"></i> Download
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Replace File Modal -->
+@if (showReplaceModal && selectedFile) {
+  <div class="modal-backdrop" (click)="closeReplaceModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Replace File</h3>
+        <button class="btn btn-icon" (click)="closeReplaceModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <p class="replace-info">
+          You are replacing: <strong>{{ selectedFile.filename }}</strong>
+        </p>
+        <p class="replace-warning">
+          <i class="fas fa-exclamation-triangle"></i>
+          This will replace the file content. Links and access rules will be preserved.
+        </p>
+
+        <div class="file-input-wrapper">
+          <input
+            type="file"
+            id="replaceFileInput"
+            (change)="onReplaceFileSelected($event)">
+          <label for="replaceFileInput" class="file-input-label">
+            @if (replaceFile) {
+              <i class="fas fa-check"></i> {{ replaceFile.name }}
+            } @else {
+              <i class="fas fa-upload"></i> Select new file...
+            }
+          </label>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn" (click)="closeReplaceModal()">Cancel</button>
+        <button
+          class="btn btn-primary"
+          [disabled]="!replaceFile || replacing"
+          (click)="confirmReplace()">
+          @if (replacing) {
+            <i class="fas fa-spinner fa-spin"></i> Replacing...
+          } @else {
+            <i class="fas fa-sync"></i> Replace File
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}

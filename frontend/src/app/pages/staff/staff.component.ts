@@ -5,20 +5,21 @@ import { LibraryStaffComponent } from './library-staff/library-staff.component';
 import { LibrariesComponent } from './libraries/libraries.component';
 import { ContentAccessComponent } from './content-access/content-access.component';
 import { AnalyticsComponent } from './analytics/analytics.component';
+import { FilesComponent } from './files/files.component';
 
-type TabType = 'library-staff' | 'libraries' | 'content-access' | 'analytics';
+type TabType = 'library-staff' | 'libraries' | 'content-access' | 'analytics' | 'files';
 
 @Component({
   selector: 'app-staff',
   standalone: true,
-  imports: [CommonModule, RouterModule, LibraryStaffComponent, LibrariesComponent, ContentAccessComponent, AnalyticsComponent],
+  imports: [CommonModule, RouterModule, LibraryStaffComponent, LibrariesComponent, ContentAccessComponent, AnalyticsComponent, FilesComponent],
   templateUrl: './staff.component.html',
   styleUrl: './staff.component.css',
 })
 export class StaffComponent implements OnInit {
   activeTab: TabType = 'library-staff';
 
-  private readonly validTabs: TabType[] = ['library-staff', 'libraries', 'content-access', 'analytics'];
+  private readonly validTabs: TabType[] = ['library-staff', 'libraries', 'content-access', 'analytics', 'files'];
 
   constructor(
     private route: ActivatedRoute,

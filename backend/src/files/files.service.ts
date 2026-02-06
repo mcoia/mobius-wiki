@@ -4,6 +4,8 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as crypto from 'crypto';
 
+import { FileAdminQueryDto } from './dto/file-admin-query.dto';
+
 @Injectable()
 export class FilesService {
   private readonly uploadDir = path.join(process.cwd(), 'uploads');
@@ -266,5 +268,395 @@ export class FilesService {
     if (rows.length === 0) {
       throw new NotFoundException(`${linkableType} with ID ${linkableId} not found`);
     }
+  }
+
+  // ==========================================================================
+  // ADMIN METHODS
+  // ==========================================================================
+
+  /**
+   * Get files with filters, pagination, and sorting for admin panel
+   */
+  async findAllAdmin(query: FileAdminQueryDto) {
+    const {
+      type,
+      uploadedBy,
+      dateFrom,
+      dateTo,
+      search,
+      orphaned,
+      includeDeleted = false,
+      page = 1,
+      limit = 25,
+      sortBy = 'uploaded_at',
+      sortOrder = 'desc',
+    } = query;
+
+    const offset = (page - 1) * limit;
+    const conditions: string[] = [];
+    const params: any[] = [];
+    let paramIndex = 1;
+
+    // Base deleted filter
+    if (!includeDeleted) {
+      conditions.push(`f.deleted_at IS NULL`);
+    }
+
+    // Type filter (based on MIME type)
+    if (type) {
+      switch (type) {
+        case 'image':
+          conditions.push(`f.mime_type LIKE 'image/%'`);
+          break;
+        case 'document':
+          conditions.push(`(f.mime_type LIKE '%pdf%' OR f.mime_type LIKE '%word%' OR f.mime_type LIKE '%excel%' OR f.mime_type LIKE '%spreadsheet%' OR f.mime_type LIKE '%powerpoint%' OR f.mime_type LIKE '%presentation%' OR f.mime_type LIKE 'text/%')`);
+          break;
+        case 'archive':
+          conditions.push(`(f.mime_type LIKE '%zip%' OR f.mime_type LIKE '%tar%' OR f.mime_type LIKE '%rar%' OR f.mime_type LIKE '%gzip%')`);
+          break;
+        case 'other':
+          conditions.push(`NOT (f.mime_type LIKE 'image/%' OR f.mime_type LIKE '%pdf%' OR f.mime_type LIKE '%word%' OR f.mime_type LIKE '%excel%' OR f.mime_type LIKE '%zip%')`);
+          break;
+      }
+    }
+
+    // Uploader filter
+    if (uploadedBy) {
+      conditions.push(`f.uploaded_by = $${paramIndex}`);
+      params.push(uploadedBy);
+      paramIndex++;
+    }
+
+    // Date range filter
+    if (dateFrom) {
+      conditions.push(`f.uploaded_at >= $${paramIndex}`);
+      params.push(dateFrom);
+      paramIndex++;
+    }
+    if (dateTo) {
+      conditions.push(`f.uploaded_at <= $${paramIndex}`);
+      params.push(dateTo);
+      paramIndex++;
+    }
+
+    // Search filter
+    if (search) {
+      conditions.push(`(f.filename ILIKE $${paramIndex} OR f.description ILIKE $${paramIndex})`);
+      params.push(`%${search}%`);
+      paramIndex++;
+    }
+
+    // Orphaned filter (files not linked to any content)
+    let joinClause = '';
+    if (orphaned) {
+      joinClause = `LEFT JOIN wiki.file_links fl ON f.id = fl.file_id`;
+      conditions.push(`fl.id IS NULL`);
+    }
+
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+    // Get total count
+    const countQuery = `
+      SELECT COUNT(DISTINCT f.id) as total
+      FROM wiki.files f
+      ${joinClause}
+      ${whereClause}
+    `;
+    const countResult = await this.pool.query(countQuery, params);
+    const total = parseInt(countResult.rows[0].total, 10);
+
+    // Validate sort column (prevent SQL injection)
+    const validSortColumns = ['filename', 'size_bytes', 'uploaded_at', 'mime_type'];
+    const safeSort = validSortColumns.includes(sortBy) ? sortBy : 'uploaded_at';
+    const safeOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
+
+    // Get paginated data with uploader info
+    const dataQuery = `
+      SELECT
+        f.*,
+        u.name as uploader_name,
+        u.email as uploader_email,
+        (SELECT COUNT(*) FROM wiki.file_links fl WHERE fl.file_id = f.id) as link_count,
+        (SELECT COUNT(*) FROM wiki.access_rules ar WHERE ar.ruleable_type = 'file' AND ar.ruleable_id = f.id) as access_rule_count
+      FROM wiki.files f
+      LEFT JOIN wiki.users u ON f.uploaded_by = u.id
+      ${joinClause}
+      ${whereClause}
+      GROUP BY f.id, u.name, u.email
+      ORDER BY f.${safeSort} ${safeOrder}
+      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+    `;
+    params.push(limit, offset);
+
+    const dataResult = await this.pool.query(dataQuery, params);
+
+    return {
+      data: dataResult.rows,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  /**
+   * Get storage statistics
+   */
+  async getStorageStats() {
+    // Total files and size
+    const totalsQuery = `
+      SELECT
+        COUNT(*) as total_files,
+        COALESCE(SUM(size_bytes), 0) as total_size,
+        COUNT(*) FILTER (WHERE deleted_at IS NOT NULL) as deleted_files,
+        COALESCE(SUM(size_bytes) FILTER (WHERE deleted_at IS NOT NULL), 0) as deleted_size
+      FROM wiki.files
+    `;
+    const totalsResult = await this.pool.query(totalsQuery);
+
+    // Files by type
+    const typeQuery = `
+      SELECT
+        CASE
+          WHEN mime_type LIKE 'image/%' THEN 'image'
+          WHEN mime_type LIKE '%pdf%' OR mime_type LIKE '%word%' OR mime_type LIKE '%excel%' OR mime_type LIKE '%spreadsheet%' OR mime_type LIKE '%powerpoint%' OR mime_type LIKE '%presentation%' OR mime_type LIKE 'text/%' THEN 'document'
+          WHEN mime_type LIKE '%zip%' OR mime_type LIKE '%tar%' OR mime_type LIKE '%rar%' OR mime_type LIKE '%gzip%' THEN 'archive'
+          ELSE 'other'
+        END as type,
+        COUNT(*) as count,
+        COALESCE(SUM(size_bytes), 0) as size
+      FROM wiki.files
+      WHERE deleted_at IS NULL
+      GROUP BY 1
+      ORDER BY count DESC
+    `;
+    const typeResult = await this.pool.query(typeQuery);
+
+    // Top uploaders
+    const uploadersQuery = `
+      SELECT
+        u.id,
+        u.name,
+        u.email,
+        COUNT(*) as file_count,
+        COALESCE(SUM(f.size_bytes), 0) as total_size
+      FROM wiki.files f
+      JOIN wiki.users u ON f.uploaded_by = u.id
+      WHERE f.deleted_at IS NULL
+      GROUP BY u.id, u.name, u.email
+      ORDER BY file_count DESC
+      LIMIT 10
+    `;
+    const uploadersResult = await this.pool.query(uploadersQuery);
+
+    // Orphaned files count
+    const orphanedQuery = `
+      SELECT COUNT(*) as count
+      FROM wiki.files f
+      LEFT JOIN wiki.file_links fl ON f.id = fl.file_id
+      WHERE f.deleted_at IS NULL AND fl.id IS NULL
+    `;
+    const orphanedResult = await this.pool.query(orphanedQuery);
+
+    return {
+      totals: {
+        totalFiles: parseInt(totalsResult.rows[0].total_files, 10),
+        totalSize: parseInt(totalsResult.rows[0].total_size, 10),
+        deletedFiles: parseInt(totalsResult.rows[0].deleted_files, 10),
+        deletedSize: parseInt(totalsResult.rows[0].deleted_size, 10),
+      },
+      byType: typeResult.rows.map(row => ({
+        type: row.type,
+        count: parseInt(row.count, 10),
+        size: parseInt(row.size, 10),
+      })),
+      topUploaders: uploadersResult.rows.map(row => ({
+        id: row.id,
+        name: row.name,
+        email: row.email,
+        fileCount: parseInt(row.file_count, 10),
+        totalSize: parseInt(row.total_size, 10),
+      })),
+      orphanedCount: parseInt(orphanedResult.rows[0].count, 10),
+    };
+  }
+
+  /**
+   * Get orphaned files (files not linked to any content)
+   */
+  async findOrphaned() {
+    const { rows } = await this.pool.query(`
+      SELECT
+        f.*,
+        u.name as uploader_name,
+        u.email as uploader_email
+      FROM wiki.files f
+      LEFT JOIN wiki.file_links fl ON f.id = fl.file_id
+      LEFT JOIN wiki.users u ON f.uploaded_by = u.id
+      WHERE f.deleted_at IS NULL AND fl.id IS NULL
+      ORDER BY f.uploaded_at DESC
+    `);
+
+    return {
+      data: rows,
+      meta: { total: rows.length },
+    };
+  }
+
+  /**
+   * Get all content linked to a file
+   */
+  async getFileLinks(fileId: number) {
+    // Verify file exists
+    await this.findOne(fileId, true);
+
+    const { rows } = await this.pool.query(`
+      SELECT
+        fl.id,
+        fl.linkable_type,
+        fl.linkable_id,
+        fl.created_at,
+        fl.created_by,
+        u.name as created_by_name,
+        CASE
+          WHEN fl.linkable_type = 'wiki' THEN (SELECT title FROM wiki.wikis WHERE id = fl.linkable_id)
+          WHEN fl.linkable_type = 'section' THEN (SELECT title FROM wiki.sections WHERE id = fl.linkable_id)
+          WHEN fl.linkable_type = 'page' THEN (SELECT title FROM wiki.pages WHERE id = fl.linkable_id)
+          WHEN fl.linkable_type = 'user' THEN (SELECT name FROM wiki.users WHERE id = fl.linkable_id)
+        END as linked_title,
+        CASE
+          WHEN fl.linkable_type = 'page' THEN (
+            SELECT json_build_object(
+              'wiki_slug', w.slug,
+              'section_slug', s.slug,
+              'page_slug', p.slug
+            )
+            FROM wiki.pages p
+            JOIN wiki.sections s ON p.section_id = s.id
+            JOIN wiki.wikis w ON s.wiki_id = w.id
+            WHERE p.id = fl.linkable_id
+          )
+          ELSE NULL
+        END as link_path
+      FROM wiki.file_links fl
+      LEFT JOIN wiki.users u ON fl.created_by = u.id
+      WHERE fl.file_id = $1
+      ORDER BY fl.created_at DESC
+    `, [fileId]);
+
+    return {
+      data: rows,
+      meta: { total: rows.length },
+    };
+  }
+
+  /**
+   * Update file metadata (description)
+   */
+  async updateMetadata(fileId: number, data: { description?: string }) {
+    const file = await this.findOne(fileId);
+
+    const updates: string[] = [];
+    const params: any[] = [];
+    let paramIndex = 1;
+
+    if (data.description !== undefined) {
+      updates.push(`description = $${paramIndex}`);
+      params.push(data.description);
+      paramIndex++;
+    }
+
+    if (updates.length === 0) {
+      return file;
+    }
+
+    updates.push(`updated_at = NOW()`);
+    params.push(fileId);
+
+    const { rows } = await this.pool.query(
+      `UPDATE wiki.files
+       SET ${updates.join(', ')}
+       WHERE id = $${paramIndex}
+       RETURNING *`,
+      params,
+    );
+
+    return rows[0];
+  }
+
+  /**
+   * Replace file content (upload new file, keep same ID)
+   */
+  async replaceFile(fileId: number, file: Express.Multer.File, userId: number) {
+    const existingFile = await this.findOne(fileId);
+
+    // Validate file type
+    this.validateFileType(file);
+
+    // Validate file size
+    const maxSizeBytes = await this.getMaxUploadSizeBytes();
+    if (file.size > maxSizeBytes) {
+      const maxMb = maxSizeBytes / (1024 * 1024);
+      const fileMb = (file.size / (1024 * 1024)).toFixed(2);
+      throw new BadRequestException(
+        `File size (${fileMb} MB) exceeds maximum allowed size (${maxMb} MB)`,
+      );
+    }
+
+    // Generate new storage path
+    const fileHash = crypto.randomBytes(16).toString('hex');
+    const ext = path.extname(file.originalname);
+    const filename = `${file.originalname}_${fileHash}${ext}`;
+    const storagePath = `uploads/${filename}`;
+    const fullPath = path.join(this.uploadDir, filename);
+
+    // Save new file to disk
+    await fs.writeFile(fullPath, file.buffer);
+
+    // Delete old file from disk (best effort)
+    try {
+      const oldFullPath = path.join(process.cwd(), existingFile.storage_path);
+      await fs.unlink(oldFullPath);
+    } catch (error) {
+      // Ignore if old file doesn't exist
+    }
+
+    // Update database record
+    const { rows } = await this.pool.query(
+      `UPDATE wiki.files
+       SET filename = $1,
+           storage_path = $2,
+           mime_type = $3,
+           size_bytes = $4,
+           updated_at = NOW()
+       WHERE id = $5
+       RETURNING *`,
+      [file.originalname, storagePath, file.mimetype, file.size, fileId],
+    );
+
+    return rows[0];
+  }
+
+  /**
+   * Restore a soft-deleted file
+   */
+  async restore(fileId: number) {
+    const { rows } = await this.pool.query(
+      `UPDATE wiki.files
+       SET deleted_at = NULL,
+           deleted_by = NULL,
+           updated_at = NOW()
+       WHERE id = $1
+       RETURNING *`,
+      [fileId],
+    );
+
+    if (rows.length === 0) {
+      throw new NotFoundException(`File with ID ${fileId} not found`);
+    }
+
+    return rows[0];
   }
 }

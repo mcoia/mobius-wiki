@@ -89,3 +89,113 @@ export function validateFile(file: File, maxSizeBytes: number): { valid: boolean
   }
   return { valid: true };
 }
+
+// =============================================================================
+// ADMIN INTERFACES
+// =============================================================================
+
+/**
+ * Extended file attachment with uploader info for admin panel
+ */
+export interface FileWithMeta extends FileAttachment {
+  uploader_name: string | null;
+  uploader_email: string | null;
+  link_count: number;
+  access_rule_count: number;
+}
+
+/**
+ * Filters for admin file list
+ */
+export interface FileFilters {
+  type?: 'image' | 'document' | 'archive' | 'other' | null;
+  search?: string | null;
+  uploadedBy?: number | null;
+  dateFrom?: string | null;
+  dateTo?: string | null;
+  orphaned?: boolean;
+  includeDeleted?: boolean;
+}
+
+/**
+ * Query parameters for admin file list
+ */
+export interface FileAdminQuery extends FileFilters {
+  page?: number;
+  limit?: number;
+  sortBy?: 'filename' | 'size_bytes' | 'uploaded_at' | 'mime_type';
+  sortOrder?: 'asc' | 'desc';
+}
+
+/**
+ * Response from admin file list endpoint
+ */
+export interface FileAdminResponse {
+  data: FileWithMeta[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+
+/**
+ * Storage statistics for admin panel
+ */
+export interface StorageStats {
+  totals: {
+    totalFiles: number;
+    totalSize: number;
+    deletedFiles: number;
+    deletedSize: number;
+  };
+  byType: {
+    type: 'image' | 'document' | 'archive' | 'other';
+    count: number;
+    size: number;
+  }[];
+  topUploaders: {
+    id: number;
+    name: string;
+    email: string;
+    fileCount: number;
+    totalSize: number;
+  }[];
+  orphanedCount: number;
+}
+
+/**
+ * Linked content info for a file
+ */
+export interface FileLinkInfo {
+  id: number;
+  linkable_type: 'wiki' | 'section' | 'page' | 'user';
+  linkable_id: number;
+  created_at: string;
+  created_by: number | null;
+  created_by_name: string | null;
+  linked_title: string | null;
+  link_path: {
+    wiki_slug: string;
+    section_slug: string;
+    page_slug: string;
+  } | null;
+}
+
+/**
+ * File audit log entry
+ */
+export interface FileAuditLog {
+  id: number;
+  file_id: number | null;
+  action: 'upload' | 'download' | 'delete' | 'restore' | 'replace' |
+          'link' | 'unlink' | 'access_rule_add' | 'access_rule_remove' | 'metadata_update';
+  actor_id: number | null;
+  actor_name: string | null;
+  actor_email: string | null;
+  details: Record<string, any> | null;
+  ip_address: string | null;
+  user_agent: string | null;
+  created_at: string;
+}

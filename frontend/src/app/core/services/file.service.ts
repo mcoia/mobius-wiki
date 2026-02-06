@@ -1,9 +1,18 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpEvent } from '@angular/common/http';
+import { HttpClient, HttpEvent, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { FileAttachment, FileLink } from '../models/file.model';
+import {
+  FileAttachment,
+  FileLink,
+  FileAdminQuery,
+  FileAdminResponse,
+  FileWithMeta,
+  StorageStats,
+  FileLinkInfo,
+  FileAuditLog,
+} from '../models/file.model';
 
 /**
  * Service for file upload, download, and linking operations.
@@ -104,5 +113,90 @@ export class FileService {
    */
   getDownloadUrl(fileId: number): string {
     return `${this.apiUrl}/files/${fileId}/download`;
+  }
+
+  // ==========================================================================
+  // ADMIN METHODS
+  // ==========================================================================
+
+  /**
+   * Get files with filters, pagination, and sorting for admin panel
+   */
+  getFilesAdmin(query: FileAdminQuery): Observable<FileAdminResponse> {
+    let params = new HttpParams();
+
+    if (query.type) params = params.set('type', query.type);
+    if (query.uploadedBy) params = params.set('uploadedBy', query.uploadedBy.toString());
+    if (query.dateFrom) params = params.set('dateFrom', query.dateFrom);
+    if (query.dateTo) params = params.set('dateTo', query.dateTo);
+    if (query.search) params = params.set('search', query.search);
+    if (query.orphaned) params = params.set('orphaned', 'true');
+    if (query.includeDeleted) params = params.set('includeDeleted', 'true');
+    if (query.page) params = params.set('page', query.page.toString());
+    if (query.limit) params = params.set('limit', query.limit.toString());
+    if (query.sortBy) params = params.set('sortBy', query.sortBy);
+    if (query.sortOrder) params = params.set('sortOrder', query.sortOrder);
+
+    return this.http.get<FileAdminResponse>(`${this.apiUrl}/files/admin`, { params });
+  }
+
+  /**
+   * Get storage statistics
+   */
+  getStorageStats(): Observable<{ data: StorageStats }> {
+    return this.http.get<{ data: StorageStats }>(`${this.apiUrl}/files/admin/stats`);
+  }
+
+  /**
+   * Get orphaned files (files not linked to any content)
+   */
+  getOrphanedFiles(): Observable<{ data: FileWithMeta[]; meta: { total: number } }> {
+    return this.http.get<{ data: FileWithMeta[]; meta: { total: number } }>(`${this.apiUrl}/files/admin/orphaned`);
+  }
+
+  /**
+   * Get content linked to a file
+   */
+  getFileLinks(fileId: number): Observable<{ data: FileLinkInfo[]; meta: { total: number } }> {
+    return this.http.get<{ data: FileLinkInfo[]; meta: { total: number } }>(`${this.apiUrl}/files/${fileId}/links`);
+  }
+
+  /**
+   * Get audit logs for a file
+   */
+  getFileAuditLogs(fileId: number, limit = 50): Observable<{ data: FileAuditLog[] }> {
+    const params = new HttpParams().set('limit', limit.toString());
+    return this.http.get<{ data: FileAuditLog[] }>(`${this.apiUrl}/files/${fileId}/audit-logs`, { params });
+  }
+
+  /**
+   * Update file metadata
+   */
+  updateFile(fileId: number, data: { description?: string }): Observable<{ data: FileAttachment }> {
+    return this.http.patch<{ data: FileAttachment }>(`${this.apiUrl}/files/${fileId}`, data);
+  }
+
+  /**
+   * Replace file content with progress tracking
+   */
+  replaceFile(fileId: number, file: File): Observable<HttpEvent<{ data: FileAttachment }>> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    return this.http.post<{ data: FileAttachment }>(
+      `${this.apiUrl}/files/${fileId}/replace`,
+      formData,
+      {
+        reportProgress: true,
+        observe: 'events'
+      }
+    );
+  }
+
+  /**
+   * Restore a soft-deleted file
+   */
+  restoreFile(fileId: number): Observable<{ data: FileAttachment }> {
+    return this.http.post<{ data: FileAttachment }>(`${this.apiUrl}/files/${fileId}/restore`, {});
   }
 }
