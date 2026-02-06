@@ -1,7 +1,9 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, of, combineLatest } from 'rxjs';
-import { catchError, map, shareReplay, tap } from 'rxjs/operators';
+import { catchError, map, shareReplay, skip, tap } from 'rxjs/operators';
+
 import { ApiService } from './api.service';
+import { AuthService } from './auth.service';
 import { NavTree, NavWiki, NavSection, NavPage } from '../models/wiki.model';
 
 @Injectable({
@@ -26,10 +28,21 @@ export class NavigationService {
   filterExpandedSections$: Observable<Set<number>>;
   filterExpandedWikis$: Observable<Set<number>>;
 
-  constructor(private api: ApiService) {
+  constructor(
+    private api: ApiService,
+    private authService: AuthService
+  ) {
     // Load expanded state from localStorage
     this.loadExpandedSections();
     this.loadExpandedWikis();
+
+    // Refresh navigation when auth state changes (login/logout)
+    // Skip initial value to avoid double-load on startup since LeftSidebar.ngOnInit already loads
+    this.authService.currentUser$.pipe(
+      skip(1)
+    ).subscribe(() => {
+      this.refresh();
+    });
 
     // Create filtered nav tree observable
     this.filteredNavTree$ = combineLatest([
