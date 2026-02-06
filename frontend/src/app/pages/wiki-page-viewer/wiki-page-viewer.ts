@@ -531,7 +531,7 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
       `;
 
       btn.addEventListener('click', () => this.copyToClipboard(preElement, btn));
-      wrapper.appendChild(btn);
+      preElement.appendChild(btn);
     });
   }
 

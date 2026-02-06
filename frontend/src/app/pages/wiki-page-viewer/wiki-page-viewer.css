@@ -201,19 +201,38 @@
 
 :host ::ng-deep .page-content pre,
 :host ::ng-deep .page-content code {
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Source Code Pro',
+               'SF Mono', 'Cascadia Code', 'Consolas',
+               'Monaco', 'Menlo', monospace;
 }
 
 :host ::ng-deep .page-content pre {
-  padding: 16px;
-  border-radius: 8px;
+  position: relative;
+  background: #2d2d2d !important;
+  color: #e6e6e6 !important;
+  padding: 16px 20px;
+  border-radius: 0;
   overflow-x: auto;
   margin: 16px 0;
+  font-size: 14px;
+  line-height: 1.6;
+  letter-spacing: 0.3px;
+}
+
+:host ::ng-deep .page-content pre code {
+  background: transparent !important;
+  color: inherit !important;
+  padding: 0;
 }
 
 /* ===== Code Block Copy Button ===== */
 :host ::ng-deep .page-content .code-block-wrapper {
   position: relative;
+  margin: 16px 0;
+}
+
+:host ::ng-deep .page-content .code-block-wrapper pre {
+  margin: 0;
 }
 
 :host ::ng-deep .page-content .copy-btn {
@@ -221,13 +240,13 @@
   top: 8px;
   right: 8px;
   padding: 6px;
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid #ddd;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 4px;
   cursor: pointer;
   opacity: 0;
   transition: opacity 0.2s, background 0.2s;
-  color: #555;
+  color: #aaa;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -239,16 +258,16 @@
 }
 
 :host ::ng-deep .page-content .copy-btn:hover {
-  background: #f0f0f0;
-  color: #333;
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
 }
 
 :host ::ng-deep .page-content .copy-btn:active {
-  background: #e0e0e0;
+  background: rgba(255, 255, 255, 0.25);
 }
 
 :host ::ng-deep .page-content .copy-btn.copied {
-  background: #d4edda;
+  background: rgba(40, 167, 69, 0.3);
   border-color: #28a745;
   color: #28a745;
 }
