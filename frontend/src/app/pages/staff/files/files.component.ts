@@ -86,6 +86,11 @@ export class FilesComponent implements OnInit, OnDestroy {
   replaceFile: File | null = null;
   replacing = false;
 
+  // Lightbox state
+  showLightbox = false;
+  lightboxImageUrl: string | null = null;
+  lightboxFilename: string | null = null;
+
   // Edit description state
   editingDescription = false;
   descriptionInput = '';
@@ -438,6 +443,23 @@ export class FilesComponent implements OnInit, OnDestroy {
 
   downloadFile(file: FileWithMeta): void {
     window.open(this.fileService.getDownloadUrl(file.id), '_blank');
+  }
+
+  // ==========================================================================
+  // LIGHTBOX METHODS
+  // ==========================================================================
+
+  openLightbox(file: FileWithMeta): void {
+    if (!this.isImage(file.mime_type)) return;
+    this.lightboxImageUrl = this.fileService.getDownloadUrl(file.id);
+    this.lightboxFilename = file.filename;
+    this.showLightbox = true;
+  }
+
+  closeLightbox(): void {
+    this.showLightbox = false;
+    this.lightboxImageUrl = null;
+    this.lightboxFilename = null;
   }
 
   // ==========================================================================
