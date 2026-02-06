@@ -75,8 +75,10 @@ async function bootstrap() {
     }),
   );
 
-  // Global prefix
-  app.setGlobalPrefix('api/v1');
+  // Global prefix (exclude SEO routes so they're accessible at root)
+  app.setGlobalPrefix('api/v1', {
+    exclude: ['robots.txt', 'sitemap.xml'],
+  });
 
   // CORS (for Angular frontend)
   app.enableCors({

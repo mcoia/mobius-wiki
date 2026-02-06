@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Observable, EMPTY } from 'rxjs';
@@ -11,6 +11,7 @@ import { Wiki, Section } from '../../../core/models/wiki.model';
 import { CreateModalComponent } from '../../../shared/components/create-modal/create-modal.component';
 import { ConfirmModalComponent } from '../../../shared/components/confirm-modal/confirm-modal.component';
 import { AccessControlPanelComponent } from '../../../shared/components/access-control-panel/access-control-panel.component';
+import { SeoService } from '../../../core/services/seo.service';
 
 interface PageInfo {
   id: number;
@@ -35,7 +36,7 @@ interface SectionWithWiki extends Section {
   templateUrl: './section-detail.component.html',
   styleUrls: ['./section-detail.component.css']
 })
-export class SectionDetailComponent implements OnInit {
+export class SectionDetailComponent implements OnInit, OnDestroy {
   readonly Plus = Plus;
   readonly FileText = FileText;
   readonly Pencil = Pencil;
@@ -62,7 +63,8 @@ export class SectionDetailComponent implements OnInit {
     private router: Router,
     private wikiService: WikiService,
     private sectionService: SectionService,
-    private authService: AuthService
+    private authService: AuthService,
+    private seoService: SeoService
   ) {}
 
   ngOnInit(): void {
@@ -92,6 +94,14 @@ export class SectionDetailComponent implements OnInit {
                 }
                 // Cache section for modal operations
                 this.currentSection = { ...section, wiki };
+
+                // Update SEO meta tags
+                this.seoService.updateMetaTags({
+                  title: section.title,
+                  description: section.description || `Browse pages in the ${section.title} section`,
+                  ogType: 'website'
+                });
+
                 return this.currentSection;
               })
             );
@@ -191,5 +201,9 @@ export class SectionDetailComponent implements OnInit {
   get deleteConfirmMessage(): string {
     if (!this.currentSection) return '';
     return `Are you sure you want to delete the section "${this.currentSection.title}"? This will also delete all pages within this section. This action cannot be undone.`;
+  }
+
+  ngOnDestroy(): void {
+    this.seoService.resetToDefaults();
   }
 }

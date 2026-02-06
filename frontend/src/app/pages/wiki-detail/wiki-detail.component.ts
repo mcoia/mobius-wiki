@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Observable, EMPTY } from 'rxjs';
@@ -11,6 +11,7 @@ import { Wiki, Section } from '../../core/models/wiki.model';
 import { CreateModalComponent } from '../../shared/components/create-modal/create-modal.component';
 import { ConfirmModalComponent } from '../../shared/components/confirm-modal/confirm-modal.component';
 import { AccessControlPanelComponent } from '../../shared/components/access-control-panel/access-control-panel.component';
+import { SeoService } from '../../core/services/seo.service';
 
 interface SectionWithPages extends Section {
   pages?: Array<{
@@ -32,7 +33,7 @@ interface SectionWithPages extends Section {
   templateUrl: './wiki-detail.component.html',
   styleUrls: ['./wiki-detail.component.css']
 })
-export class WikiDetailComponent implements OnInit {
+export class WikiDetailComponent implements OnInit, OnDestroy {
   readonly Lock = Lock;
   readonly Plus = Plus;
   readonly FileText = FileText;
@@ -88,7 +89,8 @@ export class WikiDetailComponent implements OnInit {
     private router: Router,
     private wikiService: WikiService,
     private sectionService: SectionService,
-    private authService: AuthService
+    private authService: AuthService,
+    private seoService: SeoService
   ) {}
 
   ngOnInit(): void {
@@ -103,6 +105,14 @@ export class WikiDetailComponent implements OnInit {
       map(wiki => {
         // Cache wiki for edit/delete operations
         this.currentWiki = wiki;
+
+        // Update SEO meta tags
+        this.seoService.updateMetaTags({
+          title: wiki.title,
+          description: wiki.description || `Browse ${wiki.title} documentation`,
+          ogType: 'website'
+        });
+
         return wiki;
       }),
       catchError(error => {
@@ -463,5 +473,9 @@ export class WikiDetailComponent implements OnInit {
   get deleteWikiConfirmMessage(): string {
     if (!this.currentWiki) return '';
     return `Are you sure you want to delete the wiki "${this.currentWiki.title}"? This will delete ALL sections and pages within this wiki. This action cannot be undone.`;
+  }
+
+  ngOnDestroy(): void {
+    this.seoService.resetToDefaults();
   }
 }

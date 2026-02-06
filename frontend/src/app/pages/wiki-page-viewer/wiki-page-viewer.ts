@@ -6,6 +6,7 @@ import { WikiService } from '../../core/services/wiki.service';
 import { AuthService } from '../../core/services/auth.service';
 import { PageContextService } from '../../core/services/page-context.service';
 import { TocService, TocItem } from '../../core/services/toc.service';
+import { SeoService } from '../../core/services/seo.service';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 import { ConflictDialogService } from '../../core/services/conflict-dialog.service';
 import { EditSessionService, ActiveEditor } from '../../core/services/edit-session.service';
@@ -111,7 +112,8 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
     private confirmDialog: ConfirmDialogService,
     private conflictDialog: ConflictDialogService,
     private editSessionService: EditSessionService,
-    private toast: ToastService
+    private toast: ToastService,
+    private seoService: SeoService
   ) {}
 
   ngOnInit(): void {
@@ -174,6 +176,25 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
             this.pageContext.updateEditState({
               currentPageId: page.id
             });
+
+            // Update SEO meta tags
+            const description = this.seoService.extractDescription(page.content || '');
+            this.seoService.updateMetaTags({
+              title: page.title,
+              description,
+              ogType: 'article',
+              modifiedTime: page.updated_at
+            });
+
+            // Set JSON-LD structured data
+            const pageUrl = window.location.href;
+            this.seoService.setJsonLd(this.seoService.generateArticleSchema({
+              title: page.title,
+              description,
+              url: pageUrl,
+              dateModified: page.updated_at,
+              authorName: page.author?.name
+            }));
           }),
           catchError(err => {
             console.error('Page load error:', err);
@@ -354,6 +375,9 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
 
     // Reset page context
     this.pageContext.resetEditState();
+
+    // Reset SEO tags to defaults
+    this.seoService.resetToDefaults();
   }
 
   /**

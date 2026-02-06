@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { Observable, of } from 'rxjs';
@@ -6,6 +6,7 @@ import { map, catchError, shareReplay } from 'rxjs/operators';
 import { WikiService } from '../../core/services/wiki.service';
 import { AuthService } from '../../core/services/auth.service';
 import { Wiki } from '../../core/models/wiki.model';
+import { SeoService } from '../../core/services/seo.service';
 
 @Component({
   selector: 'app-wiki-list',
@@ -13,17 +14,25 @@ import { Wiki } from '../../core/models/wiki.model';
   templateUrl: './wiki-list.html',
   styleUrl: './wiki-list.css'
 })
-export class WikiListComponent implements OnInit {
+export class WikiListComponent implements OnInit, OnDestroy {
   wikis$!: Observable<Wiki[]>;
   canCreate$!: Observable<boolean>;
   error: string | null = null;
 
   constructor(
     private wikiService: WikiService,
-    private authService: AuthService
+    private authService: AuthService,
+    private seoService: SeoService
   ) {}
 
   ngOnInit(): void {
+    // Set SEO meta tags for wiki list page
+    this.seoService.updateMetaTags({
+      title: 'Browse Wikis',
+      description: 'Browse all available wiki documentation on MOBIUS Wiki',
+      ogType: 'website'
+    });
+
     this.wikis$ = this.wikiService.getWikis().pipe(
       map(response => response.data),
       catchError(error => {
@@ -42,5 +51,9 @@ export class WikiListComponent implements OnInit {
       }),
       shareReplay(1)
     );
+  }
+
+  ngOnDestroy(): void {
+    this.seoService.resetToDefaults();
   }
 }
