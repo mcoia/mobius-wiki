@@ -53,8 +53,8 @@
           <a [routerLink]="['/wiki', page.wiki.slug]">{{ page.wiki.title }}</a>
           <span> › </span>
         }
-        @if (page.section) {
-          <span>{{ page.section.title }}</span>
+        @if (page.wiki && page.section) {
+          <a [routerLink]="['/wiki', page.wiki.slug, page.section.slug]">{{ page.section.title }}</a>
           <span> › </span>
         }
         <span>{{ page.title }}</span>

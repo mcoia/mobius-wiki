@@ -6,7 +6,7 @@ import { Observable, Subject, combineLatest } from 'rxjs';
 import { filter, take, takeUntil, map } from 'rxjs/operators';
 import { NavigationService } from '../../core/services/navigation.service';
 import { NavTree } from '../../core/models/wiki.model';
-import { LucideAngularModule, ChevronRight, ChevronDown } from 'lucide-angular';
+import { LucideAngularModule, ChevronRight, ChevronDown, LayoutGrid } from 'lucide-angular';
 
 @Component({
   selector: 'app-left-sidebar',
@@ -26,6 +26,7 @@ export class LeftSidebar implements OnInit, OnDestroy {
   // Icons for template
   readonly ChevronRight = ChevronRight;
   readonly ChevronDown = ChevronDown;
+  readonly LayoutGrid = LayoutGrid;
 
   constructor(
     private router: Router,

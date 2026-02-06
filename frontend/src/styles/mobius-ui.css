@@ -521,6 +521,27 @@ pre code {
     color: rgba(255, 255, 255, 0.7);
 }
 
+.nav-section-header.active {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.nav-section-header.active a {
+    color: white;
+}
+
+.nav-section-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 2px;
+    flex-shrink: 0;
+}
+
+.nav-section-toggle:hover .expand-icon {
+    color: white;
+}
+
 .nav-section.expanded {
     border-left: 2px solid rgba(255, 255, 255, 0.15);
     margin-left: 28px;

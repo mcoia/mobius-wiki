@@ -7,6 +7,7 @@ import { WikiPageViewer } from './pages/wiki-page-viewer/wiki-page-viewer';
 import { WikiListComponent } from './pages/wiki-list/wiki-list';
 import { WikiCreateComponent } from './pages/wiki-create/wiki-create.component';
 import { WikiDetailComponent } from './pages/wiki-detail/wiki-detail.component';
+import { SectionDetailComponent } from './pages/wiki/section-detail/section-detail.component';
 import { AdminComponent } from './pages/admin/admin.component';
 import { StaffComponent } from './pages/staff/staff.component';
 import { ProfileComponent } from './pages/profile/profile.component';
@@ -91,6 +92,10 @@ export const routes: Routes = [
       {
         path: 'wiki/:wikiSlug/:sectionSlug/:pageSlug',
         component: WikiPageViewer  // View specific page (public, ACL enforced by backend)
+      },
+      {
+        path: 'wiki/:wikiSlug/:sectionSlug',
+        component: SectionDetailComponent  // Section overview (public)
       },
       {
         path: 'wiki/:wikiSlug',

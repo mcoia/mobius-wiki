@@ -1,0 +1,17 @@
+.browse-all-link {
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.browse-all-link a {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--gray-300);
+  text-decoration: none;
+  font-size: 0.875rem;
+}
+
+.browse-all-link a:hover {
+  color: #fff;
+}

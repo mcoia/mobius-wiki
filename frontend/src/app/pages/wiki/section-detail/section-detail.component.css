@@ -1,10 +1,39 @@
-.wiki-detail {
+.section-detail {
   max-width: 1200px;
   margin: 0 auto;
   padding: 40px 20px;
 }
 
-.wiki-header {
+/* Breadcrumb */
+.breadcrumb {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-bottom: 24px;
+}
+
+.breadcrumb a {
+  color: #0097A7;
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.breadcrumb a:hover {
+  color: #00838f;
+  text-decoration: underline;
+}
+
+.breadcrumb .separator {
+  color: #9ca3af;
+  margin: 0 4px;
+}
+
+.breadcrumb .current {
+  color: #374151;
+  font-weight: 500;
+}
+
+/* Header */
+.section-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -18,21 +47,28 @@
   flex: 1;
 }
 
-.wiki-header h1 {
+.section-header h1 {
   font-size: 2.5rem;
   font-weight: 700;
   color: #1a1a1a;
-  margin: 0 0 12px 0;
+  margin: 0;
 }
 
 .description {
   font-size: 1.125rem;
   color: #6b7280;
   line-height: 1.6;
-  margin: -24px 0 32px 0;  /* Negative top to tuck under header, bottom spacing */
+  margin: -24px 0 32px 0;
 }
 
-/* Base toolbar button (matches wiki-page-viewer) */
+/* Header actions */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Base toolbar button */
 .toolbar-btn {
   display: inline-flex;
   align-items: center;
@@ -61,7 +97,7 @@
   align-items: center;
 }
 
-/* Primary action (New Section) */
+/* Primary action */
 .toolbar-btn-primary {
   background: #0097A7;
   color: white;
@@ -73,30 +109,14 @@
   border-color: #00838f;
 }
 
-/* Icon-only button variant */
-.toolbar-btn-icon {
-  padding: 6px 8px;
-}
-
-/* Danger button for delete actions */
+/* Danger button */
 .toolbar-btn-danger:hover {
   background: #fef2f2;
   border-color: #fecaca;
   color: #dc2626;
 }
 
-/* Disabled button state */
-.toolbar-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.toolbar-btn:disabled:hover {
-  background: #f5f5f5;
-  color: #555;
-}
-
-/* Header separator between button groups */
+/* Header separator */
 .header-separator {
   display: inline-block;
   width: 1px;
@@ -106,156 +126,30 @@
   vertical-align: middle;
 }
 
-/* Archive banner styling */
-.archive-banner {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 20px;
-}
-
-.archive-banner .toolbar-btn {
-  margin-left: auto;
-}
-
-/* Bulk toggle buttons */
-.bulk-toggle-buttons {
-  display: inline-flex;
-  gap: 2px;
-}
-
-.section-block {
+/* Pages section */
+.pages-section {
   background: white;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
-  padding: 0;
-  margin-bottom: 24px;
+  padding: 28px 32px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  transition: box-shadow 0.2s;
-  overflow: hidden;
 }
 
-.section-block:hover {
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
-}
-
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px 32px;
-  margin-bottom: 0;
-  border-bottom: 1px solid #e5e7eb;
-  gap: 16px;
-  background: white;
-  z-index: 10;
-  transition: box-shadow 0.2s;
-}
-
-/* Sticky header when expanded */
-.section-header.sticky {
-  position: sticky;
-  top: 0;
-}
-
-.section-header.sticky:not(:hover) {
-  /* Subtle shadow when sticky to show it's floating */
-}
-
-/* Clickable title area */
-.section-title-area {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
-  flex: 1;
-  min-width: 0;
-}
-
-.section-title-area:hover h2 {
-  color: #0097A7;
-}
-
-.section-title-area:hover .section-chevron {
-  color: #0097A7;
-}
-
-/* Chevron icon */
-.section-chevron {
-  display: flex;
-  align-items: center;
-  color: #9ca3af;
-  flex-shrink: 0;
-  transition: transform 0.3s ease, color 0.15s;
-}
-
-.section-chevron.rotated {
-  transform: rotate(90deg);
-}
-
-/* Page count badge when collapsed */
-.page-count-badge {
-  color: #9ca3af;
-  font-size: 0.875rem;
-  font-weight: 400;
-  white-space: nowrap;
-}
-
-/* Collapsible content area */
-.section-content {
-  max-height: 2000px;
-  overflow: hidden;
-  transition: max-height 0.3s ease, padding 0.3s ease, opacity 0.2s ease;
-  padding: 0 32px 28px 32px;
-  opacity: 1;
-}
-
-.section-block.collapsed .section-content {
-  max-height: 0;
-  padding-top: 0;
-  padding-bottom: 0;
-  opacity: 0;
-}
-
-.section-block.collapsed .section-header {
-  border-bottom-color: transparent;
-}
-
-.section-actions {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.section-block h2 {
+.pages-section h2 {
   font-size: 1.375rem;
   font-weight: 700;
   color: #1a1a1a;
-  margin: 0;
-  border: none;
-  background: none;
-  transition: color 0.15s;
+  margin: 0 0 20px 0;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 /* Override any global h2 underline styles */
-.section-block h2::after {
+.pages-section h2::after {
   display: none;
 }
 
-.section-desc {
-  font-size: 0.95rem;
-  color: #4b5563;
-  line-height: 1.5;
-  margin: 0 0 20px 0;
-  padding-top: 16px;
-}
-
-/* Add top spacing to page list when there's no description */
-.section-content > .page-list:first-child,
-.section-content > .no-pages:first-child {
-  padding-top: 16px;
-}
-
+/* Page list */
 .page-list {
   list-style: none;
   padding: 0;
@@ -369,18 +263,19 @@
   color: #374151;
 }
 
+/* No pages state */
 .no-pages {
-  font-size: 0.9rem;
-  color: #6b7280;
-  font-style: normal;
-  margin: 16px 0 0 0;
-  padding: 16px 20px;
-  background: #f9fafb;
-  border-radius: 6px;
-  border: 1px dashed #e5e7eb;
   text-align: center;
+  padding: 40px 20px;
+  color: #6b7280;
 }
 
+.no-pages p {
+  margin: 0 0 16px 0;
+  font-size: 1rem;
+}
+
+/* Loading state */
 .loading {
   padding: 60px 20px;
   text-align: center;
@@ -388,17 +283,31 @@
   font-size: 1.1rem;
 }
 
+/* Note boxes */
+.note-box {
+  padding: 16px 20px;
+  border-radius: 6px;
+  margin-bottom: 24px;
+}
+
+.note-box.danger {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+}
+
+/* Responsive */
 @media (max-width: 768px) {
-  .wiki-detail {
+  .section-detail {
     padding: 20px;
   }
 
-  .wiki-header {
+  .section-header {
     flex-direction: column;
     align-items: stretch;
   }
 
-  .wiki-header h1 {
+  .section-header h1 {
     font-size: 2rem;
   }
 
@@ -408,25 +317,11 @@
     gap: 8px;
   }
 
-  .section-header {
+  .pages-section {
     padding: 16px;
-    flex-wrap: wrap;
   }
 
-  .section-content {
-    padding: 0 16px 16px 16px;
-  }
-
-  .section-block.collapsed .section-content {
-    padding-top: 0;
-    padding-bottom: 0;
-  }
-
-  .section-block h2 {
+  .pages-section h2 {
     font-size: 1.25rem;
-  }
-
-  .section-title-area {
-    gap: 8px;
   }
 }

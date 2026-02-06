@@ -17,6 +17,14 @@
     </div>
   </div>
 
+  <!-- Browse All Wikis Link -->
+  <div class="browse-all-link">
+    <a routerLink="/wiki">
+      <lucide-icon [img]="LayoutGrid" [size]="14"></lucide-icon>
+      Browse All Wikis
+    </a>
+  </div>
+
   @if (filteredNavTree$ | async; as navTree) {
     @if (combinedExpandedWikis$ | async; as expandedWikis) {
       @if (combinedExpandedSections$ | async; as expandedSections) {
@@ -47,16 +55,19 @@
                   <div class="nav-sections">
                     @for (section of wiki.sections; track section.id) {
                       <div class="nav-section" [class.expanded]="expandedSections.has(section.id)">
-                        <!-- Section header (clickable to expand pages) -->
-                        <div class="nav-section-header"
-                             [class.active]="isSectionActive(wiki.slug, section.slug)"
-                             (click)="toggleSection(section.id, $event)">
-                          <lucide-icon
-                            [img]="expandedSections.has(section.id) ? ChevronDown : ChevronRight"
-                            class="expand-icon"
-                            [size]="14">
-                          </lucide-icon>
-                          <span class="nav-section-title">{{ section.title }}</span>
+                        <!-- Section header -->
+                        <div class="nav-section-header" [class.active]="isSectionActive(wiki.slug, section.slug)">
+                          <div class="nav-section-toggle" (click)="toggleSection(section.id, $event)">
+                            <lucide-icon
+                              [img]="expandedSections.has(section.id) ? ChevronDown : ChevronRight"
+                              class="expand-icon"
+                              [size]="14">
+                            </lucide-icon>
+                          </div>
+                          <a class="nav-section-title"
+                             [routerLink]="['/wiki', wiki.slug, section.slug]">
+                            {{ section.title }}
+                          </a>
                         </div>
 
                         <!-- Pages (expanded when section is clicked) -->

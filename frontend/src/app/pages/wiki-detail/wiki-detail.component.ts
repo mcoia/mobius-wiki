@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Observable, EMPTY } from 'rxjs';
 import { map, switchMap, shareReplay, catchError, take } from 'rxjs/operators';
-import { LucideAngularModule, Lock, Plus, FileText, Pencil, Settings, Trash2, ChevronUp, ChevronDown, Archive, ArchiveRestore, Paperclip } from 'lucide-angular';
+import { LucideAngularModule, Lock, Plus, FileText, Pencil, Settings, Trash2, ChevronUp, ChevronDown, ChevronRight, ChevronsDown, ChevronsUp, Archive, ArchiveRestore, Paperclip } from 'lucide-angular';
 import { WikiService } from '../../core/services/wiki.service';
 import { SectionService } from '../../core/services/section.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -41,9 +41,16 @@ export class WikiDetailComponent implements OnInit {
   readonly Trash2 = Trash2;
   readonly ChevronUp = ChevronUp;
   readonly ChevronDown = ChevronDown;
+  readonly ChevronRight = ChevronRight;
+  readonly ChevronsDown = ChevronsDown;
+  readonly ChevronsUp = ChevronsUp;
   readonly Archive = Archive;
   readonly ArchiveRestore = ArchiveRestore;
   readonly Paperclip = Paperclip;
+
+  // Collapsible sections
+  expandedSections: Set<number> = new Set();
+  private readonly STORAGE_KEY_PREFIX = 'mobius_wiki_detail_sections_';
 
   wiki$!: Observable<Wiki>;
   sections$!: Observable<SectionWithPages[]>;
@@ -112,6 +119,10 @@ export class WikiDetailComponent implements OnInit {
       map(sections => {
         // Cache sections for reordering operations
         this.sectionsCache = sections;
+        // Load expanded sections state from localStorage
+        if (this.currentWiki) {
+          this.loadExpandedSections(this.currentWiki.id);
+        }
         return sections;
       }),
       catchError(error => {
@@ -129,6 +140,69 @@ export class WikiDetailComponent implements OnInit {
       }),
       shareReplay(1)
     );
+  }
+
+  // Collapsible section methods
+  toggleSection(sectionId: number): void {
+    if (this.expandedSections.has(sectionId)) {
+      this.expandedSections.delete(sectionId);
+    } else {
+      this.expandedSections.add(sectionId);
+    }
+    if (this.currentWiki) {
+      this.saveExpandedSections(this.currentWiki.id);
+    }
+  }
+
+  isSectionExpanded(sectionId: number): boolean {
+    return this.expandedSections.has(sectionId);
+  }
+
+  private loadExpandedSections(wikiId: number): void {
+    try {
+      const key = `${this.STORAGE_KEY_PREFIX}${wikiId}`;
+      const stored = localStorage.getItem(key);
+      if (stored) {
+        const ids: number[] = JSON.parse(stored);
+        this.expandedSections = new Set(ids);
+      } else {
+        // First visit: expand all sections by default
+        this.sectionsCache.forEach(section => {
+          this.expandedSections.add(section.id);
+        });
+      }
+    } catch {
+      // Fallback: expand all sections
+      this.sectionsCache.forEach(section => {
+        this.expandedSections.add(section.id);
+      });
+    }
+  }
+
+  private saveExpandedSections(wikiId: number): void {
+    try {
+      const key = `${this.STORAGE_KEY_PREFIX}${wikiId}`;
+      const ids = Array.from(this.expandedSections);
+      localStorage.setItem(key, JSON.stringify(ids));
+    } catch {
+      // Ignore storage errors
+    }
+  }
+
+  expandAllSections(): void {
+    this.sectionsCache.forEach(section => {
+      this.expandedSections.add(section.id);
+    });
+    if (this.currentWiki) {
+      this.saveExpandedSections(this.currentWiki.id);
+    }
+  }
+
+  collapseAllSections(): void {
+    this.expandedSections.clear();
+    if (this.currentWiki) {
+      this.saveExpandedSections(this.currentWiki.id);
+    }
   }
 
 

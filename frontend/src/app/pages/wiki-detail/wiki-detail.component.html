@@ -51,6 +51,15 @@
             <lucide-angular [img]="Lock" [size]="16"></lucide-angular>
             <span>Permissions</span>
           </button>
+          <!-- Bulk toggle buttons -->
+          <div class="bulk-toggle-buttons">
+            <button (click)="expandAllSections()" class="toolbar-btn toolbar-btn-icon" title="Expand all sections">
+              <lucide-angular [img]="ChevronsDown" [size]="16"></lucide-angular>
+            </button>
+            <button (click)="collapseAllSections()" class="toolbar-btn toolbar-btn-icon" title="Collapse all sections">
+              <lucide-angular [img]="ChevronsUp" [size]="16"></lucide-angular>
+            </button>
+          </div>
           <button (click)="showCreateSectionModal = true" class="toolbar-btn toolbar-btn-primary">
             <lucide-angular [img]="Plus" [size]="16"></lucide-angular>
             <span>New Section</span>
@@ -82,39 +91,50 @@
         </div>
       } @else {
         @for (section of sections; track section.id) {
-          <div class="section-block">
-            <div class="section-header">
-              <h2>{{ section.title }}</h2>
+          <div class="section-block" [class.collapsed]="!isSectionExpanded(section.id)" [class.expanded]="isSectionExpanded(section.id)">
+            <div class="section-header" [class.sticky]="isSectionExpanded(section.id)">
+              <div class="section-title-area" (click)="toggleSection(section.id)">
+                <lucide-angular
+                  [img]="ChevronRight"
+                  [size]="18"
+                  class="section-chevron"
+                  [class.rotated]="isSectionExpanded(section.id)">
+                </lucide-angular>
+                <h2>{{ section.title }}</h2>
+                @if (!isSectionExpanded(section.id) && section.pages) {
+                  <span class="page-count-badge">({{ section.pages.length }} {{ section.pages.length === 1 ? 'page' : 'pages' }})</span>
+                }
+              </div>
               @if (canEdit$ | async) {
                 <div class="section-actions">
                   <button
                     class="toolbar-btn toolbar-btn-icon"
-                    (click)="onMoveSection(section, 'up')"
+                    (click)="onMoveSection(section, 'up'); $event.stopPropagation()"
                     [disabled]="isFirstSection(section)"
                     title="Move section up">
                     <lucide-angular [img]="ChevronUp" [size]="16"></lucide-angular>
                   </button>
                   <button
                     class="toolbar-btn toolbar-btn-icon"
-                    (click)="onMoveSection(section, 'down')"
+                    (click)="onMoveSection(section, 'down'); $event.stopPropagation()"
                     [disabled]="isLastSection(section)"
                     title="Move section down">
                     <lucide-angular [img]="ChevronDown" [size]="16"></lucide-angular>
                   </button>
                   <button
                     class="toolbar-btn toolbar-btn-icon"
-                    (click)="onEditSection(section)"
+                    (click)="onEditSection(section); $event.stopPropagation()"
                     title="Edit section">
                     <lucide-angular [img]="Settings" [size]="16"></lucide-angular>
                   </button>
                   <button
                     class="toolbar-btn toolbar-btn-icon toolbar-btn-danger"
-                    (click)="onDeleteSection(section)"
+                    (click)="onDeleteSection(section); $event.stopPropagation()"
                     title="Delete section">
                     <lucide-angular [img]="Trash2" [size]="16"></lucide-angular>
                   </button>
                   <button
-                    (click)="onCreatePageInSection(section)"
+                    (click)="onCreatePageInSection(section); $event.stopPropagation()"
                     class="toolbar-btn"
                     title="Create a new page in this section">
                     <lucide-angular [img]="Plus" [size]="16"></lucide-angular>
@@ -124,50 +144,52 @@
               }
             </div>
 
-            @if (section.description) {
-              <p class="section-desc">{{ section.description }}</p>
-            }
+            <div class="section-content">
+              @if (section.description) {
+                <p class="section-desc">{{ section.description }}</p>
+              }
 
-            @if (section.pages && section.pages.length > 0) {
-              <ul class="page-list">
-                @for (page of section.pages; track page.id) {
-                  <li>
-                    <lucide-angular [img]="FileText" [size]="16" class="page-icon"></lucide-angular>
-                    <a [routerLink]="['/wiki', wiki.slug, section.slug, page.slug]">
-                      {{ page.title }}
-                    </a>
-                    @if (page.attachment_count && page.attachment_count > 0) {
-                      <span class="attachment-badge">
-                        <lucide-angular [img]="Paperclip" [size]="12"></lucide-angular>
-                        {{ page.attachment_count }}
+              @if (section.pages && section.pages.length > 0) {
+                <ul class="page-list">
+                  @for (page of section.pages; track page.id) {
+                    <li>
+                      <lucide-angular [img]="FileText" [size]="16" class="page-icon"></lucide-angular>
+                      <a [routerLink]="['/wiki', wiki.slug, section.slug, page.slug]">
+                        {{ page.title }}
+                      </a>
+                      @if (page.attachment_count && page.attachment_count > 0) {
+                        <span class="attachment-badge">
+                          <lucide-angular [img]="Paperclip" [size]="12"></lucide-angular>
+                          {{ page.attachment_count }}
+                        </span>
+                      }
+                      <span class="page-meta">
+                        @if (page.updated_at) {
+                          {{ page.updated_at | date:'MMM d' }}
+                        }
+                        @if (page.updated_by_name) {
+                          · {{ page.updated_by_name }}
+                        }
                       </span>
-                    }
-                    <span class="page-meta">
-                      @if (page.updated_at) {
-                        {{ page.updated_at | date:'MMM d' }}
+                      <span class="badge" [class.draft]="page.status === 'draft'"
+                                          [class.published]="page.status === 'published'">
+                        {{ page.status === 'draft' ? 'Draft' : 'Published' }}
+                      </span>
+                      @if (page.canEdit) {
+                        <button class="edit-btn"
+                                [routerLink]="['/wiki', wiki.slug, section.slug, page.slug]"
+                                [queryParams]="{edit: 'true'}"
+                                title="Edit page">
+                          <lucide-angular [img]="Pencil" [size]="14"></lucide-angular>
+                        </button>
                       }
-                      @if (page.updated_by_name) {
-                        · {{ page.updated_by_name }}
-                      }
-                    </span>
-                    <span class="badge" [class.draft]="page.status === 'draft'"
-                                        [class.published]="page.status === 'published'">
-                      {{ page.status === 'draft' ? 'Draft' : 'Published' }}
-                    </span>
-                    @if (page.canEdit) {
-                      <button class="edit-btn"
-                              [routerLink]="['/wiki', wiki.slug, section.slug, page.slug]"
-                              [queryParams]="{edit: 'true'}"
-                              title="Edit page">
-                        <lucide-angular [img]="Pencil" [size]="14"></lucide-angular>
-                      </button>
-                    }
-                  </li>
-                }
-              </ul>
-            } @else {
-              <p class="no-pages">No pages in this section yet. Click "+ New Page" above to create one.</p>
-            }
+                    </li>
+                  }
+                </ul>
+              } @else {
+                <p class="no-pages">No pages in this section yet. Click "+ New Page" above to create one.</p>
+              }
+            </div>
           </div>
         }
       }
