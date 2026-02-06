@@ -13,6 +13,10 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { EditorComponent, EditorModule, TINYMCE_SCRIPT_SRC } from '@tinymce/tinymce-angular';
 import { html as beautifyHtml } from 'js-beautify';
+import { firstValueFrom } from 'rxjs';
+
+import { FileService } from '../../../core/services/file.service';
+import { ToastService } from '../../../core/services/toast.service';
 import {
   TINYMCE_BASE_CONFIG,
   ELEMENT_TEMPLATES,
@@ -49,6 +53,7 @@ export class TinymceEditorComponent implements AfterViewInit, OnDestroy {
   }
 
   @Input() placeholder: string = 'Start writing...';
+  @Input() pageId?: number;  // Optional: for linking uploaded images to page
 
   // Outputs (must match Quill API)
   @Output() contentChange = new EventEmitter<string>();
@@ -64,10 +69,17 @@ export class TinymceEditorComponent implements AfterViewInit, OnDestroy {
 
   @ViewChild('editor', { static: false }) editor?: EditorComponent;
 
-  constructor(private ngZone: NgZone, private cdr: ChangeDetectorRef) {
+  constructor(
+    private ngZone: NgZone,
+    private cdr: ChangeDetectorRef,
+    private fileService: FileService,
+    private toast: ToastService
+  ) {
     this.tinymceConfig = {
       ...TINYMCE_BASE_CONFIG,
-      setup: (editor: any) => this.setupEditor(editor)
+      setup: (editor: any) => this.setupEditor(editor),
+      images_upload_handler: (blobInfo: any, progress: (p: number) => void) =>
+        this.handleImageUpload(blobInfo, progress)
     };
   }
 
@@ -526,5 +538,40 @@ export class TinymceEditorComponent implements AfterViewInit, OnDestroy {
     // Hide overlay after alignment to prevent lockup
     this.hideImageOverlay();
     this.selectedImage = null;
+  }
+
+  // Image Upload Handler (for pasted/dropped images)
+
+  /**
+   * Handles image uploads from paste/drop operations.
+   * Converts blob URLs to permanent server URLs.
+   */
+  private async handleImageUpload(
+    blobInfo: { blob: () => Blob; filename: () => string },
+    progress: (percent: number) => void
+  ): Promise<string> {
+    const blob = blobInfo.blob();
+    const filename = blobInfo.filename() || 'pasted-image.png';
+    const file = new File([blob], filename, { type: blob.type });
+
+    try {
+      progress(10);
+      const response = await firstValueFrom(this.fileService.uploadSimple(file));
+      progress(80);
+
+      // Link to page if pageId is provided
+      if (this.pageId) {
+        await firstValueFrom(this.fileService.linkToPage(response.data.id, this.pageId));
+      }
+      progress(100);
+
+      return this.fileService.getDownloadUrl(response.data.id);
+    } catch (error: any) {
+      console.error('Image upload failed:', error);
+      this.ngZone.run(() => {
+        this.toast.error('Failed to upload image. Please try again.');
+      });
+      throw new Error(error.error?.message || 'Image upload failed');
+    }
   }
 }

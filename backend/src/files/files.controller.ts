@@ -69,6 +69,7 @@ export class FilesController {
       'Content-Type': file.mime_type,
       'Content-Disposition': `${disposition}; filename="${file.filename}"`,
       'Content-Length': file.size_bytes,
+      'Cross-Origin-Resource-Policy': 'cross-origin',  // Allow embedding in TinyMCE iframe
     });
 
     res.send(buffer);

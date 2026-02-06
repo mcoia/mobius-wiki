@@ -215,8 +215,10 @@
                     (click)="onSelectVersion(version.version_number)">
                     <span class="version-number">v{{ version.version_number }}</span>
                     <span class="version-meta">
-                      <span class="version-badge draft">Draft</span>
-                      <span class="version-badge current">Current</span>
+                      @if (version.version_number === currentVersionNumber) {
+                        <span class="version-badge draft">Draft</span>
+                        <span class="version-badge current">Current</span>
+                      }
                     </span>
                     <span class="version-date">{{ version.created_at | date:'MMM d, y' }}</span>
                     @if (version.author_name) {

@@ -69,7 +69,7 @@ export const TINYMCE_BASE_CONFIG = {
   // TinyMCE Configuration
   base_url: '/tinymce',                  // Self-hosted TinyMCE
   suffix: '.min',
-  plugins: 'link image lists code table textpattern',  // Core plugins + live templating
+  plugins: 'link image lists code table',  // Core plugins (textpattern removed - handled manually)
   menubar: false,                        // Disable menu bar
   statusbar: false,                      // Disable status bar
   branding: false,                       // Remove "Powered by Tiny" branding
@@ -114,7 +114,7 @@ export const TINYMCE_BASE_CONFIG = {
 
   // Image plugin configuration
   image_advtab: false,                   // Disable advanced tab
-  image_uploadtab: false,                // Disable upload tab (for now)
+  image_uploadtab: true,                 // Enable upload tab
   image_dimensions: true,                // Show width/height
   resize_img_proportional: true,         // Maintain aspect ratio
   object_resizing: 'img',                // Enable resize handles on images
