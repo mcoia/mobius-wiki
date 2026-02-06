@@ -13,6 +13,8 @@ export interface TocState {
   activeId: string | null;
 }
 
+const STORAGE_KEY = 'toc_collapsed';
+
 @Injectable({
   providedIn: 'root'
 })
@@ -21,6 +23,8 @@ export class TocService {
     items: [],
     activeId: null
   });
+
+  private collapsedSubject = new BehaviorSubject<boolean>(this.loadCollapsedState());
 
   /** Observable of the full TOC state */
   public state$ = this.stateSubject.asObservable();
@@ -34,6 +38,9 @@ export class TocService {
   public activeId$: Observable<string | null> = this.state$.pipe(
     map(state => state.activeId)
   );
+
+  /** Observable of the collapsed state */
+  public isCollapsed$: Observable<boolean> = this.collapsedSubject.asObservable();
 
   /**
    * Set the headings for the current page
@@ -73,5 +80,50 @@ export class TocService {
    */
   get currentState(): TocState {
     return this.stateSubject.value;
+  }
+
+  /**
+   * Toggle the collapsed state
+   */
+  toggleCollapse(): void {
+    this.setCollapsed(!this.collapsedSubject.value);
+  }
+
+  /**
+   * Set the collapsed state explicitly
+   */
+  setCollapsed(collapsed: boolean): void {
+    this.collapsedSubject.next(collapsed);
+    this.saveCollapsedState(collapsed);
+  }
+
+  /**
+   * Get collapsed state synchronously
+   */
+  get isCollapsed(): boolean {
+    return this.collapsedSubject.value;
+  }
+
+  /**
+   * Load collapsed state from localStorage
+   */
+  private loadCollapsedState(): boolean {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      return stored === 'true';
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Save collapsed state to localStorage
+   */
+  private saveCollapsedState(collapsed: boolean): void {
+    try {
+      localStorage.setItem(STORAGE_KEY, String(collapsed));
+    } catch {
+      // localStorage not available, ignore
+    }
   }
 }

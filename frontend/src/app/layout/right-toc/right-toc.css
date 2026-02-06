@@ -7,6 +7,68 @@
   display: block;
 }
 
+/* ===== Toggle Row (always at top) ===== */
+.toc-toggle-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
+
+/* ===== Toggle Button ===== */
+.toc-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--border-light, #e2e8f0);
+  border-radius: 6px;
+  background: var(--bg-primary, #ffffff);
+  color: var(--text-secondary, #64748b);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.toc-toggle:hover {
+  background: var(--bg-hover, #f1f5f9);
+  color: var(--text-primary, #1e293b);
+  border-color: var(--border-medium, #cbd5e1);
+}
+
+.toc-toggle:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--mobius-teal-light, rgba(0, 128, 128, 0.2));
+}
+
+/* ===== Collapsed State ===== */
+.right-sidebar {
+  transition: width 0.25s ease-in-out;
+}
+
+.right-sidebar.collapsed {
+  width: 40px !important;
+  min-width: 40px;
+}
+
+.right-sidebar.collapsed .toc-toggle-row {
+  justify-content: center;
+  margin-bottom: 0;
+}
+
+/* ===== Content Transitions ===== */
+.toc-header,
+.toc-list {
+  transition: opacity 0.15s ease-in-out;
+}
+
+.right-sidebar.collapsed .toc-header,
+.right-sidebar.collapsed .toc-list {
+  opacity: 0;
+  pointer-events: none;
+}
+
 /* Level indentation for nested headings */
 .toc-list li.level-1 {
   padding-left: 0;

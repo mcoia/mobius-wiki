@@ -1,25 +1,35 @@
-<aside class="right-sidebar">
-  @if (headings$ | async; as headings) {
-    @if (headings.length > 0) {
-      <div class="toc-header">On This Page</div>
-      <ul class="toc-list">
-        @for (item of headings; track item.id) {
-          <li
-            [class.level-1]="item.level === 1"
-            [class.level-2]="item.level === 2"
-            [class.level-3]="item.level === 3"
-            [class.level-4]="item.level === 4"
-            [class.level-5]="item.level === 5"
-            [class.level-6]="item.level === 6"
-            [class.active]="(activeId$ | async) === item.id">
-            <a
-              [href]="'#' + item.id"
-              (click)="scrollTo(item.id, $event)">
-              {{ item.text }}
-            </a>
-          </li>
-        }
-      </ul>
+<aside class="right-sidebar" [class.collapsed]="isCollapsed$ | async">
+  <!-- Toggle button row (always at top, inline with breadcrumbs) -->
+  <div class="toc-toggle-row">
+    <button class="toc-toggle" (click)="toggleCollapse()" [attr.aria-label]="(isCollapsed$ | async) ? 'Expand table of contents' : 'Collapse table of contents'">
+      <lucide-icon [img]="(isCollapsed$ | async) ? PanelRightOpen : PanelRightClose" [size]="18"></lucide-icon>
+    </button>
+  </div>
+
+  <!-- TOC content (hidden when collapsed) -->
+  @if (!(isCollapsed$ | async)) {
+    <div class="toc-header">On This Page</div>
+    @if (headings$ | async; as headings) {
+      @if (headings.length > 0) {
+        <ul class="toc-list">
+          @for (item of headings; track item.id) {
+            <li
+              [class.level-1]="item.level === 1"
+              [class.level-2]="item.level === 2"
+              [class.level-3]="item.level === 3"
+              [class.level-4]="item.level === 4"
+              [class.level-5]="item.level === 5"
+              [class.level-6]="item.level === 6"
+              [class.active]="(activeId$ | async) === item.id">
+              <a
+                [href]="'#' + item.id"
+                (click)="scrollTo(item.id, $event)">
+                {{ item.text }}
+              </a>
+            </li>
+          }
+        </ul>
+      }
     }
   }
 </aside>

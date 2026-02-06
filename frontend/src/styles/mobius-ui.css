@@ -357,11 +357,19 @@ pre code {
 .right-sidebar {
     width: var(--sidebar-right-width);
     background: var(--bg-sidebar-right);
-    padding: var(--space-3xl) var(--space-xl);
+    padding: var(--space-md) var(--space-xl);
     border-left: 1px solid var(--gray-200);
     overflow-y: auto;
     flex-shrink: 0;
     height: 100%;
+    transition: width 0.25s ease-in-out, padding 0.25s ease-in-out;
+}
+
+/* Collapsed state for right sidebar */
+.right-sidebar.collapsed {
+    width: 40px;
+    padding: var(--space-md) 6px;
+    overflow: hidden;
 }
 
 .right-sidebar::-webkit-scrollbar {
