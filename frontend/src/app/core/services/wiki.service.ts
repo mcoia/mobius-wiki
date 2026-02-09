@@ -104,4 +104,49 @@ export class WikiService {
   restoreVersion(pageId: number, versionNumber: number): Observable<{ data: Page }> {
     return this.api.post(`/pages/${pageId}/restore/${versionNumber}`, {});
   }
+
+  // Export methods - these trigger file downloads via new browser tab
+  // Session cookie is automatically sent with the request
+
+  /**
+   * Export a single page as PDF
+   */
+  exportPageToPdf(pageId: number): void {
+    window.open(`/api/v1/pages/${pageId}/export/pdf`, '_blank');
+  }
+
+  /**
+   * Export a single page as Markdown
+   */
+  exportPageToMarkdown(pageId: number): void {
+    window.open(`/api/v1/pages/${pageId}/export/markdown`, '_blank');
+  }
+
+  /**
+   * Export an entire wiki as PDF
+   */
+  exportWikiToPdf(wikiId: number): void {
+    window.open(`/api/v1/wikis/${wikiId}/export/pdf`, '_blank');
+  }
+
+  /**
+   * Export an entire wiki as Markdown
+   */
+  exportWikiToMarkdown(wikiId: number): void {
+    window.open(`/api/v1/wikis/${wikiId}/export/markdown`, '_blank');
+  }
+
+  /**
+   * Export a section as PDF
+   */
+  exportSectionToPdf(sectionId: number): void {
+    window.open(`/api/v1/sections/${sectionId}/export/pdf`, '_blank');
+  }
+
+  /**
+   * Export a section as Markdown
+   */
+  exportSectionToMarkdown(sectionId: number): void {
+    window.open(`/api/v1/sections/${sectionId}/export/markdown`, '_blank');
+  }
 }

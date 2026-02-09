@@ -46,7 +46,7 @@
       }
     }
 
-    <!-- Breadcrumb navigation -->
+    <!-- Breadcrumb navigation with PDF download -->
     <div class="page-header">
       <nav class="breadcrumb">
         @if (page.wiki) {
@@ -59,6 +59,12 @@
         }
         <span>{{ page.title }}</span>
       </nav>
+
+      <!-- PDF button - visible to ALL users -->
+      <button class="pdf-download-btn" (click)="exportToPdf()" title="Download as PDF" type="button">
+        <lucide-angular [img]="Download" [size]="16"></lucide-angular>
+        <span>PDF</span>
+      </button>
     </div>
 
     <!-- File Attachments Panel -->

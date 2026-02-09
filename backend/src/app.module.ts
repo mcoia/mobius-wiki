@@ -19,6 +19,7 @@ import { AdminModule } from './admin/admin.module';
 import { StaffModule } from './staff/staff.module';
 import { PublicSettingsModule } from './settings/public-settings.module';
 import { SeoModule } from './seo/seo.module';
+import { ExportModule } from './export/export.module';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { SeoModule } from './seo/seo.module';
     StaffModule,
     PublicSettingsModule,
     SeoModule,
+    ExportModule,
   ],
   providers: [
     {

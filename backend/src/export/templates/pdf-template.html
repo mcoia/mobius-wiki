@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{title}}</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 100%;
+      margin: 0;
+      padding: 0;
+      font-size: 14px;
+    }
+
+    .header {
+      border-bottom: 2px solid #0097A7;
+      padding-bottom: 16px;
+      margin-bottom: 24px;
+    }
+
+    .header h1 {
+      margin: 0 0 8px 0;
+      color: #1a2a3a;
+      font-size: 28px;
+      font-weight: 600;
+    }
+
+    .breadcrumb {
+      color: #666;
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+
+    .export-date {
+      color: #999;
+      font-size: 12px;
+    }
+
+    .content {
+      margin-top: 24px;
+    }
+
+    .content h1 {
+      font-size: 24px;
+      margin-top: 32px;
+      margin-bottom: 16px;
+      color: #1a2a3a;
+      border-bottom: 1px solid #e0e0e0;
+      padding-bottom: 8px;
+    }
+
+    .content h2 {
+      font-size: 20px;
+      margin-top: 28px;
+      margin-bottom: 14px;
+      color: #2a3a4a;
+    }
+
+    .content h3 {
+      font-size: 18px;
+      margin-top: 24px;
+      margin-bottom: 12px;
+      color: #3a4a5a;
+    }
+
+    .content h4 {
+      font-size: 16px;
+      margin-top: 20px;
+      margin-bottom: 10px;
+      color: #4a5a6a;
+    }
+
+    .content h5, .content h6 {
+      font-size: 14px;
+      margin-top: 16px;
+      margin-bottom: 8px;
+      color: #5a6a7a;
+    }
+
+    .content p {
+      margin: 12px 0;
+    }
+
+    .content ul, .content ol {
+      margin: 12px 0;
+      padding-left: 24px;
+    }
+
+    .content li {
+      margin: 6px 0;
+    }
+
+    .content pre {
+      background: #2d2d2d;
+      color: #e6e6e6;
+      padding: 16px;
+      border-radius: 4px;
+      overflow-x: auto;
+      font-size: 12px;
+      line-height: 1.5;
+      margin: 16px 0;
+    }
+
+    .content code {
+      font-family: 'JetBrains Mono', 'Fira Code', 'Source Code Pro', Consolas, Monaco, monospace;
+      background: #f0f0f0;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 0.9em;
+    }
+
+    .content pre code {
+      background: none;
+      padding: 0;
+      color: inherit;
+    }
+
+    .content img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      margin: 16px 0;
+    }
+
+    .content table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 13px;
+    }
+
+    .content th, .content td {
+      border: 1px solid #ddd;
+      padding: 10px 12px;
+      text-align: left;
+    }
+
+    .content th {
+      background: #f5f5f5;
+      font-weight: 600;
+    }
+
+    .content tr:nth-child(even) {
+      background: #fafafa;
+    }
+
+    .content blockquote {
+      border-left: 4px solid #0097A7;
+      margin: 16px 0;
+      padding: 12px 20px;
+      background: #f9fafb;
+      color: #555;
+    }
+
+    .content blockquote p {
+      margin: 0;
+    }
+
+    .content a {
+      color: #0097A7;
+      text-decoration: none;
+    }
+
+    .content hr {
+      border: none;
+      border-top: 1px solid #e0e0e0;
+      margin: 24px 0;
+    }
+
+    /* Note boxes / callouts */
+    .content .note-box,
+    .content .callout {
+      padding: 16px 20px;
+      border-radius: 4px;
+      margin: 16px 0;
+    }
+
+    .content .note-box.info,
+    .content .callout.info {
+      background: #e3f2fd;
+      border-left: 4px solid #2196f3;
+    }
+
+    .content .note-box.warning,
+    .content .callout.warning {
+      background: #fff8e1;
+      border-left: 4px solid #ff9800;
+    }
+
+    .content .note-box.danger,
+    .content .callout.danger {
+      background: #ffebee;
+      border-left: 4px solid #f44336;
+    }
+
+    .content .note-box.success,
+    .content .callout.success {
+      background: #e8f5e9;
+      border-left: 4px solid #4caf50;
+    }
+
+    /* Table of Contents */
+    .toc {
+      background: #f9fafb;
+      padding: 20px 24px;
+      border-radius: 6px;
+      margin-bottom: 32px;
+      border: 1px solid #e0e0e0;
+    }
+
+    .toc h2 {
+      margin-top: 0;
+      font-size: 18px;
+      color: #1a2a3a;
+    }
+
+    .toc ul {
+      margin: 8px 0;
+      padding-left: 20px;
+      list-style-type: none;
+    }
+
+    .toc > ul {
+      padding-left: 0;
+    }
+
+    .toc li {
+      margin: 6px 0;
+    }
+
+    .toc a {
+      color: #0097A7;
+      text-decoration: none;
+    }
+
+    .toc strong {
+      color: #333;
+    }
+
+    /* Multi-page sections */
+    .page-section {
+      margin-top: 48px;
+    }
+
+    .page-section:first-of-type {
+      margin-top: 0;
+    }
+
+    .page-title {
+      border-bottom: 2px solid #0097A7;
+      padding-bottom: 12px;
+      margin-bottom: 16px;
+      color: #1a2a3a;
+    }
+
+    .page-section-name {
+      color: #666;
+      font-style: italic;
+      margin-top: -8px;
+      margin-bottom: 20px;
+      font-size: 13px;
+    }
+
+    .page-content {
+      margin-top: 16px;
+    }
+
+    /* Page breaks for PDF */
+    .page-break {
+      page-break-after: always;
+    }
+
+    /* Footer */
+    .footer {
+      margin-top: 48px;
+      padding-top: 16px;
+      border-top: 1px solid #e0e0e0;
+      color: #999;
+      font-size: 12px;
+    }
+
+    /* Avoid breaking inside these elements */
+    h1, h2, h3, h4, h5, h6 {
+      page-break-after: avoid;
+    }
+
+    pre, blockquote, table, img {
+      page-break-inside: avoid;
+    }
+
+    /* Keep headings with following content */
+    h1 + *, h2 + *, h3 + *, h4 + *, h5 + *, h6 + * {
+      page-break-before: avoid;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="breadcrumb">{{breadcrumb}}</div>
+    <h1>{{title}}</h1>
+    <div class="export-date">Exported on {{exportDate}}</div>
+  </div>
+
+  <div class="content">
+    {{content}}
+  </div>
+
+  <div class="footer">
+    <p>Generated by MOBIUS Wiki</p>
+  </div>
+</body>
+</html>

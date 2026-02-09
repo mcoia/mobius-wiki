@@ -20,7 +20,7 @@ import { CreateModalComponent } from '../../shared/components/create-modal/creat
 import { AccessControlPanelComponent } from '../../shared/components/access-control-panel/access-control-panel.component';
 import { VersionBannerComponent } from '../../shared/components/version-banner/version-banner.component';
 import { AttachmentsPanelComponent } from '../../shared/components/attachments-panel/attachments-panel.component';
-import { LucideAngularModule, Lock, Pencil, ArrowRightFromLine, Trash2, Plus, Save, X, ChevronDown } from 'lucide-angular';
+import { LucideAngularModule, Lock, Pencil, ArrowRightFromLine, Trash2, Plus, Save, X, ChevronDown, Download, FileText, FileCode, Printer } from 'lucide-angular';
 
 @Component({
   selector: 'app-wiki-page-viewer',
@@ -41,6 +41,10 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
   readonly Save = Save;
   readonly X = X;
   readonly ChevronDown = ChevronDown;
+  readonly Download = Download;
+  readonly FileText = FileText;
+  readonly FileCode = FileCode;
+  readonly Printer = Printer;
 
   // Track script elements for cleanup
   private scriptElements: HTMLScriptElement[] = [];
@@ -91,6 +95,7 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
   showCreatePageModal = false;
   showAccessControlPanel = false;
   showMoveDropdown = false;
+  showExportDropdown = false;
   @ViewChild('createSectionModal') createSectionModal?: CreateModalComponent;
   @ViewChild('createPageModal') createPageModal?: CreateModalComponent;
 
@@ -1118,19 +1123,57 @@ export class WikiPageViewer implements OnInit, OnDestroy, AfterViewChecked {
    */
   toggleMoveDropdown(): void {
     this.showMoveDropdown = !this.showMoveDropdown;
+    this.showExportDropdown = false; // Close other dropdown
   }
 
   /**
-   * Close move dropdown (for click outside)
+   * Toggle export dropdown
+   */
+  toggleExportDropdown(): void {
+    this.showExportDropdown = !this.showExportDropdown;
+    this.showMoveDropdown = false; // Close other dropdown
+  }
+
+  /**
+   * Close dropdowns (for click outside)
    */
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
-    if (!this.showMoveDropdown) return; // Skip if already closed
+    if (!this.showMoveDropdown && !this.showExportDropdown) return; // Skip if already closed
 
     const target = event.target as HTMLElement;
     if (!target.closest('.dropdown-container')) {
       this.showMoveDropdown = false;
+      this.showExportDropdown = false;
     }
+  }
+
+  /**
+   * Export page to PDF
+   */
+  exportToPdf(): void {
+    this.showExportDropdown = false;
+    if (this.currentPage?.id) {
+      this.wikiService.exportPageToPdf(this.currentPage.id);
+    }
+  }
+
+  /**
+   * Export page to Markdown
+   */
+  exportToMarkdown(): void {
+    this.showExportDropdown = false;
+    if (this.currentPage?.id) {
+      this.wikiService.exportPageToMarkdown(this.currentPage.id);
+    }
+  }
+
+  /**
+   * Print the current page using browser print dialog
+   */
+  printPage(): void {
+    this.showExportDropdown = false;
+    window.print();
   }
 
   /**
