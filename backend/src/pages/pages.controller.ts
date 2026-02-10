@@ -7,12 +7,14 @@ import { AuthGuard } from '../auth/guards/auth.guard';
 import { AccessControlGuard } from '../access-control/access-control.guard';
 import { User } from '../common/decorators/user.decorator';
 import { PageViewInterceptor } from '../analytics/interceptors/page-view.interceptor';
+import { AccessControlService } from '../access-control/access-control.service';
 
 @Controller()
 export class PagesController {
   constructor(
     private pagesService: PagesService,
     private pageVersionsService: PageVersionsService,
+    private accessControlService: AccessControlService,
   ) {}
 
   private getRoleLevel(role: string): number {
@@ -75,6 +77,12 @@ export class PagesController {
     @Body() dto: CreatePageDto,
     @User() user: any,
   ) {
+    // Check if user can edit this section (create pages in it)
+    const canEdit = await this.accessControlService.canEdit(user, 'section', sectionId);
+    if (!canEdit) {
+      throw new ForbiddenException('You do not have permission to create pages in this section');
+    }
+
     // Check permission if allowScripts is true
     if (dto.allowScripts === true) {
       const roleLevel = this.getRoleLevel(user.role);

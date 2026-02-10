@@ -180,7 +180,24 @@ export class FilesController {
   @Delete(':id')
   @UseGuards(AuthGuard)
   async remove(@Param('id', ParseIntPipe) id: number, @User() user: any) {
-    return this.filesService.remove(id, user.id);
+    // Get the file first
+    const file = await this.filesService.findOne(id);
+
+    // Check 1: Owner can always delete their own files
+    if (file.uploaded_by === user.id) {
+      return this.filesService.remove(id, user.id);
+    }
+
+    // Check 2: User with canEdit on any linked content can delete
+    const links = await this.filesService.getFileLinksForAuth(id);
+    for (const link of links) {
+      const canEdit = await this.accessControlService.canEdit(user, link.linkable_type, link.linkable_id);
+      if (canEdit) {
+        return this.filesService.remove(id, user.id);
+      }
+    }
+
+    throw new ForbiddenException('You do not have permission to delete this file');
   }
 
   @Patch(':id')
@@ -228,6 +245,13 @@ export class FilesController {
     }
 
     const linkableType = type.slice(0, -1); // wikis -> wiki
+
+    // Check if user can edit the target content
+    const canEdit = await this.accessControlService.canEdit(user, linkableType, id);
+    if (!canEdit) {
+      throw new ForbiddenException('You do not have permission to link files to this content');
+    }
+
     const link = await this.filesService.linkToContent(fileId, linkableType, id, user.id, context);
     return { data: link };
   }
@@ -238,6 +262,7 @@ export class FilesController {
     @Param('fileId', ParseIntPipe) fileId: number,
     @Param('type') type: string,
     @Param('id', ParseIntPipe) id: number,
+    @User() user: any,
   ) {
     const validTypes = ['wikis', 'sections', 'pages', 'users'];
     if (!validTypes.includes(type)) {
@@ -245,6 +270,13 @@ export class FilesController {
     }
 
     const linkableType = type.slice(0, -1);
+
+    // Check if user can edit the target content
+    const canEdit = await this.accessControlService.canEdit(user, linkableType, id);
+    if (!canEdit) {
+      throw new ForbiddenException('You do not have permission to unlink files from this content');
+    }
+
     const link = await this.filesService.unlinkFromContent(fileId, linkableType, id);
     return { data: link };
   }

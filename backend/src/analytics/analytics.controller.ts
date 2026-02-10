@@ -1,8 +1,12 @@
-import { Controller, Get, Param, Query, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Param, Query, ParseIntPipe, UseGuards, SetMetadata } from '@nestjs/common';
 import { AnalyticsService } from './analytics.service';
 import { AnalyticsQueryDto } from './dto/analytics-query.dto';
+import { AuthGuard } from '../auth/guards/auth.guard';
+import { RoleGuard } from '../auth/guards/role.guard';
 
 @Controller('analytics')
+@UseGuards(AuthGuard, RoleGuard)
+@SetMetadata('roles', ['library_staff'])
 export class AnalyticsController {
   constructor(private analyticsService: AnalyticsService) {}
 

@@ -723,6 +723,17 @@ export class FilesService {
   }
 
   /**
+   * Get file links for authorization checks (simple version - just type and id)
+   */
+  async getFileLinksForAuth(fileId: number): Promise<{ linkable_type: string; linkable_id: number }[]> {
+    const result = await this.pool.query(
+      'SELECT linkable_type, linkable_id FROM wiki.file_links WHERE file_id = $1',
+      [fileId],
+    );
+    return result.rows;
+  }
+
+  /**
    * Restore a soft-deleted file
    */
   async restore(fileId: number) {

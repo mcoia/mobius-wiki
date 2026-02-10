@@ -1,14 +1,18 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, ParseIntPipe, SetMetadata } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, ParseIntPipe, SetMetadata, ForbiddenException } from '@nestjs/common';
 import { SectionsService } from './sections.service';
 import { CreateSectionDto } from './dto/create-section.dto';
 import { UpdateSectionDto } from './dto/update-section.dto';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { AccessControlGuard } from '../access-control/access-control.guard';
+import { AccessControlService } from '../access-control/access-control.service';
 import { User } from '../common/decorators/user.decorator';
 
 @Controller()
 export class SectionsController {
-  constructor(private sectionsService: SectionsService) {}
+  constructor(
+    private sectionsService: SectionsService,
+    private accessControlService: AccessControlService,
+  ) {}
 
   @Get('wikis/:wikiId/sections')
   async findAllInWiki(
@@ -44,6 +48,10 @@ export class SectionsController {
     @Body() dto: CreateSectionDto,
     @User() user: any,
   ) {
+    const canEdit = await this.accessControlService.canEdit(user, 'wiki', wikiId);
+    if (!canEdit) {
+      throw new ForbiddenException('You do not have permission to create sections in this wiki');
+    }
     return this.sectionsService.create(wikiId, dto, user.id);
   }
 
@@ -54,12 +62,20 @@ export class SectionsController {
     @Body() dto: UpdateSectionDto,
     @User() user: any,
   ) {
+    const canEdit = await this.accessControlService.canEdit(user, 'section', id);
+    if (!canEdit) {
+      throw new ForbiddenException('You do not have permission to edit this section');
+    }
     return this.sectionsService.update(id, dto, user.id);
   }
 
   @Delete('sections/:id')
   @UseGuards(AuthGuard)
   async remove(@Param('id', ParseIntPipe) id: number, @User() user: any) {
+    const canEdit = await this.accessControlService.canEdit(user, 'section', id);
+    if (!canEdit) {
+      throw new ForbiddenException('You do not have permission to delete this section');
+    }
     return this.sectionsService.remove(id, user.id);
   }
 }

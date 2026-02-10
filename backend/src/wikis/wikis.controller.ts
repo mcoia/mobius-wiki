@@ -1,10 +1,11 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, UseInterceptors, ParseIntPipe, SetMetadata } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, UseInterceptors, ParseIntPipe, SetMetadata, ForbiddenException } from '@nestjs/common';
 import { WikisService } from './wikis.service';
 import { PagesService } from '../pages/pages.service';
 import { CreateWikiDto } from './dto/create-wiki.dto';
 import { UpdateWikiDto } from './dto/update-wiki.dto';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { AccessControlGuard } from '../access-control/access-control.guard';
+import { AccessControlService } from '../access-control/access-control.service';
 import { User } from '../common/decorators/user.decorator';
 import { PageViewInterceptor } from '../analytics/interceptors/page-view.interceptor';
 
@@ -13,6 +14,7 @@ export class WikisController {
   constructor(
     private wikisService: WikisService,
     private pagesService: PagesService,
+    private accessControlService: AccessControlService,
   ) {}
 
   @Get()
@@ -74,24 +76,40 @@ export class WikisController {
     @Body() dto: UpdateWikiDto,
     @User() user: any,
   ) {
+    const canEdit = await this.accessControlService.canEdit(user, 'wiki', id);
+    if (!canEdit) {
+      throw new ForbiddenException('You do not have permission to edit this wiki');
+    }
     return this.wikisService.update(id, dto, user.id);
   }
 
   @Delete(':id')
   @UseGuards(AuthGuard)
   async remove(@Param('id', ParseIntPipe) id: number, @User() user: any) {
+    const canEdit = await this.accessControlService.canEdit(user, 'wiki', id);
+    if (!canEdit) {
+      throw new ForbiddenException('You do not have permission to delete this wiki');
+    }
     return this.wikisService.remove(id, user.id);
   }
 
   @Post(':id/archive')
   @UseGuards(AuthGuard)
   async archive(@Param('id', ParseIntPipe) id: number, @User() user: any) {
+    const canEdit = await this.accessControlService.canEdit(user, 'wiki', id);
+    if (!canEdit) {
+      throw new ForbiddenException('You do not have permission to archive this wiki');
+    }
     return this.wikisService.archive(id, user.id);
   }
 
   @Post(':id/unarchive')
   @UseGuards(AuthGuard)
   async unarchive(@Param('id', ParseIntPipe) id: number, @User() user: any) {
+    const canEdit = await this.accessControlService.canEdit(user, 'wiki', id);
+    if (!canEdit) {
+      throw new ForbiddenException('You do not have permission to unarchive this wiki');
+    }
     return this.wikisService.unarchive(id, user.id);
   }
 }

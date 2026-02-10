@@ -66,6 +66,19 @@ export class AccessRulesService {
     return rows[0];
   }
 
+  async findById(ruleId: number) {
+    const { rows } = await this.pool.query(
+      'SELECT id, ruleable_type, ruleable_id FROM wiki.access_rules WHERE id = $1',
+      [ruleId],
+    );
+
+    if (rows.length === 0) {
+      throw new NotFoundException(`Access rule with ID ${ruleId} not found`);
+    }
+
+    return rows[0];
+  }
+
   private async verifyRuleableExists(ruleableType: string, ruleableId: number) {
     const tableMap = {
       wiki: 'wikis',
