@@ -1,5 +1,6 @@
-import { Controller, Get, Param, Res, UseGuards, ParseIntPipe, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Param, Res, UseGuards, ParseIntPipe, HttpStatus, Inject } from '@nestjs/common';
 import { Response } from 'express';
+import { Pool } from 'pg';
 import { AccessControlGuard } from '../access-control/access-control.guard';
 import { SetMetadata } from '@nestjs/common';
 import { User } from '../common/decorators/user.decorator';
@@ -13,7 +14,10 @@ interface UserData {
 
 @Controller()
 export class ExportController {
-  constructor(private exportService: ExportService) {}
+  constructor(
+    private exportService: ExportService,
+    @Inject('DATABASE_POOL') private pool: Pool,
+  ) {}
 
   /**
    * Export a single page as PDF
@@ -185,24 +189,56 @@ export class ExportController {
   }
 
   /**
-   * Helper to get page filename
+   * Helper to get page filename based on slug
    */
   private async getPageFilename(id: number, extension: string): Promise<string> {
-    // Filename will be sanitized slug
+    try {
+      const { rows } = await this.pool.query(
+        'SELECT slug FROM wiki.pages WHERE id = $1',
+        [id]
+      );
+      if (rows.length > 0 && rows[0].slug) {
+        return `${rows[0].slug}.${extension}`;
+      }
+    } catch (error) {
+      // Fall back to ID-based name on error
+    }
     return `page-${id}.${extension}`;
   }
 
   /**
-   * Helper to get wiki filename
+   * Helper to get wiki filename based on slug
    */
   private async getWikiFilename(id: number, extension: string): Promise<string> {
+    try {
+      const { rows } = await this.pool.query(
+        'SELECT slug FROM wiki.wikis WHERE id = $1',
+        [id]
+      );
+      if (rows.length > 0 && rows[0].slug) {
+        return `${rows[0].slug}.${extension}`;
+      }
+    } catch (error) {
+      // Fall back to ID-based name on error
+    }
     return `wiki-${id}.${extension}`;
   }
 
   /**
-   * Helper to get section filename
+   * Helper to get section filename based on slug
    */
   private async getSectionFilename(id: number, extension: string): Promise<string> {
+    try {
+      const { rows } = await this.pool.query(
+        'SELECT slug FROM wiki.sections WHERE id = $1',
+        [id]
+      );
+      if (rows.length > 0 && rows[0].slug) {
+        return `${rows[0].slug}.${extension}`;
+      }
+    } catch (error) {
+      // Fall back to ID-based name on error
+    }
     return `section-${id}.${extension}`;
   }
 }

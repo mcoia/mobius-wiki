@@ -21,6 +21,9 @@
     "test:connection": "node scripts/test-connection.js",
     "sql": "node scripts/sql.js",
     "db:snapshot": "node scripts/db-snapshot.js",
+    "import:mediawiki": "node scripts/import-mediawiki.js",
+    "import:mediawiki-files": "node scripts/import-mediawiki-files.js",
+    "import:download-images": "node scripts/download-mediawiki-images.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -48,7 +51,9 @@
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
     "simple-git": "^3.30.0",
-    "turndown": "^7.2.2"
+    "turndown": "^7.2.2",
+    "wtf_wikipedia": "^10.4.1",
+    "xml2js": "^0.6.2"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.4.9",

@@ -5,6 +5,7 @@ import TurndownService from 'turndown';
 import * as path from 'path';
 import * as fs from 'fs';
 import { AccessControlService } from '../access-control/access-control.service';
+import { FilesService } from '../files/files.service';
 
 interface User {
   id: number;
@@ -32,6 +33,7 @@ export class ExportService {
   constructor(
     @Inject('DATABASE_POOL') private pool: Pool,
     private aclService: AccessControlService,
+    private filesService: FilesService,
   ) {
     // Initialize Turndown for HTML -> Markdown conversion
     this.turndownService = new TurndownService({
@@ -65,7 +67,7 @@ export class ExportService {
    */
   async exportPageToPdf(pageId: number, user: User | null): Promise<Buffer> {
     const page = await this.getPageWithAccessCheck(pageId, user);
-    const html = this.generatePdfHtml(page);
+    const html = await this.generatePdfHtml(page);
     return this.htmlToPdf(html);
   }
 
@@ -84,7 +86,7 @@ export class ExportService {
     const pages = await this.getWikiPagesWithAccessCheck(wikiId, user);
     const wiki = await this.getWiki(wikiId);
 
-    const combinedHtml = this.generateMultiPagePdfHtml(pages, wiki.title);
+    const combinedHtml = await this.generateMultiPagePdfHtml(pages, wiki.title);
     return this.htmlToPdf(combinedHtml);
   }
 
@@ -105,7 +107,7 @@ export class ExportService {
     const pages = await this.getSectionPagesWithAccessCheck(sectionId, user);
     const section = await this.getSection(sectionId);
 
-    const combinedHtml = this.generateMultiPagePdfHtml(pages, section.title);
+    const combinedHtml = await this.generateMultiPagePdfHtml(pages, section.title);
     return this.htmlToPdf(combinedHtml);
   }
 
@@ -304,7 +306,7 @@ export class ExportService {
   /**
    * Generate HTML for PDF from a single page
    */
-  private generatePdfHtml(page: PageData): string {
+  private async generatePdfHtml(page: PageData): Promise<string> {
     const exportDate = new Date().toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
@@ -317,8 +319,8 @@ export class ExportService {
       page.title,
     ].filter(Boolean).join(' › ');
 
-    // Process images - convert relative URLs to absolute
-    let processedContent = this.processContentImages(page.content || '');
+    // Process images - convert to base64 data URIs
+    const processedContent = await this.processContentImages(page.content || '');
 
     return this.pdfTemplate
       .replaceAll('{{title}}', this.escapeHtml(page.title))
@@ -332,7 +334,7 @@ export class ExportService {
   /**
    * Generate HTML for PDF from multiple pages
    */
-  private generateMultiPagePdfHtml(pages: PageData[], collectionTitle: string): string {
+  private async generateMultiPagePdfHtml(pages: PageData[], collectionTitle: string): Promise<string> {
     const exportDate = new Date().toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
@@ -355,10 +357,11 @@ export class ExportService {
     if (currentSection) toc += '</ul></li>';
     toc += '</ul></div>';
 
-    // Generate content for each page
+    // Generate content for each page (process images sequentially to avoid memory issues)
     let pagesContent = '';
-    pages.forEach((page, index) => {
-      const processedContent = this.processContentImages(page.content || '');
+    for (let index = 0; index < pages.length; index++) {
+      const page = pages[index];
+      const processedContent = await this.processContentImages(page.content || '');
       pagesContent += `
         <div class="page-section" id="page-${index}">
           <h1 class="page-title">${this.escapeHtml(page.title)}</h1>
@@ -367,7 +370,7 @@ export class ExportService {
         </div>
         <div class="page-break"></div>
       `;
-    });
+    }
 
     return this.pdfTemplate
       .replaceAll('{{title}}', this.escapeHtml(collectionTitle))
@@ -482,19 +485,43 @@ export class ExportService {
   }
 
   /**
-   * Process content images - convert relative URLs to data URIs where possible
+   * Process content images - convert relative URLs to base64 data URIs
+   * This ensures images are embedded in the PDF since Puppeteer can't
+   * resolve relative URLs when HTML is loaded from a string.
    */
-  private processContentImages(content: string): string {
-    // For now, just ensure images have full URLs
-    // In production, you might want to convert to base64 for offline PDFs
-    return content.replace(
-      /src="\/api\/v1\/files\/(\d+)\/download"/g,
-      (match) => {
-        // Keep as is - Puppeteer will fetch during PDF generation
-        // In production, you could convert to base64 here
-        return match;
+  private async processContentImages(content: string): Promise<string> {
+    // Find all image URLs matching /api/v1/files/{id}/download
+    const imageRegex = /src="\/api\/v1\/files\/(\d+)\/download"/g;
+    const matches: { fullMatch: string; fileId: number }[] = [];
+
+    let match: RegExpExecArray | null;
+    while ((match = imageRegex.exec(content)) !== null) {
+      matches.push({
+        fullMatch: match[0],
+        fileId: parseInt(match[1], 10),
+      });
+    }
+
+    // Convert each image to base64 data URI
+    let processedContent = content;
+    for (const { fullMatch, fileId } of matches) {
+      try {
+        // Get file metadata for MIME type
+        const file = await this.filesService.findOne(fileId);
+        // Get file binary data
+        const buffer = await this.filesService.getFileBuffer(fileId);
+        // Convert to base64 data URI
+        const base64 = buffer.toString('base64');
+        const dataUri = `data:${file.mime_type};base64,${base64}`;
+        // Replace in content
+        processedContent = processedContent.replace(fullMatch, `src="${dataUri}"`);
+      } catch (error) {
+        // If file not found or error, leave as-is (will show broken image)
+        console.warn(`Failed to embed image file ${fileId}:`, error.message);
       }
-    );
+    }
+
+    return processedContent;
   }
 
   /**

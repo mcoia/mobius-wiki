@@ -34,6 +34,9 @@ Thumbs.db
 backend/uploads/
 uploads/
 
+# Migration data (contains PII - never commit)
+backend/migration-data/
+
 # Temporary files
 *.tmp
 *.temp
