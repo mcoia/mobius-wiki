@@ -46,6 +46,17 @@
           </div>
         </div>
 
+        <!-- Conflicting Rules Warning -->
+        @if (hasConflictingRules(rules)) {
+          <div class="conflict-warning-banner">
+            <lucide-angular [img]="AlertTriangle" [size]="20"></lucide-angular>
+            <div>
+              <strong>Conflicting rules detected</strong>
+              <p>This content has both public access and restricted rules. Public access overrides all restrictions.</p>
+            </div>
+          </div>
+        }
+
         <!-- Rule Cards -->
         <div class="rules-list">
           @for (rule of rules; track rule.id) {

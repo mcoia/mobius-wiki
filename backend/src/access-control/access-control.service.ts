@@ -256,6 +256,180 @@ export class AccessControlService {
   }
 
   /**
+   * Batch access check for multiple files
+   * Reduces ~5,900 queries to 4 queries for 844 files
+   * Returns Map<fileId, canAccess>
+   */
+  async canAccessFileBatch(
+    user: User | null,
+    fileIds: number[],
+  ): Promise<Map<number, boolean>> {
+    const result = new Map<number, boolean>();
+    if (fileIds.length === 0) return result;
+
+    // Query 1: Get all file rules
+    const { rows: fileRules } = await this.pool.query<AccessRule>(
+      `SELECT id, ruleable_type, ruleable_id, rule_type, rule_value
+       FROM wiki.access_rules
+       WHERE ruleable_type = 'file' AND ruleable_id = ANY($1)`,
+      [fileIds],
+    );
+
+    // Query 2: Get all file links with page hierarchy
+    const { rows: fileLinks } = await this.pool.query<{
+      file_id: number;
+      linkable_type: string;
+      linkable_id: number;
+      section_id: number | null;
+      wiki_id: number | null;
+    }>(
+      `SELECT
+         fl.file_id,
+         fl.linkable_type,
+         fl.linkable_id,
+         p.section_id,
+         COALESCE(s.wiki_id, s2.wiki_id, w.id) as wiki_id
+       FROM wiki.file_links fl
+       LEFT JOIN wiki.pages p ON fl.linkable_type = 'page' AND fl.linkable_id = p.id
+       LEFT JOIN wiki.sections s ON p.section_id = s.id
+       LEFT JOIN wiki.sections s2 ON fl.linkable_type = 'section' AND fl.linkable_id = s2.id
+       LEFT JOIN wiki.wikis w ON fl.linkable_type = 'wiki' AND fl.linkable_id = w.id
+       WHERE fl.file_id = ANY($1)`,
+      [fileIds],
+    );
+
+    // Collect all content IDs for rule lookup
+    const pageIds = new Set<number>();
+    const sectionIds = new Set<number>();
+    const wikiIds = new Set<number>();
+
+    for (const link of fileLinks) {
+      if (link.linkable_type === 'page') pageIds.add(link.linkable_id);
+      if (link.linkable_type === 'section') sectionIds.add(link.linkable_id);
+      if (link.linkable_type === 'wiki') wikiIds.add(link.linkable_id);
+      if (link.section_id) sectionIds.add(link.section_id);
+      if (link.wiki_id) wikiIds.add(link.wiki_id);
+    }
+
+    // Query 3: Get all content rules in one query
+    const { rows: contentRules } = await this.pool.query<AccessRule>(
+      `SELECT id, ruleable_type, ruleable_id, rule_type, rule_value
+       FROM wiki.access_rules
+       WHERE (ruleable_type = 'page' AND ruleable_id = ANY($1))
+          OR (ruleable_type = 'section' AND ruleable_id = ANY($2))
+          OR (ruleable_type = 'wiki' AND ruleable_id = ANY($3))`,
+      [Array.from(pageIds), Array.from(sectionIds), Array.from(wikiIds)],
+    );
+
+    // Index rules by type:id for O(1) lookup
+    const rulesMap = new Map<string, AccessRule[]>();
+    for (const rule of [...fileRules, ...contentRules]) {
+      const key = `${rule.ruleable_type}:${rule.ruleable_id}`;
+      if (!rulesMap.has(key)) rulesMap.set(key, []);
+      rulesMap.get(key)!.push(rule);
+    }
+
+    // Index file links by file_id
+    const linksMap = new Map<number, typeof fileLinks>();
+    for (const link of fileLinks) {
+      if (!linksMap.has(link.file_id)) linksMap.set(link.file_id, []);
+      linksMap.get(link.file_id)!.push(link);
+    }
+
+    // Process each file in memory
+    for (const fileId of fileIds) {
+      const canAccess = this.evaluateFileAccessInMemory(
+        user,
+        fileId,
+        rulesMap,
+        linksMap.get(fileId) || [],
+      );
+      result.set(fileId, canAccess);
+    }
+
+    return result;
+  }
+
+  /**
+   * Evaluate file access in memory using pre-loaded rules
+   * File ACL AND at least one linked content must be accessible
+   */
+  private evaluateFileAccessInMemory(
+    user: User | null,
+    fileId: number,
+    rulesMap: Map<string, AccessRule[]>,
+    links: Array<{
+      file_id: number;
+      linkable_type: string;
+      linkable_id: number;
+      section_id: number | null;
+      wiki_id: number | null;
+    }>,
+  ): boolean {
+    // Check file's own rules
+    const fileRules = rulesMap.get(`file:${fileId}`) || [];
+    let fileAccessGranted = fileRules.length === 0; // No rules = public
+
+    if (!fileAccessGranted) {
+      fileAccessGranted = this.matchesAnyRule(fileRules, user);
+    }
+
+    if (!fileAccessGranted) return false;
+    if (links.length === 0) return true; // No links = file ACL only
+
+    // Check if user can access at least ONE linked content
+    for (const link of links) {
+      if (this.evaluateContentAccessInMemory(user, link, rulesMap)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Evaluate content access in memory
+   * Walks inheritance chain: page → section → wiki → public
+   */
+  private evaluateContentAccessInMemory(
+    user: User | null,
+    link: {
+      linkable_type: string;
+      linkable_id: number;
+      section_id: number | null;
+      wiki_id: number | null;
+    },
+    rulesMap: Map<string, AccessRule[]>,
+  ): boolean {
+    // Build check levels based on content type
+    const checkLevels: string[] = [];
+
+    if (link.linkable_type === 'page') {
+      checkLevels.push(`page:${link.linkable_id}`);
+      if (link.section_id) checkLevels.push(`section:${link.section_id}`);
+      if (link.wiki_id) checkLevels.push(`wiki:${link.wiki_id}`);
+    } else if (link.linkable_type === 'section') {
+      checkLevels.push(`section:${link.linkable_id}`);
+      if (link.wiki_id) checkLevels.push(`wiki:${link.wiki_id}`);
+    } else if (link.linkable_type === 'wiki') {
+      checkLevels.push(`wiki:${link.linkable_id}`);
+    }
+
+    // Walk inheritance chain
+    for (const key of checkLevels) {
+      const rules = rulesMap.get(key) || [];
+      if (rules.length > 0) {
+        // Has rules at this level - check if any match
+        return this.matchesAnyRule(rules, user);
+      }
+      // No rules at this level - continue to parent
+    }
+
+    // No rules anywhere = public
+    return true;
+  }
+
+  /**
    * File access control: most restrictive wins
    * User must have access to BOTH file AND at least one linked content
    */

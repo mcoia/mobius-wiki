@@ -162,9 +162,10 @@ export class AccessControlPanelComponent implements OnInit {
    * Delete an access rule
    */
   deleteRule(rule: AccessRule): void {
+    const display = this.getRuleDisplay(rule);
     this.confirmDialog.open({
       title: 'Delete Access Rule',
-      message: 'Are you sure you want to remove this access rule?',
+      message: `Are you sure you want to remove the "${display.title}" rule?\n\n${display.description}`,
       type: 'danger',
       confirmText: 'Delete',
       cancelText: 'Cancel'
@@ -253,5 +254,15 @@ export class AccessControlPanelComponent implements OnInit {
     if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
     if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
     return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+  }
+
+  /**
+   * Check if rules have conflicting permissions
+   * Returns true if content has both public access AND restricted rules
+   */
+  hasConflictingRules(rules: AccessRule[]): boolean {
+    const hasPublic = rules.some(r => r.rule_type === 'public');
+    const hasRestrictive = rules.some(r => r.rule_type === 'role' || r.rule_type === 'user');
+    return hasPublic && hasRestrictive;
   }
 }

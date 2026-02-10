@@ -14,6 +14,7 @@ import {
   Res,
   Req,
   BadRequestException,
+  ForbiddenException,
   SetMetadata,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -22,6 +23,7 @@ import { Response, Request } from 'express';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { RoleGuard } from '../auth/guards/role.guard';
 import { AccessControlGuard } from '../access-control/access-control.guard';
+import { AccessControlService } from '../access-control/access-control.service';
 import { User } from '../common/decorators/user.decorator';
 import { FilesService } from './files.service';
 import { FileAuditService } from './file-audit.service';
@@ -33,6 +35,7 @@ export class FilesController {
   constructor(
     private filesService: FilesService,
     private fileAuditService: FileAuditService,
+    private accessControlService: AccessControlService,
   ) {}
 
   // ==========================================================================
@@ -65,13 +68,23 @@ export class FilesController {
   async findLinkedFiles(
     @Param('type') type: string,
     @Param('id', ParseIntPipe) id: number,
+    @User() user: any,
   ) {
     const validTypes = ['wikis', 'sections', 'pages', 'users'];
     if (!validTypes.includes(type)) {
       throw new BadRequestException(`Invalid type. Must be one of: ${validTypes.join(', ')}`);
     }
 
-    const linkableType = type.slice(0, -1);
+    const linkableType = type.slice(0, -1); // wikis -> wiki
+
+    // Check if user can access the parent content (skip for users - profile files are different)
+    if (linkableType !== 'user') {
+      const canAccess = await this.accessControlService.canAccess(user, linkableType, id);
+      if (!canAccess) {
+        throw new ForbiddenException('Access denied to this content');
+      }
+    }
+
     return this.filesService.findLinkedFiles(linkableType, id);
   }
 
@@ -96,8 +109,12 @@ export class FilesController {
   }
 
   @Get()
-  async findAll(@Query('includeDeleted') includeDeleted?: string) {
-    return this.filesService.findAll(includeDeleted === 'true');
+  @UseGuards(AuthGuard)
+  async findAll(
+    @Query('includeDeleted') includeDeleted?: string,
+    @User() user?: any,
+  ) {
+    return this.filesService.findAllFiltered(user, includeDeleted === 'true');
   }
 
   // ==========================================================================

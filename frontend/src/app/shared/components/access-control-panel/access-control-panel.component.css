@@ -116,6 +116,29 @@
   border-color: #ffd966;
 }
 
+/* Conflicting Rules Warning */
+.conflict-warning-banner {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  background-color: #fff3cd;
+  border: 1px solid #ff9800;
+  border-radius: 4px;
+  align-items: flex-start;
+}
+
+.conflict-warning-banner strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #8b5a00;
+}
+
+.conflict-warning-banner p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #856404;
+}
+
 .info-icon {
   font-size: 1.5rem;
 }

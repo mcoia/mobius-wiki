@@ -1,10 +1,17 @@
-import { Injectable, Inject, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, Inject, NotFoundException, BadRequestException, forwardRef } from '@nestjs/common';
 import { Pool } from 'pg';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as crypto from 'crypto';
 
 import { FileAdminQueryDto } from './dto/file-admin-query.dto';
+import { AccessControlService } from '../access-control/access-control.service';
+
+interface User {
+  id?: number;
+  role?: string;
+  libraryId?: number | null;
+}
 
 @Injectable()
 export class FilesService {
@@ -51,7 +58,10 @@ export class FilesService {
     '.application',
   ];
 
-  constructor(@Inject('DATABASE_POOL') private pool: Pool) {
+  constructor(
+    @Inject('DATABASE_POOL') private pool: Pool,
+    @Inject(forwardRef(() => AccessControlService)) private accessControlService: AccessControlService,
+  ) {
     this.ensureUploadDir();
   }
 
@@ -166,6 +176,30 @@ export class FilesService {
     return {
       data: rows,
       meta: { total: rows.length },
+    };
+  }
+
+  /**
+   * Get all files filtered by user's access permissions.
+   * Uses batch ACL checking - 4 queries instead of ~5,900 for 844 files.
+   */
+  async findAllFiltered(user: User | null, includeDeleted = false) {
+    const whereClause = includeDeleted ? '' : 'WHERE deleted_at IS NULL';
+
+    const { rows } = await this.pool.query(
+      `SELECT * FROM wiki.files ${whereClause} ORDER BY created_at DESC`,
+    );
+
+    // Batch check all file permissions (4 queries instead of N*7)
+    const fileIds = rows.map((f) => f.id);
+    const accessMap = await this.accessControlService.canAccessFileBatch(user, fileIds);
+
+    // Filter based on batch results
+    const accessibleFiles = rows.filter((file) => accessMap.get(file.id) === true);
+
+    return {
+      data: accessibleFiles,
+      meta: { total: accessibleFiles.length },
     };
   }
 
