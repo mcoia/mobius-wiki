@@ -1,4 +1,4 @@
-import { IsString, IsOptional, MinLength, MaxLength, IsInt } from 'class-validator';
+import { IsString, IsOptional, MinLength, MaxLength, IsInt, Min } from 'class-validator';
 
 export class UpdateSectionDto {
   @IsOptional()
@@ -19,4 +19,9 @@ export class UpdateSectionDto {
   @IsOptional()
   @IsInt()
   sortOrder?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  parentSectionId?: number | null;
 }

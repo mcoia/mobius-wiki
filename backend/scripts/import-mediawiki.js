@@ -721,6 +721,8 @@ function getPageRevisions(page) {
 /**
  * Create the target wiki
  *
+ * Matches existing wikis by slug OR title (case-insensitive) to prevent duplicates.
+ *
  * @param {object} client - Database client
  * @param {string} title - Wiki title
  * @param {number} userId - User ID for attribution
@@ -731,15 +733,30 @@ function getPageRevisions(page) {
 async function createWiki(client, title, userId, description, customSlug) {
   const slug = customSlug || slugify(title);
 
-  // Check if wiki exists
+  // Check if wiki exists by slug OR title (case-insensitive) to prevent duplicates
   const existing = await client.query(
-    'SELECT id FROM wiki.wikis WHERE slug = $1 AND deleted_at IS NULL',
-    [slug]
+    `SELECT id, title, slug FROM wiki.wikis
+     WHERE (slug = $1 OR LOWER(title) = LOWER($2))
+       AND deleted_at IS NULL`,
+    [slug, title]
   );
 
   if (existing.rows.length > 0) {
-    console.log(`Wiki "${title}" already exists (id: ${existing.rows[0].id})`);
-    return existing.rows[0].id;
+    const existingWiki = existing.rows[0];
+    console.log(`Wiki "${title}" already exists (id: ${existingWiki.id}, slug: ${existingWiki.slug})`);
+
+    // Update the wiki if title/slug changed
+    if (existingWiki.slug !== slug || existingWiki.title !== title) {
+      await client.query(
+        `UPDATE wiki.wikis
+         SET title = $1, slug = $2, updated_at = NOW()
+         WHERE id = $3`,
+        [title, slug, existingWiki.id]
+      );
+      console.log(`  Updated wiki: title="${title}", slug="${slug}"`);
+    }
+
+    return existingWiki.id;
   }
 
   const desc = description || `Imported from MediaWiki on ${new Date().toISOString()}`;
@@ -757,8 +774,15 @@ async function createWiki(client, title, userId, description, customSlug) {
 
 /**
  * Create or get a section
+ *
+ * @param {object} client - Database client
+ * @param {number} wikiId - Wiki ID
+ * @param {string} title - Section title
+ * @param {number} userId - User ID for attribution
+ * @param {number} sortOrder - Sort order for the section (unique per wiki)
+ * @returns {Promise<number>} - Section ID
  */
-async function getOrCreateSection(client, wikiId, title, userId) {
+async function getOrCreateSection(client, wikiId, title, userId, sortOrder = 0) {
   const slug = slugify(title);
 
   const existing = await client.query(
@@ -771,13 +795,13 @@ async function getOrCreateSection(client, wikiId, title, userId) {
   }
 
   const result = await client.query(
-    `INSERT INTO wiki.sections (wiki_id, title, slug, created_by, updated_by)
-     VALUES ($1, $2, $3, $4, $4)
+    `INSERT INTO wiki.sections (wiki_id, title, slug, sort_order, created_by, updated_by)
+     VALUES ($1, $2, $3, $4, $5, $5)
      RETURNING id`,
-    [wikiId, title, slug, userId]
+    [wikiId, title, slug, sortOrder, userId]
   );
 
-  console.log(`  Created section: ${title}`);
+  console.log(`  Created section: ${title} (sort_order: ${sortOrder})`);
   return result.rows[0].id;
 }
 
@@ -1052,15 +1076,16 @@ async function main() {
 
         // Create sections and import pages
         const sectionMap = new Map();
+        let sectionSortOrder = 0;
 
-        // Always create General section as fallback
-        const generalId = await getOrCreateSection(client, wikiId, 'General', config.userId);
+        // Always create General section as fallback (sort_order 0)
+        const generalId = await getOrCreateSection(client, wikiId, 'General', config.userId, sectionSortOrder++);
         sectionMap.set('General', generalId);
         stats.sections++;
 
         for (const [sectionName, items] of sectionGroups) {
           if (sectionName !== 'General') {
-            const sectionId = await getOrCreateSection(client, wikiId, sectionName, config.userId);
+            const sectionId = await getOrCreateSection(client, wikiId, sectionName, config.userId, sectionSortOrder++);
             sectionMap.set(sectionName, sectionId);
             stats.sections++;
           }
@@ -1189,15 +1214,16 @@ async function main() {
 
     const sectionMap = new Map();
     const sectionsToCreate = allCategories.size > 0 ? allCategories : allInferredSections;
+    let sectionSortOrder = 0;
 
     const fallbackSectionName = allCategories.size > 0 ? 'Uncategorized' : 'General';
-    const fallbackId = await getOrCreateSection(client, wikiId, fallbackSectionName, config.userId);
+    const fallbackId = await getOrCreateSection(client, wikiId, fallbackSectionName, config.userId, sectionSortOrder++);
     sectionMap.set(fallbackSectionName, fallbackId);
     stats.sections++;
 
     for (const sectionName of sectionsToCreate) {
       if (sectionName !== fallbackSectionName) {
-        const sectionId = await getOrCreateSection(client, wikiId, sectionName, config.userId);
+        const sectionId = await getOrCreateSection(client, wikiId, sectionName, config.userId, sectionSortOrder++);
         sectionMap.set(sectionName, sectionId);
         stats.sections++;
       }

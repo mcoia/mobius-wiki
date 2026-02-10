@@ -16,10 +16,12 @@ export interface Wiki {
 export interface Section {
   id: number;
   wiki_id: number;
+  parent_section_id: number | null;
   title: string;
   slug: string;
   description: string | null;
   sort_order: number;
+  depth: number;
   created_at: string;
   updated_at: string;
   created_by: number;
@@ -91,7 +93,10 @@ export interface NavSection {
   id: number;
   title: string;
   slug: string;
+  parent_section_id?: number | null;
+  depth?: number;
   pages: NavPage[];
+  children?: NavSection[];
 }
 
 export interface NavWiki {

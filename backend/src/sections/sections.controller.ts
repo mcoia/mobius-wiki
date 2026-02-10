@@ -19,6 +19,14 @@ export class SectionsController {
     return this.sectionsService.findAllInWiki(wikiId, user, includeDeleted === 'true');
   }
 
+  @Get('wikis/:wikiId/sections/tree')
+  async getSectionTree(
+    @Param('wikiId', ParseIntPipe) wikiId: number,
+    @User() user: any,
+  ) {
+    return this.sectionsService.getSectionTree(wikiId, user);
+  }
+
   @Get('sections/:id')
   @UseGuards(AccessControlGuard)
   @SetMetadata('aclCheck', { type: 'section', idParam: 'id' })

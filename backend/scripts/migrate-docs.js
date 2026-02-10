@@ -29,15 +29,28 @@ const MODULES_PATH = path.join(DOCS_ROOT, 'base_docs/docs/modules');
 const CHECKPOINT_FILE = path.join(__dirname, '../migration-data/.migrate-checkpoint.json');
 const REPORT_FILE = path.join(__dirname, '../migration-data/migration-report.json');
 
+// Flat section configuration with unique sort_order values
+// Each section is independent (no parent, depth=0)
+const FLAT_SECTIONS = {
+  'IT - Policies': { slug: 'it-policies', description: 'IT department policies', sortOrder: 0 },
+  'IT - Procedures': { slug: 'it-procedures', description: 'IT department procedures', sortOrder: 1 },
+  'Helpdesk - Policies': { slug: 'helpdesk-policies', description: 'Helpdesk policies', sortOrder: 2 },
+  'Helpdesk - Procedures': { slug: 'helpdesk-procedures', description: 'Helpdesk procedures', sortOrder: 3 },
+  'eResources - Policies': { slug: 'eresources-policies', description: 'eResources policies', sortOrder: 4 },
+  'eResources - Procedures': { slug: 'eresources-procedures', description: 'eResources procedures', sortOrder: 5 },
+  'General': { slug: 'general', description: 'General documentation', sortOrder: 6 },
+};
+
 // Module to section mapping
+// Maps AsciiDoc module names to flat section names
 const MODULE_MAP = {
-  'ROOT': { slug: 'general', title: 'General', description: 'General documentation and guides' },
-  'procedures_Helpdesk': { slug: 'procedures-helpdesk', title: 'Procedures - Helpdesk', description: 'Helpdesk procedures and workflows' },
-  'procedures_IT': { slug: 'procedures-it', title: 'Procedures - IT', description: 'IT procedures and technical documentation' },
-  'policies_Helpdesk': { slug: 'policies-helpdesk', title: 'Policies - Helpdesk', description: 'Helpdesk policies and standards' },
-  'policies_IT': { slug: 'policies-it', title: 'Policies - IT', description: 'IT policies and standards' },
-  'policies_eResources': { slug: 'policies-eresources', title: 'Policies - eResources', description: 'eResources policies' },
-  'procedures_eResources': { slug: 'procedures-eresources', title: 'Procedures - eResources', description: 'eResources procedures' },
+  'ROOT': { section: 'General' },
+  'procedures_Helpdesk': { section: 'Helpdesk - Procedures' },
+  'procedures_IT': { section: 'IT - Procedures' },
+  'policies_Helpdesk': { section: 'Helpdesk - Policies' },
+  'policies_IT': { section: 'IT - Policies' },
+  'policies_eResources': { section: 'eResources - Policies' },
+  'procedures_eResources': { section: 'eResources - Procedures' },
 };
 
 async function main() {
@@ -82,10 +95,21 @@ async function main() {
 
     // Create wiki structure (idempotent)
     console.log('Creating wiki structure...');
-    const { wikiId, sectionMap } = dryRun
-      ? { wikiId: 0, sectionMap: Object.fromEntries(Object.values(MODULE_MAP).map(m => [m.slug, 0])) }
-      : await createWikiStructure(pool);
-    console.log(`  Wiki ID: ${wikiId}`);
+    let wikiId, sectionMap;
+    if (dryRun) {
+      // Build fake section map for dry run
+      wikiId = 0;
+      sectionMap = {};
+      for (const sectionName of Object.keys(FLAT_SECTIONS)) {
+        sectionMap[sectionName] = 0;
+      }
+      console.log(`  Wiki ID: ${wikiId} (dry run)`);
+    } else {
+      const result = await createWikiStructure(pool);
+      wikiId = result.wikiId;
+      sectionMap = result.sectionMap;
+      console.log(`  Wiki ID: ${wikiId}`);
+    }
     console.log(`  Sections: ${Object.keys(sectionMap).join(', ')}\n`);
 
     // Discover page files
@@ -116,7 +140,10 @@ async function main() {
       const globalIndex = startIndex + i;
       const moduleName = getModuleName(file);
       const moduleConfig = MODULE_MAP[moduleName] || MODULE_MAP['ROOT'];
-      const sectionId = sectionMap[moduleConfig.slug];
+
+      // Determine the section ID using the flat section map
+      const sectionName = moduleConfig.section || 'General';
+      const sectionId = sectionMap[sectionName];
 
       const fileName = path.basename(file, '.adoc');
       console.log(`[${globalIndex + 1}/${startIndex + pageFiles.length}] ${moduleName}/${fileName}`);
@@ -275,31 +302,59 @@ async function buildUserMap(pool) {
 }
 
 /**
- * Create the wiki and sections (idempotent)
+ * Create the wiki and flat sections (idempotent)
+ * Returns sectionMap keyed by section name (e.g., "IT - Policies")
  */
 async function createWikiStructure(pool) {
-  // Create or get wiki
-  const { rows: wikiRows } = await pool.query(`
-    INSERT INTO wiki.wikis (title, slug, description, created_by, updated_by)
-    VALUES ('MOBIUS Documentation', 'mobius-documentation',
-            'Internal documentation migrated from AsciiDoc repository', 1, 1)
-    ON CONFLICT (slug) DO UPDATE SET updated_at = NOW()
-    RETURNING id
+  // Create or get wiki - use 'docs' slug to match seed data
+  // Only match by slug to avoid conflicts with duplicate titles
+  const { rows: existingWiki } = await pool.query(`
+    SELECT id, title FROM wiki.wikis
+    WHERE slug = 'docs' AND deleted_at IS NULL
   `);
-  const wikiId = wikiRows[0].id;
 
-  // Create sections
-  const sectionMap = {};
-  let sortOrder = 1;
-
-  for (const [moduleName, config] of Object.entries(MODULE_MAP)) {
-    const { rows } = await pool.query(`
-      INSERT INTO wiki.sections (wiki_id, title, slug, description, sort_order, created_by, updated_by)
-      VALUES ($1, $2, $3, $4, $5, 1, 1)
-      ON CONFLICT (wiki_id, slug) DO UPDATE SET updated_at = NOW()
+  let wikiId;
+  if (existingWiki.length > 0) {
+    wikiId = existingWiki[0].id;
+    // Update the wiki title/description if needed
+    await pool.query(`
+      UPDATE wiki.wikis
+      SET title = 'MOBIUS Documentation',
+          description = 'Internal documentation migrated from AsciiDoc repository',
+          updated_at = NOW()
+      WHERE id = $1
+    `, [wikiId]);
+    console.log(`  Using existing wiki ID: ${wikiId} (slug: docs)`);
+  } else {
+    const { rows: wikiRows } = await pool.query(`
+      INSERT INTO wiki.wikis (title, slug, description, created_by, updated_by)
+      VALUES ('MOBIUS Documentation', 'docs',
+              'Internal documentation migrated from AsciiDoc repository', 1, 1)
       RETURNING id
-    `, [wikiId, config.title, config.slug, config.description, sortOrder++]);
-    sectionMap[config.slug] = rows[0].id;
+    `);
+    wikiId = wikiRows[0].id;
+    console.log(`  Created wiki ID: ${wikiId}`);
+  }
+
+  // Create flat sections (no parent, depth=0, unique sort_order)
+  const sectionMap = {};
+
+  for (const [sectionName, config] of Object.entries(FLAT_SECTIONS)) {
+    const { rows } = await pool.query(`
+      INSERT INTO wiki.sections (wiki_id, parent_section_id, title, slug, description, sort_order, depth, created_by, updated_by)
+      VALUES ($1, NULL, $2, $3, $4, $5, 0, 1, 1)
+      ON CONFLICT (wiki_id, slug) DO UPDATE SET
+        title = EXCLUDED.title,
+        description = EXCLUDED.description,
+        sort_order = EXCLUDED.sort_order,
+        depth = 0,
+        parent_section_id = NULL,
+        updated_at = NOW()
+      RETURNING id
+    `, [wikiId, sectionName, config.slug, config.description, config.sortOrder]);
+
+    sectionMap[sectionName] = rows[0].id;
+    console.log(`  Created section: ${sectionName} (ID: ${rows[0].id}, sort_order: ${config.sortOrder})`);
   }
 
   return { wikiId, sectionMap };

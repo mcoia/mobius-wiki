@@ -1,4 +1,4 @@
-import { IsString, IsOptional, MinLength, MaxLength, IsInt } from 'class-validator';
+import { IsString, IsOptional, MinLength, MaxLength, IsInt, Min } from 'class-validator';
 
 export class CreateSectionDto {
   @IsString()
@@ -18,4 +18,9 @@ export class CreateSectionDto {
   @IsOptional()
   @IsInt()
   sortOrder?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  parentSectionId?: number;
 }
