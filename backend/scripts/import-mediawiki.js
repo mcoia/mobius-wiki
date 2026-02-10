@@ -5,10 +5,17 @@
  * Imports pages from a MediaWiki XML export into MOBIUS Wiki,
  * converting wikitext to HTML and preserving revision history.
  *
+ * Multi-Wiki Mode (default):
+ *   Creates 4 separate wikis (FOLIO, EDS, OpenRS, Panorama) based on
+ *   booknav tags and title patterns.
+ *
+ * Single-Wiki Mode (legacy):
+ *   Use --single-wiki <name> to import all pages into one wiki.
+ *
  * Usage:
  *   node scripts/import-mediawiki.js --file ../resources/MOBIUS+Wiki-20260209222944.xml --dry-run
- *   node scripts/import-mediawiki.js --file ../resources/MOBIUS+Wiki-20260209222944.xml --wiki "BlueSpice Import"
- *   node scripts/import-mediawiki.js --file ../resources/MOBIUS+Wiki-20260209222944.xml --files ./imports/files/ --wiki "MOBIUS Wiki Import"
+ *   node scripts/import-mediawiki.js --file ../resources/MOBIUS+Wiki-20260209222944.xml
+ *   node scripts/import-mediawiki.js --file ../resources/MOBIUS+Wiki-20260209222944.xml --single-wiki "Legacy Import"
  */
 
 const fs = require('fs');
@@ -19,6 +26,219 @@ const wtf = require('wtf_wikipedia');
 require('dotenv').config();
 
 // =============================================================================
+// Multi-Wiki Configuration
+// =============================================================================
+
+/**
+ * Wiki configurations for multi-wiki mode.
+ * Priority: booknav patterns checked first, then title patterns, then default.
+ */
+const WIKI_CONFIGS = {
+  eds: {
+    key: 'eds',
+    title: 'EDS',
+    slug: 'eds',
+    description: 'EBSCO Discovery Service documentation for the MOBIUS Consortium',
+    booknavPatterns: ['EDS wiki'],
+    titlePatterns: [
+      /^EDS\b/i,
+      /^EBSCO/i,
+      /Evolution of EBSCOhost/i,
+    ],
+    isDefault: false,
+  },
+  panorama: {
+    key: 'panorama',
+    title: 'Panorama',
+    slug: 'panorama',
+    description: 'Panorama analytics and reporting documentation',
+    booknavPatterns: ['Panorama'],
+    titlePatterns: [
+      /^Panorama/i,
+    ],
+    isDefault: false,
+  },
+  openrs: {
+    key: 'openrs',
+    title: 'OpenRS',
+    slug: 'openrs',
+    description: 'OpenRS resource sharing documentation for the MOBIUS Consortium',
+    booknavPatterns: ['OpenRS wiki'],
+    titlePatterns: [
+      /^OpenRS/i,
+      /OpenRS\b/i, // Any title containing "OpenRS"
+      /^7\.\d+\s+DCB/i,
+      /^7\.\d+\s+(?!FOLIO)/i, // 7.x patterns not followed by FOLIO
+      /^7\s+DCB/i,
+      /^DCB\b/i,
+      /Active OpenRS/i,
+      /^Controlling\s+Lending/i,
+      /Format\s+Filtering\s+in\s+OpenRS/i,
+      /Returned\s+OpenRS\s+Books/i,
+      /Stop.*Borrowing.*Lending/i, // Borrowing/lending controls
+      /Temporarily\s+Stopping\s+Borrowing/i,
+    ],
+    isDefault: false,
+  },
+  folio: {
+    key: 'folio',
+    title: 'FOLIO',
+    slug: 'folio',
+    description: 'FOLIO ILS documentation for the MOBIUS Consortium',
+    booknavPatterns: ['FOLIO WIKI'],
+    titlePatterns: [
+      /^FOLIO/i,
+      /^Folio\b/i,
+      /^Inventory/i,
+      /^Course\s*Reserves?/i,
+      /^Bulk\s*Edit/i,
+      /^Lists\b/i,
+      /^Finance\b/i,
+      /^Acquisitions/i,
+      /^Serials/i,
+      /^20\d{6}.*FOLIO/i, // Dated FOLIO pages
+      /^20\d{6}.*Serials/i,
+      /^20\d{6}.*Acquisitions/i,
+      /^7\s+FOLIO/i,
+      /Connexion/i,
+      /^OCLC/i,
+      /^CQL\s+Query/i,
+      /^Batchloading/i,
+      /^Batch\s+Updating/i,
+      /permissions/i,
+    ],
+    isDefault: true, // Default wiki for unmatched pages
+  },
+};
+
+// Order matters: more specific wikis checked first
+const WIKI_CHECK_ORDER = ['eds', 'panorama', 'openrs', 'folio'];
+
+/**
+ * Extract booknav book assignment from wikitext.
+ * Handles both raw and HTML-encoded versions.
+ *
+ * Examples:
+ *   <booknav book="FOLIO WIKI" />
+ *   &lt;booknav book="EDS wiki" /&gt;
+ *
+ * @param {string} wikitext - Raw wikitext content
+ * @returns {string|null} - Book name or null if not found
+ */
+function extractBooknavAssignment(wikitext) {
+  if (!wikitext) return null;
+
+  // Match both raw and HTML-encoded versions
+  // Raw: <booknav book="FOLIO WIKI" />
+  // Encoded: &lt;booknav book="EDS wiki" /&gt;
+  const patterns = [
+    /<booknav\s+book="([^"]+)"\s*\/?>/i,
+    /&lt;booknav\s+book="([^"]+)"\s*\/?&gt;/i,
+    /booknav\s+book="([^"]+)"/i, // Fallback partial match
+  ];
+
+  for (const pattern of patterns) {
+    const match = wikitext.match(pattern);
+    if (match) {
+      return match[1].trim();
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Determine which wiki a page should be assigned to.
+ *
+ * @param {string} title - Page title
+ * @param {string} wikitext - Page wikitext content
+ * @returns {{ wikiKey: string, method: 'booknav'|'title'|'default' }}
+ */
+function determineWikiAssignment(title, wikitext) {
+  // 1. Check booknav tag first (highest priority)
+  const booknavBook = extractBooknavAssignment(wikitext);
+  if (booknavBook) {
+    for (const wikiKey of WIKI_CHECK_ORDER) {
+      const wikiConfig = WIKI_CONFIGS[wikiKey];
+      for (const pattern of wikiConfig.booknavPatterns) {
+        if (booknavBook.toLowerCase() === pattern.toLowerCase()) {
+          return { wikiKey, method: 'booknav' };
+        }
+      }
+    }
+  }
+
+  // 2. Check title patterns (in priority order)
+  for (const wikiKey of WIKI_CHECK_ORDER) {
+    const wikiConfig = WIKI_CONFIGS[wikiKey];
+    for (const pattern of wikiConfig.titlePatterns) {
+      if (pattern.test(title)) {
+        return { wikiKey, method: 'title' };
+      }
+    }
+  }
+
+  // 3. Default to FOLIO
+  const defaultWiki = Object.values(WIKI_CONFIGS).find(w => w.isDefault);
+  return { wikiKey: defaultWiki.key, method: 'default' };
+}
+
+/**
+ * Infer section from page title for a specific wiki.
+ * Each wiki has its own section groupings.
+ *
+ * @param {string} title - Page title
+ * @param {string} wikiKey - Wiki key (folio, openrs, eds, panorama)
+ * @returns {string} - Section name
+ */
+function inferSectionForWiki(title, wikiKey) {
+  // Wiki-specific section patterns
+  const sectionPatterns = {
+    folio: [
+      { pattern: /^20\d{6}.*Serials/i, section: 'Serials Training' },
+      { pattern: /^20\d{6}.*Acquisitions/i, section: 'Acquisitions Training' },
+      { pattern: /^20\d{6}/i, section: 'Training Sessions' },
+      { pattern: /^FOLIO\s*Serials|^Serials/i, section: 'Serials' },
+      { pattern: /^FOLIO\s*Acquisitions|^Acquisitions/i, section: 'Acquisitions' },
+      { pattern: /^Finance/i, section: 'Finance' },
+      { pattern: /^Inventory|^CQL|^Bulk\s*Edit|^Lists/i, section: 'Inventory' },
+      { pattern: /^Course\s*Reserves/i, section: 'Course Reserves' },
+      { pattern: /permissions/i, section: 'Permissions' },
+      { pattern: /Connexion|^OCLC/i, section: 'OCLC/Connexion' },
+      { pattern: /^Batchloading|^Batch\s+Updating/i, section: 'Batch Operations' },
+      { pattern: /^FOLIO\s+Calendar/i, section: 'Settings' },
+      { pattern: /^FOLIO\s+Query/i, section: 'Search & Query' },
+    ],
+    openrs: [
+      { pattern: /^7\.\d+\s+DCB|^7\s+DCB|^DCB\s+Admin/i, section: 'DCB Admin' },
+      { pattern: /^DCB\s+Request/i, section: 'DCB Requesting' },
+      { pattern: /^7\.\d+/i, section: 'Version Documentation' },
+      { pattern: /^Active\s+OpenRS/i, section: 'Active Loans' },
+      { pattern: /^Controlling\s+Lending|Temporarily\s+Stopping\s+Borrowing|Stop.*Borrowing/i, section: 'Lending Controls' },
+      { pattern: /Format\s+Filtering/i, section: 'Filtering' },
+      { pattern: /OpenRS\s+Statistics/i, section: 'Statistics' },
+      { pattern: /Returned\s+OpenRS\s+Books/i, section: 'Returns' },
+    ],
+    eds: [
+      { pattern: /^EDS\s+Table/i, section: 'Getting Started' },
+      { pattern: /Evolution|EBSCOhost/i, section: 'Guides' },
+    ],
+    panorama: [
+      { pattern: /^Panorama/i, section: 'Reports' },
+    ],
+  };
+
+  const patterns = sectionPatterns[wikiKey] || [];
+  for (const { pattern, section } of patterns) {
+    if (pattern.test(title)) {
+      return section;
+    }
+  }
+
+  return 'General';
+}
+
+// =============================================================================
 // Configuration & CLI Parsing
 // =============================================================================
 
@@ -26,7 +246,7 @@ const args = process.argv.slice(2);
 const config = {
   xmlPath: null,
   filesPath: null,
-  wikiTitle: 'MediaWiki Import',
+  singleWikiTitle: null, // If set, use legacy single-wiki mode
   dryRun: false,
   verbose: false,
   userId: 1, // Default user ID for attributing content
@@ -47,9 +267,10 @@ for (let i = 0; i < args.length; i++) {
       config.filesPath = nextArg;
       i++;
       break;
+    case '--single-wiki':
     case '--wiki':
     case '-w':
-      config.wikiTitle = nextArg;
+      config.singleWikiTitle = nextArg;
       i++;
       break;
     case '--user':
@@ -76,26 +297,44 @@ function showHelp() {
   console.log(`
 MediaWiki to MOBIUS Wiki Import Script
 
+Imports pages from MediaWiki XML into MOBIUS Wiki. By default, creates 4 wikis
+(FOLIO, EDS, OpenRS, Panorama) based on booknav tags and title patterns.
+
 Usage:
   node import-mediawiki.js --file <xml-path> [options]
 
 Required:
-  --file, -f <path>     Path to MediaWiki XML export file
+  --file, -f <path>       Path to MediaWiki XML export file
 
 Options:
-  --wiki, -w <name>     Wiki title to create (default: "MediaWiki Import")
-  --files <dir>         Directory containing downloaded images
-  --user, -u <id>       User ID to attribute content to (default: 1)
-  --dry-run, -n         Preview what would be imported without making DB changes
-  --verbose, -v         Show detailed output
-  --help, -h            Show this help message
+  --single-wiki <name>    Legacy mode: import all pages to a single wiki
+  --wiki, -w <name>       Alias for --single-wiki
+  --files <dir>           Directory containing downloaded images
+  --user, -u <id>         User ID to attribute content to (default: 1)
+  --dry-run, -n           Preview what would be imported without making DB changes
+  --verbose, -v           Show detailed output
+  --help, -h              Show this help message
+
+Multi-Wiki Mode (default):
+  Pages are assigned to wikis based on:
+    1. Booknav tags (e.g., <booknav book="FOLIO WIKI" />) - highest priority
+    2. Title patterns (e.g., pages starting with "OpenRS") - fallback
+    3. Default wiki (FOLIO) - for unmatched pages
+
+  Assignment indicators in dry-run output:
+    [B] = Matched by booknav tag
+    [T] = Matched by title pattern
+    [D] = Default assignment (no match)
 
 Examples:
-  # Dry run to preview import
+  # Dry run to preview multi-wiki import
   node import-mediawiki.js --file export.xml --dry-run
 
-  # Full import with images
-  node import-mediawiki.js --file export.xml --files ./imports/files/ --wiki "BlueSpice Import"
+  # Full multi-wiki import
+  node import-mediawiki.js --file export.xml
+
+  # Legacy single-wiki import
+  node import-mediawiki.js --file export.xml --single-wiki "BlueSpice Import"
 `);
 }
 
@@ -481,9 +720,16 @@ function getPageRevisions(page) {
 
 /**
  * Create the target wiki
+ *
+ * @param {object} client - Database client
+ * @param {string} title - Wiki title
+ * @param {number} userId - User ID for attribution
+ * @param {string} [description] - Wiki description
+ * @param {string} [customSlug] - Optional custom slug
+ * @returns {Promise<number>} - Wiki ID
  */
-async function createWiki(client, title, userId) {
-  const slug = slugify(title);
+async function createWiki(client, title, userId, description, customSlug) {
+  const slug = customSlug || slugify(title);
 
   // Check if wiki exists
   const existing = await client.query(
@@ -496,11 +742,13 @@ async function createWiki(client, title, userId) {
     return existing.rows[0].id;
   }
 
+  const desc = description || `Imported from MediaWiki on ${new Date().toISOString()}`;
+
   const result = await client.query(
     `INSERT INTO wiki.wikis (title, slug, description, created_by, updated_by)
      VALUES ($1, $2, $3, $4, $4)
      RETURNING id`,
-    [title, slug, `Imported from MediaWiki on ${new Date().toISOString()}`, userId]
+    [title, slug, desc, userId]
   );
 
   console.log(`Created wiki "${title}" (id: ${result.rows[0].id})`);
@@ -616,12 +864,59 @@ async function importPage(client, sectionId, page, userId, stats) {
 // Main Import Function
 // =============================================================================
 
+/**
+ * Analyze pages and determine wiki assignments for multi-wiki mode.
+ *
+ * @param {Array} mainPages - Pages to analyze
+ * @returns {Map} - Map of wikiKey -> array of { page, section, method }
+ */
+function analyzeMultiWikiAssignments(mainPages) {
+  const wikiAssignments = new Map();
+
+  // Initialize all wikis
+  for (const wikiKey of Object.keys(WIKI_CONFIGS)) {
+    wikiAssignments.set(wikiKey, []);
+  }
+
+  for (const page of mainPages) {
+    const revisions = getPageRevisions(page);
+    if (revisions.length === 0) continue;
+
+    const latestContent = revisions[revisions.length - 1].content;
+    const { wikiKey, method } = determineWikiAssignment(page.title, latestContent);
+    const section = inferSectionForWiki(page.title, wikiKey);
+
+    wikiAssignments.get(wikiKey).push({
+      page,
+      section,
+      method,
+      revisionCount: revisions.length,
+    });
+  }
+
+  return wikiAssignments;
+}
+
+/**
+ * Get method indicator for display
+ */
+function getMethodIndicator(method) {
+  switch (method) {
+    case 'booknav': return '[B]';
+    case 'title': return '[T]';
+    case 'default': return '[D]';
+    default: return '[?]';
+  }
+}
+
 async function main() {
+  const isMultiWikiMode = !config.singleWikiTitle;
+
   console.log('='.repeat(70));
   console.log('MediaWiki to MOBIUS Wiki Import');
   console.log('='.repeat(70));
   console.log(`XML File: ${config.xmlPath}`);
-  console.log(`Wiki: ${config.wikiTitle}`);
+  console.log(`Mode: ${isMultiWikiMode ? 'Multi-Wiki (FOLIO, EDS, OpenRS, Panorama)' : `Single Wiki: ${config.singleWikiTitle}`}`);
   console.log(`Files: ${config.filesPath || 'Not specified'}`);
   console.log(`User ID: ${config.userId}`);
   console.log(`Dry Run: ${config.dryRun}`);
@@ -635,7 +930,7 @@ async function main() {
   }
 
   // Parse XML
-  const { siteInfo, pages } = await parseMediaWikiXml(absolutePath);
+  const { pages } = await parseMediaWikiXml(absolutePath);
 
   // Filter out non-main namespace pages
   const mainPages = pages.filter(p => {
@@ -646,11 +941,197 @@ async function main() {
   console.log(`Filtered to ${mainPages.length} main namespace pages`);
   console.log('');
 
-  // Extract all categories for section creation
+  // Stats tracking
+  const stats = {
+    imported: 0,
+    skipped: 0,
+    failed: 0,
+    revisions: 0,
+    sections: 0,
+    wikis: 0,
+  };
+
+  // ============================================================================
+  // Multi-Wiki Mode
+  // ============================================================================
+  if (isMultiWikiMode) {
+    console.log('Analyzing page assignments...');
+    const wikiAssignments = analyzeMultiWikiAssignments(mainPages);
+
+    // Count assignments by method
+    const methodCounts = { booknav: 0, title: 0, default: 0 };
+    for (const [, pageList] of wikiAssignments) {
+      for (const { method } of pageList) {
+        methodCounts[method]++;
+      }
+    }
+
+    console.log(`\nAssignment methods: [B]ooknav=${methodCounts.booknav}, [T]itle=${methodCounts.title}, [D]efault=${methodCounts.default}`);
+    console.log('');
+
+    // Dry run output
+    if (config.dryRun) {
+      console.log('='.repeat(70));
+      console.log('DRY RUN - No changes will be made');
+      console.log('='.repeat(70));
+
+      for (const wikiKey of WIKI_CHECK_ORDER) {
+        const wikiConfig = WIKI_CONFIGS[wikiKey];
+        const pageList = wikiAssignments.get(wikiKey);
+
+        if (pageList.length === 0) {
+          console.log(`\n📁 ${wikiConfig.title} (0 pages) - Would skip, no pages`);
+          continue;
+        }
+
+        console.log(`\n📁 ${wikiConfig.title} (${pageList.length} pages)`);
+
+        // Group by section
+        const sectionGroups = new Map();
+        for (const item of pageList) {
+          if (!sectionGroups.has(item.section)) {
+            sectionGroups.set(item.section, []);
+          }
+          sectionGroups.get(item.section).push(item);
+        }
+
+        // Print sections and pages
+        for (const [section, items] of sectionGroups) {
+          console.log(`  📂 ${section} (${items.length} pages)`);
+          for (const item of items) {
+            const indicator = getMethodIndicator(item.method);
+            console.log(`     ${indicator} ${item.page.title} (${item.revisionCount} rev)`);
+          }
+        }
+      }
+
+      console.log('\n' + '='.repeat(70));
+      console.log('Legend: [B]=Booknav tag, [T]=Title pattern, [D]=Default');
+      console.log('Remove --dry-run to perform actual import');
+      return;
+    }
+
+    // Actual import
+    console.log('Connecting to database...');
+    const client = await pool.connect();
+
+    try {
+      await client.query('BEGIN');
+
+      // Create wikis and import pages
+      for (const wikiKey of WIKI_CHECK_ORDER) {
+        const wikiConfig = WIKI_CONFIGS[wikiKey];
+        const pageList = wikiAssignments.get(wikiKey);
+
+        if (pageList.length === 0) {
+          console.log(`\nSkipping ${wikiConfig.title} wiki (no pages)`);
+          continue;
+        }
+
+        console.log(`\n${'─'.repeat(70)}`);
+        console.log(`Creating ${wikiConfig.title} wiki with ${pageList.length} pages...`);
+
+        // Create wiki
+        const wikiId = await createWiki(
+          client,
+          wikiConfig.title,
+          config.userId,
+          wikiConfig.description,
+          wikiConfig.slug
+        );
+        stats.wikis++;
+
+        // Group pages by section
+        const sectionGroups = new Map();
+        for (const item of pageList) {
+          if (!sectionGroups.has(item.section)) {
+            sectionGroups.set(item.section, []);
+          }
+          sectionGroups.get(item.section).push(item);
+        }
+
+        // Create sections and import pages
+        const sectionMap = new Map();
+
+        // Always create General section as fallback
+        const generalId = await getOrCreateSection(client, wikiId, 'General', config.userId);
+        sectionMap.set('General', generalId);
+        stats.sections++;
+
+        for (const [sectionName, items] of sectionGroups) {
+          if (sectionName !== 'General') {
+            const sectionId = await getOrCreateSection(client, wikiId, sectionName, config.userId);
+            sectionMap.set(sectionName, sectionId);
+            stats.sections++;
+          }
+        }
+
+        console.log(`Created ${sectionGroups.size} sections`);
+        console.log('Importing pages...');
+
+        // Import pages in this wiki
+        let wikiPageCount = 0;
+        for (const item of pageList) {
+          wikiPageCount++;
+          const sectionId = sectionMap.get(item.section) || generalId;
+
+          try {
+            if (!config.verbose) {
+              process.stdout.write(`\r  [${wikiPageCount}/${pageList.length}] ${item.page.title.substring(0, 45).padEnd(45)}`);
+            } else {
+              console.log(`  [${wikiPageCount}/${pageList.length}] ${item.page.title}`);
+            }
+
+            await importPage(client, sectionId, item.page, config.userId, stats);
+          } catch (err) {
+            console.log(`\n  Error importing "${item.page.title}": ${err.message}`);
+            stats.failed++;
+          }
+        }
+        console.log(''); // New line after progress
+      }
+
+      await client.query('COMMIT');
+      console.log('\nTransaction committed successfully.');
+
+    } catch (err) {
+      await client.query('ROLLBACK');
+      console.error('\nTransaction rolled back due to error:', err.message);
+      throw err;
+    } finally {
+      client.release();
+    }
+
+    // Print summary
+    console.log('\n' + '='.repeat(70));
+    console.log('MULTI-WIKI IMPORT COMPLETE');
+    console.log('='.repeat(70));
+    console.log(`Wikis created: ${stats.wikis}`);
+    console.log(`Sections created: ${stats.sections}`);
+    console.log(`Pages imported: ${stats.imported}`);
+    console.log(`Pages skipped: ${stats.skipped}`);
+    console.log(`Pages failed: ${stats.failed}`);
+    console.log(`Revisions imported: ${stats.revisions}`);
+    console.log('');
+
+    if (config.filesPath) {
+      console.log('Note: File references in page content point to /api/v1/files/by-name/');
+      console.log('Make sure to import files from:', config.filesPath);
+    }
+
+    await pool.end();
+    return;
+  }
+
+  // ============================================================================
+  // Single-Wiki Mode (Legacy)
+  // ============================================================================
+
+  // Extract all categories for section creation (legacy behavior)
   const allCategories = new Set();
   const allInferredSections = new Set();
-  const pageCategories = new Map(); // Map page title to its categories
-  const pageSections = new Map(); // Map page title to inferred section
+  const pageCategories = new Map();
+  const pageSections = new Map();
 
   for (const page of mainPages) {
     const revisions = getPageRevisions(page);
@@ -660,7 +1141,6 @@ async function main() {
       pageCategories.set(page.title, categories);
       categories.forEach(cat => allCategories.add(cat));
 
-      // Also infer section from title
       const inferredSection = inferSectionFromTitle(page.title);
       pageSections.set(page.title, inferredSection);
       allInferredSections.add(inferredSection);
@@ -674,24 +1154,13 @@ async function main() {
   }
   console.log('');
 
-  // Stats tracking
-  const stats = {
-    imported: 0,
-    skipped: 0,
-    failed: 0,
-    revisions: 0,
-    sections: 0,
-  };
-
   if (config.dryRun) {
     console.log('='.repeat(70));
     console.log('DRY RUN - No changes will be made');
     console.log('='.repeat(70));
 
-    // Preview what would be imported
-    console.log('\nWould create wiki:', config.wikiTitle);
+    console.log('\nWould create wiki:', config.singleWikiTitle);
     console.log('\nWould create sections:');
-    // Use categories if available, otherwise use inferred sections
     const sectionsToCreate = allCategories.size > 0 ? allCategories : allInferredSections;
     Array.from(sectionsToCreate).sort().forEach(s => console.log(`  - ${s}`));
 
@@ -713,19 +1182,14 @@ async function main() {
   const client = await pool.connect();
 
   try {
-    // Start transaction
     await client.query('BEGIN');
 
-    // Create the wiki
-    const wikiId = await createWiki(client, config.wikiTitle, config.userId);
+    const wikiId = await createWiki(client, config.singleWikiTitle, config.userId);
+    stats.wikis++;
 
-    // Create sections from categories or inferred sections
-    const sectionMap = new Map(); // section name -> section id
-
-    // Determine which sections to create
+    const sectionMap = new Map();
     const sectionsToCreate = allCategories.size > 0 ? allCategories : allInferredSections;
 
-    // Always create a General/fallback section
     const fallbackSectionName = allCategories.size > 0 ? 'Uncategorized' : 'General';
     const fallbackId = await getOrCreateSection(client, wikiId, fallbackSectionName, config.userId);
     sectionMap.set(fallbackSectionName, fallbackId);
@@ -743,13 +1207,11 @@ async function main() {
     console.log('\nImporting pages...');
     console.log('-'.repeat(70));
 
-    // Import each page
     for (let i = 0; i < mainPages.length; i++) {
       const page = mainPages[i];
       const progress = `[${i + 1}/${mainPages.length}]`;
 
       try {
-        // Determine which section this page belongs to
         const categories = pageCategories.get(page.title) || [];
         let sectionName;
         if (categories.length > 0) {
@@ -774,7 +1236,6 @@ async function main() {
 
     console.log('\n');
 
-    // Commit transaction
     await client.query('COMMIT');
     console.log('Transaction committed successfully.');
 
@@ -790,7 +1251,7 @@ async function main() {
   console.log('\n' + '='.repeat(70));
   console.log('IMPORT COMPLETE');
   console.log('='.repeat(70));
-  console.log(`Wiki: ${config.wikiTitle}`);
+  console.log(`Wiki: ${config.singleWikiTitle}`);
   console.log(`Sections created: ${stats.sections}`);
   console.log(`Pages imported: ${stats.imported}`);
   console.log(`Pages skipped: ${stats.skipped}`);
