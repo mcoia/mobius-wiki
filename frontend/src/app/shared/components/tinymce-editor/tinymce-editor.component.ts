@@ -559,9 +559,9 @@ export class TinymceEditorComponent implements AfterViewInit, OnDestroy {
       const response = await firstValueFrom(this.fileService.uploadSimple(file));
       progress(80);
 
-      // Link to page if pageId is provided
+      // Link to page if pageId is provided (as inline image, not attachment)
       if (this.pageId) {
-        await firstValueFrom(this.fileService.linkToPage(response.data.id, this.pageId));
+        await firstValueFrom(this.fileService.linkToPage(response.data.id, this.pageId, 'inline'));
       }
       progress(100);
 

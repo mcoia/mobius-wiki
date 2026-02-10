@@ -68,11 +68,17 @@ export class FilesController {
   async findLinkedFiles(
     @Param('type') type: string,
     @Param('id', ParseIntPipe) id: number,
+    @Query('context') context: 'attachment' | 'inline' | 'cover' | 'thumbnail' | undefined,
     @User() user: any,
   ) {
     const validTypes = ['wikis', 'sections', 'pages', 'users'];
     if (!validTypes.includes(type)) {
       throw new BadRequestException(`Invalid type. Must be one of: ${validTypes.join(', ')}`);
+    }
+
+    // Validate context if provided
+    if (context && !['attachment', 'inline', 'cover', 'thumbnail'].includes(context)) {
+      throw new BadRequestException(`Invalid context. Must be one of: attachment, inline, cover, thumbnail`);
     }
 
     const linkableType = type.slice(0, -1); // wikis -> wiki
@@ -85,7 +91,7 @@ export class FilesController {
       }
     }
 
-    return this.filesService.findLinkedFiles(linkableType, id);
+    return this.filesService.findLinkedFiles(linkableType, id, context);
   }
 
   // ==========================================================================
@@ -207,6 +213,7 @@ export class FilesController {
     @Param('fileId', ParseIntPipe) fileId: number,
     @Param('type') type: string,
     @Param('id', ParseIntPipe) id: number,
+    @Body() body: { context?: 'attachment' | 'inline' | 'cover' | 'thumbnail' },
     @User() user: any,
   ) {
     const validTypes = ['wikis', 'sections', 'pages', 'users'];
@@ -214,8 +221,14 @@ export class FilesController {
       throw new BadRequestException(`Invalid type. Must be one of: ${validTypes.join(', ')}`);
     }
 
+    // Validate context if provided
+    const context = body?.context || 'attachment';
+    if (!['attachment', 'inline', 'cover', 'thumbnail'].includes(context)) {
+      throw new BadRequestException(`Invalid context. Must be one of: attachment, inline, cover, thumbnail`);
+    }
+
     const linkableType = type.slice(0, -1); // wikis -> wiki
-    const link = await this.filesService.linkToContent(fileId, linkableType, id, user.id);
+    const link = await this.filesService.linkToContent(fileId, linkableType, id, user.id, context);
     return { data: link };
   }
 

@@ -232,19 +232,25 @@ export class FilesService {
     return rows[0];
   }
 
-  async linkToContent(fileId: number, linkableType: string, linkableId: number, userId: number) {
+  async linkToContent(
+    fileId: number,
+    linkableType: string,
+    linkableId: number,
+    userId: number,
+    context: 'attachment' | 'inline' | 'cover' | 'thumbnail' = 'attachment',
+  ) {
     // Verify file exists
     await this.findOne(fileId);
 
     // Verify linkable entity exists
     await this.verifyLinkableExists(linkableType, linkableId);
 
-    // Create file link
+    // Create file link with context
     const { rows } = await this.pool.query(
-      `INSERT INTO wiki.file_links (file_id, linkable_type, linkable_id, created_by)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO wiki.file_links (file_id, linkable_type, linkable_id, created_by, link_context)
+       VALUES ($1, $2, $3, $4, $5)
        RETURNING *`,
-      [fileId, linkableType, linkableId, userId],
+      [fileId, linkableType, linkableId, userId, context],
     );
 
     return rows[0];
@@ -265,15 +271,28 @@ export class FilesService {
     return rows[0];
   }
 
-  async findLinkedFiles(linkableType: string, linkableId: number) {
-    const { rows } = await this.pool.query(
-      `SELECT f.*, fl.created_at as linked_at, fl.created_by as linked_by
-       FROM wiki.file_links fl
-       JOIN wiki.files f ON fl.file_id = f.id
-       WHERE fl.linkable_type = $1 AND fl.linkable_id = $2 AND f.deleted_at IS NULL
-       ORDER BY fl.created_at DESC`,
-      [linkableType, linkableId],
-    );
+  async findLinkedFiles(
+    linkableType: string,
+    linkableId: number,
+    context?: 'attachment' | 'inline' | 'cover' | 'thumbnail',
+  ) {
+    let query = `
+      SELECT f.*, fl.created_at as linked_at, fl.created_by as linked_by, fl.link_context
+      FROM wiki.file_links fl
+      JOIN wiki.files f ON fl.file_id = f.id
+      WHERE fl.linkable_type = $1 AND fl.linkable_id = $2 AND f.deleted_at IS NULL`;
+
+    const params: any[] = [linkableType, linkableId];
+
+    // Filter by context if provided
+    if (context) {
+      query += ` AND fl.link_context = $3`;
+      params.push(context);
+    }
+
+    query += ` ORDER BY fl.created_at DESC`;
+
+    const { rows } = await this.pool.query(query, params);
 
     return {
       data: rows,

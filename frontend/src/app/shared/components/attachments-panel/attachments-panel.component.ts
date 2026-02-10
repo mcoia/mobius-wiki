@@ -101,7 +101,7 @@ export class AttachmentsPanelComponent implements OnInit, OnChanges {
   loadAttachments(): void {
     if (!this.pageId) return;
 
-    this.attachments$ = this.fileService.getLinkedFiles(this.pageId).pipe(
+    this.attachments$ = this.fileService.getLinkedFiles(this.pageId, 'attachment').pipe(
       map(response => response.data),
       catchError(error => {
         console.error('Failed to load attachments:', error);

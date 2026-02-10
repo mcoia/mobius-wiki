@@ -82,11 +82,16 @@ export class FileService {
 
   /**
    * Link a file to a page
+   * @param context - 'attachment' for panel uploads, 'inline' for embedded images
    */
-  linkToPage(fileId: number, pageId: number): Observable<{ data: FileLink }> {
+  linkToPage(
+    fileId: number,
+    pageId: number,
+    context: 'attachment' | 'inline' | 'cover' | 'thumbnail' = 'attachment'
+  ): Observable<{ data: FileLink }> {
     return this.http.post<{ data: FileLink }>(
       `${this.apiUrl}/files/${fileId}/link/pages/${pageId}`,
-      {}
+      { context }
     );
   }
 
@@ -101,10 +106,19 @@ export class FileService {
 
   /**
    * Get all files linked to a page
+   * @param context - Optional filter: 'attachment', 'inline', 'cover', 'thumbnail'
    */
-  getLinkedFiles(pageId: number): Observable<{ data: FileAttachment[]; meta: { total: number } }> {
+  getLinkedFiles(
+    pageId: number,
+    context?: 'attachment' | 'inline' | 'cover' | 'thumbnail'
+  ): Observable<{ data: FileAttachment[]; meta: { total: number } }> {
+    let params = new HttpParams();
+    if (context) {
+      params = params.set('context', context);
+    }
     return this.http.get<{ data: FileAttachment[]; meta: { total: number } }>(
-      `${this.apiUrl}/files/linked/pages/${pageId}`
+      `${this.apiUrl}/files/linked/pages/${pageId}`,
+      { params }
     );
   }
 
