@@ -1,0 +1,318 @@
+---
+# MOBIUS Wiki Deployment Playbook
+#
+# Deploys MOBIUS Wiki to a GCP Compute Engine instance using Docker Compose.
+#
+# Usage:
+#   ansible-playbook -i inventory.yml playbook.yml
+#
+# Prerequisites:
+#   - Target server accessible via SSH
+#   - SSL certificates ready (or use Let's Encrypt)
+#   - Ansible 2.12+
+#
+# Tags:
+#   - setup: Install Docker and dependencies
+#   - deploy: Deploy application
+#   - migrate: Run database migrations
+#   - ssl: Configure SSL certificates
+#   - backup: Set up automated backups
+
+- name: Deploy MOBIUS Wiki
+  hosts: mobius_wiki
+  become: yes
+  vars_files:
+    - group_vars/all.yml
+
+  pre_tasks:
+    - name: Validate required variables
+      assert:
+        that:
+          - domain_name is defined
+          - database_password is defined
+          - session_secret is defined
+        fail_msg: "Required variables not set. Check group_vars/all.yml"
+
+  tasks:
+    # =========================================================================
+    # System Setup
+    # =========================================================================
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+      tags: [setup]
+
+    - name: Install required packages
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg
+          - lsb-release
+          - git
+          - python3-pip
+        state: present
+      tags: [setup]
+
+    # =========================================================================
+    # Docker Installation
+    # =========================================================================
+    - name: Add Docker GPG key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+      tags: [setup]
+
+    - name: Add Docker repository
+      apt_repository:
+        repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        state: present
+      tags: [setup]
+
+    - name: Install Docker
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-compose-plugin
+        state: present
+      tags: [setup]
+
+    - name: Start and enable Docker
+      systemd:
+        name: docker
+        state: started
+        enabled: yes
+      tags: [setup]
+
+    - name: Add deploy user to docker group
+      user:
+        name: "{{ ansible_user }}"
+        groups: docker
+        append: yes
+      tags: [setup]
+
+    - name: Install Docker Python library
+      pip:
+        name: docker
+        state: present
+      tags: [setup]
+
+    # =========================================================================
+    # Application Directory Setup
+    # =========================================================================
+    - name: Create application directory
+      file:
+        path: "{{ app_dir }}"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0755'
+      tags: [deploy]
+
+    - name: Clone repository
+      git:
+        repo: "{{ git_repo }}"
+        dest: "{{ app_dir }}"
+        version: "{{ git_branch }}"
+        force: yes
+      become_user: "{{ ansible_user }}"
+      tags: [deploy]
+
+    # =========================================================================
+    # SSL Certificate Setup
+    # =========================================================================
+    - name: Create SSL directory
+      file:
+        path: "{{ app_dir }}/nginx/ssl"
+        state: directory
+        mode: '0700'
+      tags: [ssl, deploy]
+
+    - name: Install certbot (Let's Encrypt)
+      apt:
+        name: certbot
+        state: present
+      when: use_letsencrypt | default(false)
+      tags: [ssl]
+
+    - name: Obtain Let's Encrypt certificate
+      command: >
+        certbot certonly --standalone
+        -d {{ domain_name }}
+        --non-interactive
+        --agree-tos
+        --email {{ letsencrypt_email }}
+      args:
+        creates: "/etc/letsencrypt/live/{{ domain_name }}/fullchain.pem"
+      when: use_letsencrypt | default(false)
+      tags: [ssl]
+
+    - name: Copy Let's Encrypt certificates
+      copy:
+        src: "/etc/letsencrypt/live/{{ domain_name }}/{{ item.src }}"
+        dest: "{{ app_dir }}/nginx/ssl/{{ item.dest }}"
+        remote_src: yes
+        mode: "{{ item.mode }}"
+      loop:
+        - { src: 'fullchain.pem', dest: 'fullchain.pem', mode: '0644' }
+        - { src: 'privkey.pem', dest: 'privkey.pem', mode: '0600' }
+      when: use_letsencrypt | default(false)
+      tags: [ssl]
+
+    - name: Copy custom SSL certificate
+      copy:
+        src: "{{ ssl_cert_path }}"
+        dest: "{{ app_dir }}/nginx/ssl/fullchain.pem"
+        mode: '0644'
+      when: not (use_letsencrypt | default(false)) and ssl_cert_path is defined
+      tags: [ssl]
+
+    - name: Copy custom SSL private key
+      copy:
+        src: "{{ ssl_key_path }}"
+        dest: "{{ app_dir }}/nginx/ssl/privkey.pem"
+        mode: '0600'
+      when: not (use_letsencrypt | default(false)) and ssl_key_path is defined
+      tags: [ssl]
+
+    # =========================================================================
+    # Environment Configuration
+    # =========================================================================
+    - name: Create .env file
+      template:
+        src: templates/env.j2
+        dest: "{{ app_dir }}/.env"
+        mode: '0600'
+        owner: "{{ ansible_user }}"
+      tags: [deploy]
+
+    # =========================================================================
+    # Docker Compose Deployment
+    # =========================================================================
+    - name: Build and start containers
+      community.docker.docker_compose_v2:
+        project_src: "{{ app_dir }}"
+        files:
+          - docker-compose.yml
+          - docker-compose.prod.yml
+        build: always
+        state: present
+      register: docker_output
+      tags: [deploy]
+
+    - name: Wait for services to be healthy
+      uri:
+        url: "https://{{ domain_name }}/api/v1/health"
+        validate_certs: "{{ validate_ssl_certs | default(true) }}"
+        status_code: 200
+      register: health_check
+      until: health_check.status == 200
+      retries: 30
+      delay: 10
+      tags: [deploy]
+
+    # =========================================================================
+    # Database Migration
+    # =========================================================================
+    - name: Run database migrations
+      community.docker.docker_container_exec:
+        container: mobius-backend
+        command: npm run migrate
+      register: migration_result
+      tags: [migrate, deploy]
+
+    - name: Show migration output
+      debug:
+        var: migration_result.stdout_lines
+      tags: [migrate, deploy]
+
+    - name: Seed initial data (first deployment only)
+      community.docker.docker_container_exec:
+        container: mobius-backend
+        command: npm run db:reset:clean
+      when: initial_deployment | default(false)
+      tags: [migrate]
+
+    # =========================================================================
+    # Backup Configuration
+    # =========================================================================
+    - name: Create backup directory
+      file:
+        path: "{{ backup_dir }}"
+        state: directory
+        mode: '0750'
+      tags: [backup]
+
+    - name: Deploy backup script
+      template:
+        src: templates/backup.sh.j2
+        dest: /opt/mobius-backup.sh
+        mode: '0750'
+      tags: [backup]
+
+    - name: Configure daily backup cron job
+      cron:
+        name: "MOBIUS Wiki daily backup"
+        hour: "2"
+        minute: "0"
+        job: "/opt/mobius-backup.sh >> /var/log/mobius-backup.log 2>&1"
+      tags: [backup]
+
+    # =========================================================================
+    # Let's Encrypt Auto-Renewal
+    # =========================================================================
+    - name: Configure Let's Encrypt renewal cron
+      cron:
+        name: "Let's Encrypt renewal"
+        hour: "0,12"
+        minute: "0"
+        job: >
+          certbot renew --quiet &&
+          cp /etc/letsencrypt/live/{{ domain_name }}/*.pem {{ app_dir }}/nginx/ssl/ &&
+          docker compose -f {{ app_dir }}/docker-compose.yml exec -T nginx nginx -s reload
+      when: use_letsencrypt | default(false)
+      tags: [ssl]
+
+  # ===========================================================================
+  # Handlers
+  # ===========================================================================
+  handlers:
+    - name: Restart docker
+      systemd:
+        name: docker
+        state: restarted
+
+    - name: Reload nginx
+      community.docker.docker_container_exec:
+        container: mobius-nginx
+        command: nginx -s reload
+
+  # ===========================================================================
+  # Post-deployment Summary
+  # ===========================================================================
+  post_tasks:
+    - name: Deployment summary
+      debug:
+        msg:
+          - "========================================"
+          - "MOBIUS Wiki Deployment Complete"
+          - "========================================"
+          - ""
+          - "URL: https://{{ domain_name }}"
+          - "Health: https://{{ domain_name }}/api/v1/health"
+          - ""
+          - "Login:"
+          - "  Email: admin@localhost"
+          - "  Password: admin123"
+          - ""
+          - "IMPORTANT: Change the admin password after first login!"
+          - ""
+          - "Commands:"
+          - "  View logs: docker compose -f {{ app_dir }}/docker-compose.yml logs -f"
+          - "  Restart:   docker compose -f {{ app_dir }}/docker-compose.yml restart"
+          - "========================================"
+      tags: [always]

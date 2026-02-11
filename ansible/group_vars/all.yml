@@ -1,0 +1,98 @@
+---
+# MOBIUS Wiki Deployment Variables
+#
+# REQUIRED: Set these before running the playbook
+# SENSITIVE: Do not commit this file with real values to git
+#
+# For production, use Ansible Vault to encrypt sensitive values:
+#   ansible-vault encrypt group_vars/all.yml
+
+# =============================================================================
+# REQUIRED SETTINGS (must configure)
+# =============================================================================
+
+# Your domain name (must point to server IP)
+domain_name: "wiki.mobius.org"
+
+# Database password (use a strong random password)
+# Generate with: openssl rand -base64 32
+database_password: "CHANGE_ME_USE_STRONG_PASSWORD"
+
+# Session secret (64 character random string)
+# Generate with: openssl rand -hex 32
+session_secret: "CHANGE_ME_USE_OPENSSL_RAND_HEX_32"
+
+# =============================================================================
+# SSL CONFIGURATION
+# =============================================================================
+
+# Option 1: Use Let's Encrypt (free, automatic)
+use_letsencrypt: true
+letsencrypt_email: "admin@mobius.org"
+
+# Option 2: Use custom certificates (set use_letsencrypt: false)
+# ssl_cert_path: "/path/to/local/fullchain.pem"
+# ssl_key_path: "/path/to/local/privkey.pem"
+
+# Skip SSL validation for health checks (useful for self-signed certs)
+validate_ssl_certs: true
+
+# =============================================================================
+# GIT REPOSITORY
+# =============================================================================
+
+git_repo: "https://github.com/your-org/mobius-wiki.git"
+git_branch: "main"
+
+# =============================================================================
+# APPLICATION SETTINGS
+# =============================================================================
+
+# Installation directory on target server
+app_dir: "/opt/mobius-wiki"
+
+# Backup directory
+backup_dir: "/opt/backups/mobius-wiki"
+
+# First deployment flag (runs db:reset:clean to seed data)
+# Set to false after initial deployment
+initial_deployment: true
+
+# =============================================================================
+# DATABASE SETTINGS
+# =============================================================================
+
+database_host: "db"
+database_port: 5432
+database_name: "mobius_wiki"
+database_user: "postgres"
+
+# =============================================================================
+# EMAIL SETTINGS (for password reset)
+# =============================================================================
+
+smtp_host: "smtp.example.com"
+smtp_port: 587
+smtp_user: ""
+smtp_password: ""
+smtp_from_email: "noreply@mobius.org"
+smtp_from_name: "MOBIUS Wiki"
+
+# Set to false if SMTP is not configured
+smtp_enabled: false
+
+# =============================================================================
+# OPTIONAL SETTINGS
+# =============================================================================
+
+# Node environment
+node_env: "production"
+
+# Log level (error, warn, info, debug)
+log_level: "info"
+
+# Max file upload size (bytes)
+max_upload_size: 52428800  # 50MB
+
+# Session lifetime (milliseconds)
+session_max_age: 86400000  # 24 hours
