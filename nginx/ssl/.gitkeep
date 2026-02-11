@@ -1,0 +1,15 @@
+# SSL Certificate Placeholder
+#
+# Place your SSL certificates here:
+#   - fullchain.pem  (certificate + intermediate chain)
+#   - privkey.pem    (private key)
+#
+# These files should NOT be committed to git.
+# Add them manually on the server or use a secrets manager.
+#
+# For Let's Encrypt certificates:
+#   - fullchain.pem is typically at /etc/letsencrypt/live/yourdomain/fullchain.pem
+#   - privkey.pem is typically at /etc/letsencrypt/live/yourdomain/privkey.pem
+#
+# For internal CA certificates:
+#   - Request from your organization's IT/Security team

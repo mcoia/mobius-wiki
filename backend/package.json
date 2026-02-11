@@ -24,6 +24,9 @@
     "import:mediawiki": "node scripts/import-mediawiki.js",
     "import:mediawiki-files": "node scripts/import-mediawiki-files.js",
     "import:download-images": "node scripts/download-mediawiki-images.js",
+    "db:reset:clean": "node scripts/reset-and-import.js",
+    "db:reset:clean:dry-run": "node scripts/reset-and-import.js --dry-run",
+    "db:package": "bash scripts/package-production.sh",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

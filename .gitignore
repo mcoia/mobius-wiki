@@ -9,6 +9,13 @@
 .env
 .env.local
 .env.*.local
+.env.production
+
+# SSL Certificates (NEVER commit)
+nginx/ssl/*.pem
+nginx/ssl/*.key
+nginx/ssl/*.crt
+!nginx/ssl/.gitkeep
 
 # Node.js
 node_modules/
@@ -53,3 +60,7 @@ coverage/
 
 # Local documentation (keep CLAUDE.md for repo context)
 # CLAUDE.md is intentionally tracked
+
+screenshots/
+/*.md
+!README.md

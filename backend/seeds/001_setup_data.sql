@@ -27,8 +27,7 @@
 -- =============================================================================
 
 INSERT INTO wiki.libraries (id, name, slug, created_at, updated_at) VALUES
-(1, 'MOBIUS Headquarters', 'mobius-hq', NOW(), NOW()),
-(2, 'Springfield Public Library', 'springfield', NOW(), NOW());
+(1, 'MOBIUS Headquarters', 'mobius-hq', NOW(), NOW());
 
 -- Reset sequence for libraries
 SELECT setval('wiki.libraries_id_seq', (SELECT MAX(id) FROM wiki.libraries));
@@ -36,13 +35,9 @@ SELECT setval('wiki.libraries_id_seq', (SELECT MAX(id) FROM wiki.libraries));
 -- =============================================================================
 -- 2. USERS
 -- =============================================================================
--- Password for all users: "admin123" (hashed with bcrypt, 12 rounds)
--- Hash: $2b$12$6Jn5EganDF.i49YlP2UdWO6b0vxgnPQLONzmkQHh8HGwgb5dCmT0G
 
 INSERT INTO wiki.users (id, email, password_hash, name, role, library_id, is_active, created_at, updated_at) VALUES
-(1, 'admin@mobius.org', '$2b$12$6Jn5EganDF.i49YlP2UdWO6b0vxgnPQLONzmkQHh8HGwgb5dCmT0G', 'Site Administrator', 'site_admin', NULL, true, NOW(), NOW()),
-(2, 'librarian@springfield.org', '$2b$12$6Jn5EganDF.i49YlP2UdWO6b0vxgnPQLONzmkQHh8HGwgb5dCmT0G', 'Jane Smith', 'library_staff', 2, true, NOW(), NOW()),
-(3, 'staff@mobius.org', '$2b$12$6Jn5EganDF.i49YlP2UdWO6b0vxgnPQLONzmkQHh8HGwgb5dCmT0G', 'John Doe', 'mobius_staff', NULL, true, NOW(), NOW());
+(1, 'admin@localhost', '$2b$12$6Jn5EganDF.i49YlP2UdWO6b0vxgnPQLONzmkQHh8HGwgb5dCmT0G', 'Site Administrator', 'site_admin', NULL, true, NOW(), NOW());
 
 -- Reset sequence for users
 SELECT setval('wiki.users_id_seq', (SELECT MAX(id) FROM wiki.users));
@@ -185,7 +180,7 @@ INSERT INTO wiki.page_tags (page_id, tag_id) VALUES
 
 INSERT INTO wiki.files (filename, storage_path, mime_type, size_bytes, uploaded_by, uploaded_at, created_at, updated_at) VALUES
 ('test-document.pdf', '/uploads/test-document.pdf', 'application/pdf', 1048576, 1, NOW(), NOW(), NOW()),
-('test-image.png', '/uploads/test-image.png', 'image/png', 524288, 2, NOW(), NOW(), NOW());
+('test-image.png', '/uploads/test-image.png', 'image/png', 524288, 1, NOW(), NOW(), NOW());
 
 SELECT setval('wiki.files_id_seq', (SELECT MAX(id) FROM wiki.files));
 
@@ -195,8 +190,8 @@ SELECT setval('wiki.files_id_seq', (SELECT MAX(id) FROM wiki.files));
 -- Links files to other content (polymorphic relationship)
 
 INSERT INTO wiki.file_links (file_id, linkable_type, linkable_id, created_at, created_by) VALUES
-(1, 'page', 1, NOW(), 1),    -- Link PDF to "Welcome to Folio" page
-(2, 'wiki', 1, NOW(), 2);    -- Link image to "Folio" wiki
+(1, 'page', 1, NOW(), 1),
+(2, 'wiki', 1, NOW(), 1);
 
 -- =============================================================================
 -- 11. ACCESS RULES
@@ -217,8 +212,8 @@ INSERT INTO wiki.access_rules (ruleable_type, ruleable_id, rule_type, rule_value
 
 INSERT INTO wiki.page_views (page_id, user_id, viewed_at, session_id, referrer) VALUES
 (1, 1, NOW() - INTERVAL '1 hour', 'sess_001', 'https://google.com/search?q=folio'),
-(1, 2, NOW() - INTERVAL '30 minutes', 'sess_002', NULL),
-(2, NULL, NOW(), 'sess_guest', NULL);  -- Guest view (user_id NULL)
+(1, 1, NOW() - INTERVAL '30 minutes', 'sess_002', NULL),
+(2, NULL, NOW(), 'sess_guest', NULL);
 
 -- =============================================================================
 -- 13. REDIRECTS
@@ -235,8 +230,7 @@ INSERT INTO wiki.redirects (old_path, new_path, created_at, created_by) VALUES
 -- PostgreSQL session storage
 
 INSERT INTO wiki.sessions (sid, sess, expire) VALUES
-('session_test_active_1', '{"cookie":{"maxAge":86400000},"user":{"id":1,"email":"admin@mobius.org"}}', NOW() + INTERVAL '1 day'),
-('session_test_active_2', '{"cookie":{"maxAge":86400000},"user":{"id":2,"email":"librarian@springfield.org"}}', NOW() + INTERVAL '6 hours');
+('session_test_active_1', '{"cookie":{"maxAge":86400000},"user":{"id":1,"email":"admin@localhost"}}', NOW() + INTERVAL '1 day');
 
 
 -- =============================================================================
