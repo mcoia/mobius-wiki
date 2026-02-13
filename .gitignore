@@ -58,8 +58,8 @@ coverage/
 .parcel-cache/
 .angular/
 
-# Local documentation (keep CLAUDE.md for repo context)
-# CLAUDE.md is intentionally tracked
+# Claude configuration (private - never commit)
+CLAUDE.md
 
 screenshots/
 /*.md
