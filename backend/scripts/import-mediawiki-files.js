@@ -152,9 +152,12 @@ function generateStoragePath(filename) {
 
 /**
  * Copy file to uploads directory
+ * Note: storagePath includes 'uploads/' prefix for database storage,
+ * so we use cwd() instead of uploadsDir to avoid double nesting
  */
 function copyFileToUploads(sourcePath, storagePath, uploadsDir) {
-  const destPath = path.join(uploadsDir, storagePath);
+  // Use cwd() since storagePath already includes 'uploads/' prefix
+  const destPath = path.join(process.cwd(), storagePath);
   const destDir = path.dirname(destPath);
 
   // Create directory if needed
@@ -334,7 +337,7 @@ async function main() {
           new RegExp(`src="[^"]*${filename.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/ /g, '[_ ]')}[^"]*"`, 'gi'),
         ];
 
-        const newUrl = `/api/v1/files/${fileId}`;
+        const newUrl = `/api/v1/files/${fileId}/download`;
 
         for (const pattern of patterns) {
           if (pattern.test(content)) {
@@ -384,7 +387,7 @@ async function main() {
           new RegExp(`/api/v1/files/by-name/${encodeURIComponent(filename)}`, 'g'),
         ];
 
-        const newUrl = `/api/v1/files/${fileId}`;
+        const newUrl = `/api/v1/files/${fileId}/download`;
 
         for (const pattern of patterns) {
           if (pattern.test(content)) {

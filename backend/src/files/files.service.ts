@@ -166,6 +166,19 @@ export class FilesService {
     return rows[0];
   }
 
+  async findByFilename(filename: string) {
+    const { rows } = await this.pool.query(
+      `SELECT * FROM wiki.files WHERE filename = $1 AND deleted_at IS NULL`,
+      [filename],
+    );
+
+    if (rows.length === 0) {
+      throw new NotFoundException(`File not found: ${filename}`);
+    }
+
+    return rows[0];
+  }
+
   async findAll(includeDeleted = false) {
     const whereClause = includeDeleted ? '' : 'WHERE deleted_at IS NULL';
 

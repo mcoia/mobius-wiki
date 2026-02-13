@@ -94,6 +94,47 @@ export class FilesController {
     return this.filesService.findLinkedFiles(linkableType, id, context);
   }
 
+  // Download file by filename (for content that references files by name)
+  @Get('by-name/:filename')
+  @SkipThrottle()
+  async downloadByName(
+    @Param('filename') filename: string,
+    @Req() req: any,
+    @Res() res: Response,
+  ) {
+    // Look up file by filename
+    const file = await this.filesService.findByFilename(filename);
+
+    // Get user from session (or null for guests)
+    const user = req.session?.userId
+      ? {
+          id: req.session.userId,
+          role: req.session.role,
+          libraryId: req.session.libraryId,
+        }
+      : null;
+
+    // ACL check
+    const hasAccess = await this.accessControlService.canAccess(user, 'file', file.id);
+    if (!hasAccess) {
+      throw new ForbiddenException('Access denied');
+    }
+
+    // Serve file
+    const buffer = await this.filesService.getFileBuffer(file.id);
+    const isImage = file.mime_type?.startsWith('image/');
+    const disposition = isImage ? 'inline' : 'attachment';
+
+    res.set({
+      'Content-Type': file.mime_type,
+      'Content-Disposition': `${disposition}; filename="${file.filename}"`,
+      'Content-Length': file.size_bytes,
+      'Cross-Origin-Resource-Policy': 'cross-origin',
+    });
+
+    res.send(buffer);
+  }
+
   // ==========================================================================
   // STANDARD FILE ENDPOINTS
   // ==========================================================================
@@ -179,13 +220,26 @@ export class FilesController {
 
   @Delete(':id')
   @UseGuards(AuthGuard)
-  async remove(@Param('id', ParseIntPipe) id: number, @User() user: any) {
+  async remove(
+    @Param('id', ParseIntPipe) id: number,
+    @User() user: any,
+    @Req() req: Request,
+  ) {
     // Get the file first
     const file = await this.filesService.findOne(id);
 
     // Check 1: Owner can always delete their own files
     if (file.uploaded_by === user.id) {
-      return this.filesService.remove(id, user.id);
+      const result = await this.filesService.remove(id, user.id);
+      await this.fileAuditService.log(
+        id,
+        'delete',
+        user.id,
+        { reason: 'owner' },
+        req.ip,
+        req.headers['user-agent'],
+      );
+      return result;
     }
 
     // Check 2: User with canEdit on any linked content can delete
@@ -193,7 +247,16 @@ export class FilesController {
     for (const link of links) {
       const canEdit = await this.accessControlService.canEdit(user, link.linkable_type, link.linkable_id);
       if (canEdit) {
-        return this.filesService.remove(id, user.id);
+        const result = await this.filesService.remove(id, user.id);
+        await this.fileAuditService.log(
+          id,
+          'delete',
+          user.id,
+          { reason: 'canEdit', linkable_type: link.linkable_type, linkable_id: link.linkable_id },
+          req.ip,
+          req.headers['user-agent'],
+        );
+        return result;
       }
     }
 

@@ -37,7 +37,7 @@ SELECT setval('wiki.libraries_id_seq', (SELECT MAX(id) FROM wiki.libraries));
 -- =============================================================================
 
 INSERT INTO wiki.users (id, email, password_hash, name, role, library_id, is_active, created_at, updated_at) VALUES
-(1, 'admin@localhost', '$2b$12$6Jn5EganDF.i49YlP2UdWO6b0vxgnPQLONzmkQHh8HGwgb5dCmT0G', 'Site Administrator', 'site_admin', NULL, true, NOW(), NOW());
+(1, 'admin@mobiusconsortium.org', '$2b$12$6Jn5EganDF.i49YlP2UdWO6b0vxgnPQLONzmkQHh8HGwgb5dCmT0G', 'Site Administrator', 'site_admin', NULL, true, NOW(), NOW());
 
 -- Reset sequence for users
 SELECT setval('wiki.users_id_seq', (SELECT MAX(id) FROM wiki.users));
