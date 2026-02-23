@@ -32,8 +32,16 @@ RUN npm run build -- --configuration production
 # -----------------------------------------------------------------------------
 FROM nginx:alpine AS production
 
-# Install curl for HTTPS health checks
-RUN apk add --no-cache curl
+# Install curl for HTTPS health checks and openssl for self-signed certs
+RUN apk add --no-cache curl openssl
+
+# Generate self-signed SSL certificate for internal container communication
+# This is used for nginx-to-nginx HTTPS within the Docker network
+RUN mkdir -p /etc/nginx/ssl && \
+    openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
+    -keyout /etc/nginx/ssl/privkey.pem \
+    -out /etc/nginx/ssl/fullchain.pem \
+    -subj "/C=US/ST=Missouri/L=Columbia/O=MOBIUS/CN=localhost"
 
 # Copy custom nginx configuration for SPA routing
 COPY nginx.conf /etc/nginx/nginx.conf
