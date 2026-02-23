@@ -30,8 +30,8 @@ RUN npm run build
 # -----------------------------------------------------------------------------
 FROM node:20-alpine AS production
 
-# Install curl for health checks
-RUN apk add --no-cache curl
+# Install curl for health checks, bash and postgresql-client for migrations
+RUN apk add --no-cache curl bash postgresql-client
 
 # Create non-root user for security
 RUN addgroup -g 1001 -S nodejs && \
