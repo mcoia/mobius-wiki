@@ -1,0 +1,197 @@
+# =============================================================================
+# MOBIUS Wiki - Multi-Environment Docker Compose
+# =============================================================================
+# Supports both staging and production on a single server:
+#   - Staging:    wiki-dev.mobiusconsortium.org
+#   - Production: wiki.mobiusconsortium.org
+#
+# Usage:
+#   docker compose -f docker-compose.multi-env.yml up -d
+#   docker compose -f docker-compose.multi-env.yml logs -f staging-backend
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # PostgreSQL Database (Shared)
+  # ---------------------------------------------------------------------------
+  db:
+    image: postgres:15-alpine
+    container_name: mobius-db
+    restart: always
+    environment:
+      POSTGRES_USER: ${DATABASE_USER:-postgres}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: mobius_wiki_dev
+      # Create both databases on startup
+      POSTGRES_MULTIPLE_DATABASES: mobius_wiki_dev,mobius_wiki_prod
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./scripts/create-multiple-databases.sh:/docker-entrypoint-initdb.d/create-multiple-databases.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ---------------------------------------------------------------------------
+  # STAGING Environment
+  # ---------------------------------------------------------------------------
+  staging-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: mobius-staging-backend
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+      DATABASE_NAME: mobius_wiki_dev
+      DATABASE_USER: ${DATABASE_USER:-postgres}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+      DATABASE_URL: postgresql://${DATABASE_USER:-postgres}:${DATABASE_PASSWORD}@db:5432/mobius_wiki_dev
+      SESSION_SECRET: ${SESSION_SECRET_STAGING}
+      NODE_ENV: production
+      PORT: 10000
+      FRONTEND_URL: https://wiki-dev.mobiusconsortium.org
+      MAIL_TRANSPORT: ${MAIL_TRANSPORT:-smtp}
+      SMTP_HOST: ${SMTP_HOST:-localhost}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM_EMAIL: ${SMTP_FROM_EMAIL:-noreply@mobius.org}
+      SMTP_FROM_NAME: ${SMTP_FROM_NAME:-MOBIUS Wiki (Staging)}
+    volumes:
+      - staging-uploads:/app/uploads
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:10000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  staging-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        API_URL: https://wiki-dev.mobiusconsortium.org/api
+    container_name: mobius-staging-frontend
+    restart: always
+    depends_on:
+      - staging-backend
+    healthcheck:
+      test: ["CMD", "curl", "-k", "-f", "https://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # ---------------------------------------------------------------------------
+  # PRODUCTION Environment
+  # ---------------------------------------------------------------------------
+  prod-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: mobius-prod-backend
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+      DATABASE_NAME: mobius_wiki_prod
+      DATABASE_USER: ${DATABASE_USER:-postgres}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+      DATABASE_URL: postgresql://${DATABASE_USER:-postgres}:${DATABASE_PASSWORD}@db:5432/mobius_wiki_prod
+      SESSION_SECRET: ${SESSION_SECRET_PROD}
+      NODE_ENV: production
+      PORT: 10000
+      FRONTEND_URL: https://wiki.mobiusconsortium.org
+      MAIL_TRANSPORT: ${MAIL_TRANSPORT:-smtp}
+      SMTP_HOST: ${SMTP_HOST:-localhost}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM_EMAIL: ${SMTP_FROM_EMAIL:-noreply@mobius.org}
+      SMTP_FROM_NAME: ${SMTP_FROM_NAME:-MOBIUS Wiki}
+    volumes:
+      - prod-uploads:/app/uploads
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:10000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  prod-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        API_URL: https://wiki.mobiusconsortium.org/api
+    container_name: mobius-prod-frontend
+    restart: always
+    depends_on:
+      - prod-backend
+    healthcheck:
+      test: ["CMD", "curl", "-k", "-f", "https://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # ---------------------------------------------------------------------------
+  # nginx Reverse Proxy (Routes by domain)
+  # ---------------------------------------------------------------------------
+  # Initial setup: Use nginx-init.conf to get SSL certs, then switch to nginx-multi.conf
+  #
+  # Step 1: ln -sf nginx-init.conf nginx/nginx.conf && docker compose up -d nginx
+  # Step 2: Run make_certs.sh to get SSL certificates
+  # Step 3: ln -sf nginx-multi.conf nginx/nginx.conf && docker compose restart nginx
+  # ---------------------------------------------------------------------------
+  nginx:
+    image: nginx:alpine
+    container_name: mobius-nginx
+    restart: always
+    depends_on:
+      - staging-backend
+      - staging-frontend
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - /var/www/acme:/var/www/acme
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+# -----------------------------------------------------------------------------
+# Volumes
+# -----------------------------------------------------------------------------
+volumes:
+  pgdata:
+    name: mobius-pgdata
+  staging-uploads:
+    name: mobius-staging-uploads
+  prod-uploads:
+    name: mobius-prod-uploads
+
+# -----------------------------------------------------------------------------
+# Networks
+# -----------------------------------------------------------------------------
+networks:
+  default:
+    name: mobius-network
