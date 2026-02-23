@@ -67,6 +67,7 @@ services:
       SMTP_FROM_NAME: ${SMTP_FROM_NAME:-MOBIUS Wiki (Staging)}
     volumes:
       - staging-uploads:/app/uploads
+      - ./resources:/app/resources:ro
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:10000/api/v1/health"]
       interval: 30s
