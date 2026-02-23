@@ -74,7 +74,7 @@ services:
       start_period: 40s
 
   # ---------------------------------------------------------------------------
-  # Angular Frontend (nginx)
+  # Angular Frontend (nginx with HTTPS)
   # ---------------------------------------------------------------------------
   frontend:
     build:
@@ -85,9 +85,11 @@ services:
     depends_on:
       - backend
     ports:
-      - "4200:80"
+      - "443:443"
+    volumes:
+      - ./nginx/ssl:/etc/nginx/ssl:ro
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/"]
+      test: ["CMD", "curl", "-k", "-f", "https://localhost/health"]
       interval: 30s
       timeout: 10s
       retries: 3

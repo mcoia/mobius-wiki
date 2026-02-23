@@ -32,6 +32,9 @@ RUN npm run build -- --configuration production
 # -----------------------------------------------------------------------------
 FROM nginx:alpine AS production
 
+# Install curl for HTTPS health checks
+RUN apk add --no-cache curl
+
 # Copy custom nginx configuration for SPA routing
 COPY nginx.conf /etc/nginx/nginx.conf
 
@@ -46,12 +49,12 @@ RUN chown -R nginx:nginx /usr/share/nginx/html && \
     touch /var/run/nginx.pid && \
     chown -R nginx:nginx /var/run/nginx.pid
 
-# Expose port 80
-EXPOSE 80
+# Expose port 443
+EXPOSE 443
 
-# Health check
+# Health check (uses -k to accept self-signed certificates)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:80/ || exit 1
+    CMD curl -k -f https://localhost/health || exit 1
 
 # Start nginx
 CMD ["nginx", "-g", "daemon off;"]
