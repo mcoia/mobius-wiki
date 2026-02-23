@@ -45,7 +45,7 @@ Before deploying, ensure you have:
                     │                                         │
   Internet          │  ┌─────────────────────────────────┐   │
      │              │  │         nginx (reverse proxy)    │   │
-     │              │  │         Ports: 80, 443          │   │
+     │              │  │         Port: 443 (HTTPS only)   │   │
      ▼              │  │         SSL Termination          │   │
 ┌─────────┐         │  └──────────┬──────────┬───────────┘   │
 │ HTTPS   │◄────────┼─────────────┘          │               │
@@ -53,7 +53,7 @@ Before deploying, ensure you have:
 └─────────┘         │  ┌─────────────┐  ┌────▼────────┐      │
                     │  │  frontend   │  │   backend   │      │
                     │  │  (Angular)  │  │  (NestJS)   │      │
-                    │  │  nginx:80   │  │  Port 10000 │      │
+                    │  │  nginx:443  │  │  Port 10000 │      │
                     │  └─────────────┘  └──────┬──────┘      │
                     │                          │              │
                     │                   ┌──────▼──────┐       │
@@ -69,8 +69,8 @@ Before deploying, ensure you have:
 
 | Service | Container | Internal Port | External Port |
 |---------|-----------|---------------|---------------|
-| nginx (proxy) | mobius-nginx | 80, 443 | 80, 443 |
-| Frontend | mobius-frontend | 80 | (internal) |
+| nginx (proxy) | mobius-nginx | 443 | 443 |
+| Frontend | mobius-frontend | 443 | (internal) |
 | Backend | mobius-backend | 10000 | (internal) |
 | Database | mobius-db | 5432 | (internal) |
 
@@ -105,7 +105,7 @@ gcloud compute instances create mobius-wiki \
 #### 2. Configure Firewall
 
 ```bash
-# Allow HTTPS traffic only
+# Allow HTTPS traffic only (no HTTP - HTTPS-only architecture)
 gcloud compute firewall-rules create allow-https \
   --direction=INGRESS \
   --priority=1000 \
@@ -113,15 +113,6 @@ gcloud compute firewall-rules create allow-https \
   --action=ALLOW \
   --rules=tcp:443 \
   --target-tags=https-server
-
-# Allow HTTP for redirect (optional but recommended)
-gcloud compute firewall-rules create allow-http \
-  --direction=INGRESS \
-  --priority=1000 \
-  --network=default \
-  --action=ALLOW \
-  --rules=tcp:80 \
-  --target-tags=http-server
 ```
 
 #### 3. Reserve Static IP
@@ -190,6 +181,16 @@ This option provides better scaling but is more complex to set up. Contact your 
 You need two files:
 - `fullchain.pem` - Your certificate + intermediate chain
 - `privkey.pem` - Your private key
+
+### For Local Development (Self-Signed)
+
+For local/development testing, use the included script to generate a self-signed certificate:
+
+```bash
+./scripts/generate-ssl-cert.sh
+```
+
+This creates a certificate for `localhost` that works for local Docker testing.
 
 ### For Internal CA Certificates
 
@@ -297,7 +298,7 @@ docker compose ps
 
 # Expected output:
 # NAME              STATUS          PORTS
-# mobius-nginx      Up (healthy)    0.0.0.0:80->80/tcp, 0.0.0.0:443->443/tcp
+# mobius-nginx      Up (healthy)    0.0.0.0:443->443/tcp
 # mobius-frontend   Up (healthy)
 # mobius-backend    Up (healthy)
 # mobius-db         Up (healthy)
@@ -534,9 +535,9 @@ gcloud compute instances set-machine-type mobius-wiki \
 Before going live, verify:
 
 - [ ] **Strong passwords**: DATABASE_PASSWORD and SESSION_SECRET are random, long strings
-- [ ] **HTTPS only**: Port 80 redirects to 443
+- [ ] **HTTPS only**: Only port 443 exposed (no HTTP)
 - [ ] **SSL certificate**: Valid and not expired
-- [ ] **Firewall**: Only ports 80 and 443 open
+- [ ] **Firewall**: Only port 443 open
 - [ ] **Environment file**: `.env` has restrictive permissions (`chmod 600`)
 - [ ] **Admin password**: Changed from default `admin123`
 - [ ] **Backups**: Automated backup script configured and tested
