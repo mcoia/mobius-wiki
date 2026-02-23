@@ -11,6 +11,11 @@ import { GlobalExceptionFilter } from './common/filters/http-exception.filter';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // Trust proxy headers (required for sessions behind nginx reverse proxy)
+  // This ensures secure cookies work correctly when nginx terminates SSL
+  const expressApp = app.getHttpAdapter().getInstance();
+  expressApp.set('trust proxy', 1);
+
   // Security headers via Helmet
   app.use(
     helmet({
