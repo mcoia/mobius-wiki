@@ -43,6 +43,10 @@ uploads/
 
 # Migration data (contains PII - never commit)
 backend/migration-data/
+backend/production-data.tar.gz
+
+# Internal documentation (contains sensitive procedures)
+resources/docs.mobiusconsortium.org/
 
 # Temporary files
 *.tmp
